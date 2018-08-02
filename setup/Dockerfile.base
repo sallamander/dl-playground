@@ -24,6 +24,7 @@ RUN mkdir -p $CONDA_DIRPATH && \
     wget https://repo.continuum.io/miniconda/Miniconda3-${conda_version}-Linux-x86_64.sh && \
     chmod u+x Miniconda3-${conda_version}-Linux-x86_64.sh && \
     ./Miniconda3-${conda_version}-Linux-x86_64.sh -b -f -p $CONDA_DIRPATH && \
+    conda install python=3.5.5 && \
     rm Miniconda3-${conda_version}-Linux-x86_64.sh
 
 RUN useradd -m -s /bin/bash -N -u $USER_UID $user && \
