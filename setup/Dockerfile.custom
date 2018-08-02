@@ -1,0 +1,9 @@
+FROM dl-playground/final
+
+arg user
+
+USER $user
+
+RUN git clone https://github.com/sallamander/.dotfiles.git && \
+    cd $HOME/.dotfiles && \
+    bash install.sh
