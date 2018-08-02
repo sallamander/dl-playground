@@ -1,4 +1,5 @@
 FROM dl-playground/base
+LABEL maintainer="Sean Sall <ssall@alumni.nd.edu>"
 
 ARG conda_version
 ARG user

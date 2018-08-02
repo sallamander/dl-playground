@@ -1,5 +1,5 @@
 FROM ubuntu:16.04
-LABEL Maintainer="Sean Sall <ssall@alumni.nd.edu>"
+LABEL maintainer="Sean Sall <ssall@alumni.nd.edu>"
 
 ARG conda_version
 ARG user

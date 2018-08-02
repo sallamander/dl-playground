@@ -1,4 +1,5 @@
 FROM dl-playground/final
+LABEL maintainer="Sean Sall <ssall@alumni.nd.edu>"
 
 arg user
 
