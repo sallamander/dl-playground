@@ -1,0 +1,35 @@
+FROM ubuntu:16.04
+LABEL Maintainer="Sean Sall <ssall@alumni.nd.edu>"
+
+ARG conda_version
+ARG user
+
+ENV CONDA_DIRPATH /opt/conda
+ENV PATH $CONDA_DIRPATH/bin:$PATH
+ENV USER_UID 1000
+
+RUN apt-get update && apt-get install -y \
+   bzip2 \
+   g++ \
+   git \
+   graphviz \
+   libhdf5-dev \
+   sudo \
+   tmux \
+   vim \
+   wget
+
+RUN mkdir -p $CONDA_DIRPATH && \
+    cd $CONDA_DIRPATH && \
+    wget https://repo.continuum.io/miniconda/Miniconda3-${conda_version}-Linux-x86_64.sh && \
+    chmod u+x Miniconda3-${conda_version}-Linux-x86_64.sh && \
+    ./Miniconda3-${conda_version}-Linux-x86_64.sh -b -f -p $CONDA_DIRPATH && \
+    rm Miniconda3-${conda_version}-Linux-x86_64.sh
+
+RUN useradd -m -s /bin/bash -N -u $USER_UID $user && \
+    echo "$user:$user" | chpasswd && adduser $user sudo && \
+    chown -R $user $CONDA_DIRPATH && \
+    echo "$user    ALL=NOPASSWD: ALL" > /etc/sudoers.d/sallamander
+
+WORKDIR /home/$user
+USER $user
