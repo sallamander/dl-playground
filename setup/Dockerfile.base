@@ -30,7 +30,7 @@ RUN mkdir -p $CONDA_DIRPATH && \
 RUN useradd -m -s /bin/bash -N -u $USER_UID $user && \
     echo "$user:$user" | chpasswd && adduser $user sudo && \
     chown -R $user $CONDA_DIRPATH && \
-    echo "$user    ALL=NOPASSWD: ALL" > /etc/sudoers.d/sallamander
+    echo "$user    ALL=NOPASSWD: ALL" > /etc/sudoers.d/$user
 
 WORKDIR /home/$user
 USER $user
