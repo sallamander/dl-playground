@@ -33,12 +33,10 @@ do
                 ;;
             --fpath_custom_dockerfile)
                 FPATH_CUSTOM_DOCKERFILE=$2
-                echo $FPATH_CUSTOM_DOCKERFILE
                 shift 2
                 ;;
             --user)
                 USER=$2
-                echo $USER
                 shift 2
                 ;;
             --help)
@@ -50,4 +48,7 @@ done
 
 docker build --build-arg user=$USER --build-arg conda_version=$CONDA_VERSION -t dl-playground/base --file ./Dockerfile.base ./
 docker build --build-arg user=$USER --build-arg conda_version=$CONDA_VERSION -t dl-playground/final --file ./Dockerfile ./
-docker build --build-arg user=$USER -t dl-playground/custom --file ./Dockerfile.custom ./
+if [ ! -z "$FPATH_CUSTOM_DOCKERFILE" ]; then
+    echo "Building custom Docker image based off of $fpath_custom_dockerfile..."
+    docker build --build-arg user=$USER -t dl-playground/custom --file $FPATH_CUSTOM_DOCKERFILE ./
+fi
