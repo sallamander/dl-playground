@@ -80,6 +80,7 @@ dependencies:
   - statsmodels=0.9.0=py35h3010b51_0
   - tk=8.6.7=hc745277_3
   - tornado=5.0.2=py35_0
+  - tqdm=4.24.0=py35_0
   - traitlets=4.3.2=py35ha522a97_0
   - wcwidth=0.1.7=py35hcd08066_0
   - wheel=0.31.1=py35_0
