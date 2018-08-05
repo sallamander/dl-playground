@@ -109,10 +109,20 @@ if [ ! -z "$REBUILD_IMAGE" ]; then
 fi
 
 
-echo "Creating images with docker username $DOCKER_USER and miniconda version $CONDA_VERSION..."
-docker build --build-arg user=$DOCKER_USER --build-arg conda_version=$CONDA_VERSION -t dl-playground/base --file ./Dockerfile.base ./
-docker build --build-arg user=$DOCKER_USER --build-arg conda_version=$CONDA_VERSION -t dl-playground/final --file ./Dockerfile ./
+echo "Creating images with docker username $DOCKER_USER and miniconda "
+echo "version $CONDA_VERSION..."
+
+docker build --build-arg user=$DOCKER_USER \
+             --build-arg conda_version=$CONDA_VERSION \
+             -t dl-playground/base --file ./Dockerfile.base ./
+
+docker build --build-arg user=$DOCKER_USER \
+             --build-arg conda_version=$CONDA_VERSION \
+             -t dl-playground/final --file ./Dockerfile ./
+
 if [ ! -z "$FPATH_CUSTOM_DOCKERFILE" ]; then
-    echo "Building custom Docker image based off of $FPATH_CUSTOM_DOCKERFILE ..."
-    docker build --build-arg user=$DOCKER_USER -t dl-playground/custom --file $FPATH_CUSTOM_DOCKERFILE ./
+    echo "Building custom Docker image based off of "
+    echo "$FPATH_CUSTOM_DOCKERFILE ..."
+    docker build --build-arg user=$DOCKER_USER \
+                 -t dl-playground/custom --file $FPATH_CUSTOM_DOCKERFILE ./
 fi
