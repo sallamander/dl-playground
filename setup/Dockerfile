@@ -1,6 +1,7 @@
 FROM dl-playground/base
 LABEL maintainer="Sean Sall <ssall@alumni.nd.edu>"
 
+ARG fname_environment_yml
 ARG conda_version
 ARG user
 
@@ -12,5 +13,5 @@ RUN mkdir $HOME/repos && \
 
 RUN cd $HOME/repos/dl-playground/setup && \
     conda install conda=$conda_version && \
-    conda env create -f environment_cpu.yml && \
+    conda env create -f $fname_environment_yml && \
     cd $HOME

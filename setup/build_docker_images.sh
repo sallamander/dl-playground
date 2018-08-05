@@ -118,8 +118,10 @@ if [ ! -z "$REBUILD_IMAGE" ]; then
 fi
 
 BASE_IMAGE="ubuntu:16.04"
+FNAME_ENVIRONMENT_YML="environment_cpu.yml"
 if [[ ! -z "$GPU_BUILD" ]]; then
     BASE_IMAGE="nvidia/cuda:9.2-cudnn7-runtime-ubuntu16.04"
+    FNAME_ENVIRONMENT_YML="environment_gpu.yml"
 fi
 
 echo "Creating images with docker username $DOCKER_USER and miniconda "
@@ -132,6 +134,7 @@ docker build --build-arg user=$DOCKER_USER \
 
 docker build --build-arg user=$DOCKER_USER \
              --build-arg conda_version=$CONDA_VERSION \
+             --build-arg fname_environment_yml=$FNAME_ENVIRONMENT_YML \
              -t dl-playground/final --file ./Dockerfile ./
 
 if [ ! -z "$FPATH_CUSTOM_DOCKERFILE" ]; then
