@@ -5,8 +5,9 @@
 # Dockerfile files in this directory.
 
 function usage {
-    echo "Usage: build_docker_image.sh  [--conda_version version] [--fpath_custom_dockerfile fpath]"
-    echo "                              [--user username]"
+    echo "Usage: build_docker_image.sh  [--conda_version version] [--docker_user username]"
+    echo "                              [--fpath_custom_dockerfile fpath] [--gpu_build] "
+    echo "                              [--rebuild_image (base|final|custom)]"
     echo ""
     echo "   --conda_version                     Conda version for the Docker images - defaults "
     echo "                                       to 4.5.1, which is compatible with the repository "
@@ -20,6 +21,10 @@ function usage {
     echo "                                       further customization of a user's environment. "
     echo "                                       This Dockerfile must use dl-playground/final as "
     echo "                                       the base image."
+    echo ""
+    echo "    --gpu_build                        Build the base image (dl-playground/base) using "
+    echo "                                       nvidia/cuda9.2-cudnn7-runtime-ubuntu16.04 as the "
+    echo "                                       base image, instead of ubuntu:16.04 (the default)."
     echo ""
     echo "    --rebuild_image                    Rebuild this image and any subsequent images that "
     echo "                                       use this one as base. Useful if you know that "
@@ -43,6 +48,10 @@ do
             --fpath_custom_dockerfile)
                 FPATH_CUSTOM_DOCKERFILE=$2
                 shift 2
+                ;;
+            --gpu_build)
+                GPU_BUILD=true
+                shift 1
                 ;;
             --rebuild_image)
                 REBUILD_IMAGE=$2
@@ -108,12 +117,17 @@ if [ ! -z "$REBUILD_IMAGE" ]; then
     fi
 fi
 
+BASE_IMAGE="ubuntu:16.04"
+if [[ ! -z "$GPU_BUILD" ]]; then
+    BASE_IMAGE="nvidia/cuda:9.2-cudnn7-runtime-ubuntu16.04"
+fi
 
 echo "Creating images with docker username $DOCKER_USER and miniconda "
 echo "version $CONDA_VERSION..."
 
 docker build --build-arg user=$DOCKER_USER \
              --build-arg conda_version=$CONDA_VERSION \
+             --build-arg base_image=$BASE_IMAGE \
              -t dl-playground/base --file ./Dockerfile.base ./
 
 docker build --build-arg user=$DOCKER_USER \
