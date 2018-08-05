@@ -20,6 +20,12 @@ function usage {
     echo "                                       further customization of a user's environment. "
     echo "                                       This Dockerfile must use dl-playground/final as "
     echo "                                       the base image."
+    echo ""
+    echo "    --rebuild_image                    Rebuild this image and any subsequent images that "
+    echo "                                       use this one as base. Useful if you know that "
+    echo "                                       something inside has changed (e.g. the conda "
+    echo "                                       environment) but Docker won't be able to register "
+    echo "                                       that change. Valid options are (base, final, custom)."
     exit 1
 }
 
@@ -30,12 +36,16 @@ do
                 CONDA_VERSION=$2
                 shift 2
                 ;;
+            --docker_user)
+                DOCKER_USER=$2
+                shift 2
+                ;;
             --fpath_custom_dockerfile)
                 FPATH_CUSTOM_DOCKERFILE=$2
                 shift 2
                 ;;
-            --docker_user)
-                DOCKER_USER=$2
+            --rebuild_image)
+                REBUILD_IMAGE=$2
                 shift 2
                 ;;
             --help)
@@ -54,6 +64,50 @@ if [ -z "$CONDA_VERSION" ]; then
     echo "--conda_version not specified, using the default of 4.5.1."
     CONDA_VERSION=4.5.1
 fi
+
+if [ ! -z "$REBUILD_IMAGE" ]; then
+    if ! [[ "$REBUILD_IMAGE" =~ ^(base|final|custom)$ ]]; then
+        echo "--rebuild_image option \"$REBUILD_IMAGE\" is not one of the "
+        echo "accepted options (base, final, or custom). If you'd like to "
+        echo "delete and remove one of the images, please specify one of "
+        echo "these options."
+        exit 1
+    fi
+
+    if [[ "$REBUILD_IMAGE" == "base" ]]; then
+        echo "--rebuild_image equal to \"base\"... will delete any existing, "
+        echo "dl-playground/base, dl-playground/final, and "
+        echo "dl-playground/custom images to build them anew."
+        DELETE_BASE=true
+        DELETE_FINAL=true
+        DELETE_CUSTOM=true
+    elif [[ "$REBUILD_IMAGE" == "final" ]]; then
+        echo "--rebuild_image equal to \"final\"... will delete any existing, "
+        echo "dl-playground/final and dl-playground/custom images to build "
+        echo "them anew."
+        DELETE_FINAL=true
+        DELETE_CUSTOM=true
+    elif [[ "$REBUILD_IMAGE" == "custom" ]]; then
+        echo "--rebuild_image equal to \"custom\"... will delete the "
+        echo "dl-playground/custom image to build it anew."
+        DELETE_CUSTOM=true
+    fi
+
+    BASE_IMAGE_EXISTS=$(docker images -q dl-playground/base)
+    FINAL_IMAGE_EXISTS=$(docker images -q dl-playground/final)
+    CUSTOM_IMAGE_EXISTS=$(docker images -q dl-playground/custom)
+
+    if [[ "$DELETE_BASE" == "true" ]] && [[ ! -z $BASE_IMAGE_EXISTS ]]; then
+        docker image rm dl-playground/base
+    fi
+    if [[ "$DELETE_FINAL" == "true" ]] && [[ ! -z $FINAL_IMAGE_EXISTS ]]; then
+        docker image rm dl-playground/final
+    fi
+    if [[ "$DELETE_CUSTOM" == "true" ]] && [[ ! -z $CUSTOM_IMAGE_EXISTS ]]; then
+        docker image rm dl-playground/custom
+    fi
+fi
+
 
 echo "Creating images with docker username $DOCKER_USER and miniconda version $CONDA_VERSION..."
 docker build --build-arg user=$DOCKER_USER --build-arg conda_version=$CONDA_VERSION -t dl-playground/base --file ./Dockerfile.base ./
