@@ -23,6 +23,7 @@ FPATH_FAILED_URLS_CSV = os.path.join(
 )
 
 BBOX_XMLS_URL = 'http://www.image-net.org/Annotation/Annotation.tar.gz'
+SYNSETS_URL = 'http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz'
 URLS_LIST_URL = (
     'http://image-net.org/imagenet_data/urls/imagenet_fall11_urls.tgz'
 )
@@ -150,6 +151,35 @@ def download_image_urls_list():
     return fpath_urls_txt
 
 
+def download_synset_lists():
+    """Download relevant synset lists
+
+    These lists include the synset IDs for the classification and detection
+    challenges, including the mapping from ID to word.
+
+    This function downloads a tarred directory containing these lists to
+    DIRPATH_METADATA_LISTS, and then untars it to grab the relevant lists.
+    """
+
+    fname_tarfile = os.path.basename(SYNSETS_URL)
+    fpath_tarfile = os.path.join(DIRPATH_METADATA_LISTS, fname_tarfile)
+
+    cmd = 'wget {} -P {}'.format(SYNSETS_URL, DIRPATH_METADATA_LISTS)
+    process = subprocess.Popen(cmd.split())
+    process.communicate()
+
+    cmd = 'tar -xvf {} -C {}'.format(fpath_tarfile, DIRPATH_METADATA_LISTS)
+    process = subprocess.Popen(cmd.split())
+    process.communicate()
+
+    fnames_to_remove = [
+        'imagenet.bet.pickle', 'imagenet_mean.binaryproto', 'synsets.txt',
+        'train.txt', 'val.txt', 'test.txt'
+    ]
+    for fname in fnames_to_remove:
+        os.remove(os.path.join(DIRPATH_METADATA_LISTS, fname))
+
+
 def parse_args():
     """Parse command line arguments"""
 
@@ -184,6 +214,7 @@ def main():
             os.makedirs(dirpath)
 
     download_bbox_xmls()
+    download_synset_lists()
 
     if args.from_failed_urls:
         fpath_urls = FPATH_FAILED_URLS_CSV
