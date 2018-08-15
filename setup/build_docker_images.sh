@@ -120,7 +120,7 @@ fi
 BASE_IMAGE="ubuntu:16.04"
 FNAME_ENVIRONMENT_YML="environment_cpu.yml"
 if [[ ! -z "$GPU_BUILD" ]]; then
-    BASE_IMAGE="nvidia/cuda:9.2-cudnn7-runtime-ubuntu16.04"
+    BASE_IMAGE="nvidia/cuda:9.0-cudnn7-runtime-ubuntu16.04"
     FNAME_ENVIRONMENT_YML="environment_gpu.yml"
 fi
 
