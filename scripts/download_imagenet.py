@@ -15,11 +15,14 @@ from tqdm import tqdm
 from utils import dev_env
 
 DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
+DIRPATH_BBOX_XMLS = os.path.join(DIRPATH_DATA, 'bbox_xmls')
 DIRPATH_IMAGES = os.path.join(DIRPATH_DATA, 'images')
 DIRPATH_METADATA_LISTS = os.path.join(DIRPATH_DATA, 'metadata_lists')
 FPATH_FAILED_URLS_CSV = os.path.join(
     DIRPATH_METADATA_LISTS, 'failed_download_urls.csv'
 )
+
+BBOX_XMLS_URL = 'http://www.image-net.org/Annotation/Annotation.tar.gz'
 URLS_LIST_URL = (
     'http://image-net.org/imagenet_data/urls/imagenet_fall11_urls.tgz'
 )
@@ -27,6 +30,52 @@ URLS_LIST_URL = (
 N_THREADS_DEFAULT = 100
 FAILED_URLS_LOCK = Lock()
 FAILED_URLS = []
+
+
+def download_bbox_xmls():
+    """Download the available bounding box annotations
+
+    This downloads a tarfile that contains a number of other tarfiles that hold
+    XML files for each image, where the XML files contain bounding box
+    parameterizations for objects in the image. The tarfile will be placed at
+    DIRPATH_BBOX_XMLS, and then recursively untarred.
+    """
+
+    fname_master_tarfile = os.path.basename(BBOX_XMLS_URL)
+    fpath_master_tarfile = os.path.join(DIRPATH_BBOX_XMLS, fname_master_tarfile)
+
+    cmd = 'wget {} -P {}'.format(BBOX_XMLS_URL, DIRPATH_BBOX_XMLS)
+    process = subprocess.Popen(cmd.split())
+    process.communicate()
+
+    cmd = 'tar -xvf {} -C {}'.format(fpath_master_tarfile, DIRPATH_BBOX_XMLS)
+    process = subprocess.Popen(cmd.split())
+    process.communicate()
+
+    for fname_xml_tarfile in os.listdir(DIRPATH_BBOX_XMLS):
+        if fname_xml_tarfile == fname_master_tarfile:
+            continue
+        else:
+            fpath_xml_tarfile = os.path.join(
+                DIRPATH_BBOX_XMLS, fname_xml_tarfile
+            )
+            cmd = 'tar -xvf {} -C {}'.format(
+                fpath_xml_tarfile, DIRPATH_BBOX_XMLS
+            )
+            process = subprocess.Popen(cmd.split())
+            process.communicate()
+
+            cmd = 'rm {}'.format(fpath_xml_tarfile)
+            process = subprocess.Popen(cmd.split())
+            process.communicate()
+
+    # all files untar to an "Annotations" directory inside DIRPATH_BBOX_XMLS,
+    # but we want them one level higher
+    os.system('mv {0}/Annotation/* {0}'.format(DIRPATH_BBOX_XMLS))
+
+    cmd = 'rm -rf {}/Annotation/'.format(DIRPATH_BBOX_XMLS)
+    process = subprocess.Popen(cmd.split())
+    process.communicate()
 
 
 def download_image(image_name, image_url):
@@ -133,6 +182,8 @@ def main():
     for dirpath in [DIRPATH_DATA, DIRPATH_IMAGES]:
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
+
+    download_bbox_xmls()
 
     if args.from_failed_urls:
         fpath_urls = FPATH_FAILED_URLS_CSV
