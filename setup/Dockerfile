@@ -15,3 +15,5 @@ RUN cd $HOME/repos/dl-playground/setup && \
     conda install conda=$conda_version && \
     conda env create -f $fname_environment_yml && \
     cd $HOME
+
+RUN echo "backend: Agg" > ~/.config/matplotlib/matplotlibrc

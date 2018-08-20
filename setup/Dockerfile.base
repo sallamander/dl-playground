@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
    g++ \
    git \
    graphviz \
+   libgl1-mesa-glx \
    libhdf5-dev \
    sudo \
    tmux \
