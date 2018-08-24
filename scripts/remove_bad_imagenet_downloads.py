@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-r"""Remove image URLs that were downloaded as text / empty files and not images
+r"""Remove image URLs that were corrupt or bad downloads
 
 This assumes that the following command (or a similar one adjusted for
 differences in the paths images were stored at) was run from the terminal:
@@ -38,6 +38,11 @@ N_THREADS = 10
 def load_image(fpath_image):
     """Load the image
 
+    This loads the image to test if (a) it was loaded successfully (i.e. wasn't
+    corrupted in download), and (b) ensure that it is not a "flickr" banner
+    image that simply states "photo is no longer available." These images come
+    as 2D, and thus can be filtered out solely by their number of dimensions.
+
     :param fpath_image: filepath to the image to load
     :type fpath_image: str
     :return: tuple holding
@@ -47,7 +52,9 @@ def load_image(fpath_image):
     """
 
     try:
-        _ = np.array(imageio.imread(fpath_image)).astype(np.float32)
+        image = np.array(imageio.imread(fpath_image)).astype(np.float32)
+        if image.ndim != 3:
+            return fpath_image, False
         return fpath_image, True
     except:
         return fpath_image, False
@@ -113,7 +120,7 @@ def remove_unloadable_images(set_name, df_set, n_threads):
 
     idx_remove = df_set['fpath_image'].isin(fpaths_unloadable_images)
     msg = (
-        'Removing {} unloadable_images from df_{}_set.csv'
+        'Removing {} unloadable or non-3D images from df_{}_set.csv'
     ).format(idx_remove.sum(), set_name)
     print(msg)
 
