@@ -24,6 +24,9 @@ from utils import dev_env
 DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
 DIRPATH_IMAGES = os.path.join(DIRPATH_DATA, 'images')
 DIRPATH_METADATA_LISTS = os.path.join(DIRPATH_DATA, 'metadata_lists')
+FPATH_DF_FPATHS_IMAGES = os.path.join(
+    DIRPATH_METADATA_LISTS, 'df_fpaths_images.csv'
+)
 
 N_THREADS = 10
 
@@ -150,6 +153,7 @@ def main():
     )
     df_synsets = pd.read_csv(fpath_synsets_csv)
     df_fpath_images = get_fpaths_images(df_synsets['synset'])
+    df_fpath_images.to_csv(FPATH_DF_FPATHS_IMAGES, index=False)
 
     # raise warnings to play it safe and throw out any errors that might cause
     # problems
@@ -160,7 +164,7 @@ def main():
     )
 
     fpath_unloadable_images = os.path.join(
-        DIRPATH_METADATA_LISTS, 'unloadable_images.csv'
+        DIRPATH_METADATA_LISTS, 'unloadable_files.csv'
     )
     np.savetxt(
         fpath_unloadable_images, fpaths_unloadable_images,
