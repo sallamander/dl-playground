@@ -9,59 +9,100 @@ from sklearn.model_selection import train_test_split
 from utils import dev_env
 
 DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
-DIRPATH_IMAGES = os.path.join(DIRPATH_DATA, 'images')
 DIRPATH_METADATA_LISTS = os.path.join(DIRPATH_DATA, 'metadata_lists')
 
+FPATH_BAD_FILES_TXT = os.path.join(DIRPATH_METADATA_LISTS, 'bad_files.txt')
+FPATH_DF_FPATHS_IMAGES = os.path.join(
+    DIRPATH_METADATA_LISTS, 'df_fpaths_images.csv'
+)
+FPATH_UNLOADABLE_FILES_CSV = os.path.join(
+    DIRPATH_METADATA_LISTS, 'unloadable_files.csv'
+)
 
-def get_fpaths_images(synsets):
-    """Return a DataFrame holding filepaths of images from `synsets`
 
-    This will find all downloaded images of each synset in `synsets` and return
-    a DataFrame holding the absolute filepath as well as the synset ID.
+def remove_bad_files(df_fpaths_images):
+    """Load and remove the bad filenames from `df_fpaths_images`
 
-    :param synsets: IDs of all the synsets to get filepaths for
-    :type synsets: list[str]
-    :return: DataFrame with columns:
-    - str synset: ID of the synset
-    - str fpath_image: absolute filepath to the image
+    :param df_fpaths_images: holds the filepaths for the imagenet images
+    :type df_fpaths_images: pandas.DataFrame
+    :return: df_fpaths_images with the bad filenames removed
     :rtype: pandas.DataFrame
     """
 
-    synset_dfs = []
-    for synset in synsets:
-        dirpath_synset = os.path.join(DIRPATH_IMAGES, synset)
-        if not os.path.exists(dirpath_synset):
-            continue
+    df_bad_files = pd.read_table(FPATH_BAD_FILES_TXT, names=['text'])
+    df_image_ids, _ = df_bad_files['text'].str.split(' ', 1).str
+    # this turns '/n01367772/n01367772_3576:' => 'n01367772_3576'
+    bad_fnames = df_image_ids.apply(
+        lambda text: text.split('/')[-1].replace(':', '')
+    ).values
 
-        fpath_dicts = []
-        for filename in os.listdir(dirpath_synset):
-            fpath_image = os.path.join(dirpath_synset, filename)
-            fpath_dicts.append({
-                'synset': synset,
-                'fpath_image': fpath_image
-            })
+    df_fpaths_images['fname_image'] = (
+        df_fpaths_images['fpath_image'].apply(os.path.basename)
+    )
+    idx_remove = df_fpaths_images['fname_image'].isin(bad_fnames)
+    msg = (
+        'Removing {} text / empty images from df_fpaths_images.'
+    ).format(idx_remove.sum())
+    print(msg)
 
-        df_synset_images = pd.DataFrame(fpath_dicts)
-        synset_dfs.append(df_synset_images)
+    df_fpaths_images = df_fpaths_images[~idx_remove]
+    return df_fpaths_images
 
-    df_fpaths_images = pd.concat(synset_dfs)
+
+def remove_unloadable_files(df_fpaths_images):
+    """Load and remove the unloadable filenames from `df_fpaths_images`
+
+    :param df_fpaths_images: holds the filepaths for the imagenet images
+    :type df_fpaths_images: pandas.DataFrame
+    :return: df_fpaths_images with the unloadable filenames removed
+    :rtype: pandas.DataFrame
+    """
+
+    df_unloadable_files = pd.read_csv(FPATH_UNLOADABLE_FILES_CSV)
+    unloadable_fpaths = df_unloadable_files['fpath_image']
+
+    idx_remove = df_fpaths_images['fpath_image'].isin(unloadable_fpaths)
+    msg = (
+        'Removing {} unloadable images from df_fpaths_images.'
+    ).format(idx_remove.sum())
+    print(msg)
+
+    df_fpaths_images = df_fpaths_images[~idx_remove]
     return df_fpaths_images
 
 
 def main():
     """Main logic"""
 
-    fpath_synsets_list = os.path.join(
-        DIRPATH_METADATA_LISTS, 'synset_words.txt'
+    files_exist = (
+        os.path.exists(FPATH_BAD_FILES_TXT) and
+        os.path.exists(FPATH_UNLOADABLE_FILES_CSV)
     )
-    df_synset_words = pd.read_table(fpath_synsets_list, names=['text'])
-    df_synsets, _ = df_synset_words['text'].str.split(' ', 1).str
-    synsets = df_synsets.values
+    if not files_exist:
+        msg = (
+            '{0} or {1} don\'t exist, and they are necessary for removing the '
+            'image URLs that were downloaded as BAD files instead of images, '
+            'as well as the files that are unloadable. To generate {0}, type '
+            'the following at the command line: '
+            'find /data/imagenet/images -type f | xargs file | grep -v '
+            r'"image data" | '
+            'tee /data/imagenet/metadata_lists/bad_files.txt | wc -l '
+            '\n\n'
+            '**Note**: This command may need to be updated if your images are '
+            'stored at a different location, and this may take 12+ hours to '
+            'run depending on how many images you have stored. \n\n '
+            'To generate {1}, run the \'find_unloadable_imagenet_images.py\' '
+            'script in the scripts directory.'
+        ).format(FPATH_BAD_FILES_TXT, FPATH_UNLOADABLE_FILES_CSV)
+        raise FileNotFoundError(msg)
 
-    df_fpath_images = get_fpaths_images(synsets)
+    df_fpaths_images = pd.read_csv(FPATH_DF_FPATHS_IMAGES)
+    df_fpaths_images = remove_bad_files(df_fpaths_images)
+    df_fpaths_images = remove_unloadable_files(df_fpaths_images)
+
     df_train, df_test = train_test_split(
-        df_fpath_images, train_size=0.80, test_size=0.20, random_state=529,
-        stratify=df_fpath_images['synset']
+        df_fpaths_images, train_size=0.80, test_size=0.20, random_state=529,
+        stratify=df_fpaths_images['synset']
     )
     df_val, df_test = train_test_split(
         df_test, train_size=0.50, test_size=0.50, random_state=529,
