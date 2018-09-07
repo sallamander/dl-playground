@@ -51,7 +51,7 @@ class AlexNet(object):
         if missing_keys:
             msg = (
                 '{} keys are missing from the network_config, but are '
-                'required in order to construct the model.'
+                'required in order to construct the AlexNet model.'
             ).format(missing_keys)
             raise KeyError(msg)
 
