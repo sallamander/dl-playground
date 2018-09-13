@@ -9,7 +9,7 @@ import pandas as pd
 import tensorflow as tf
 import pytest
 
-from datasets.imagenet import ImageNetDataSet
+from datasets.imagenet_dataset import ImageNetDataSet
 
 
 class TestImageNetDataSet(object):
