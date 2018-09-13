@@ -40,6 +40,15 @@ class ImageNetDataSet(object):
 
         self.num_parallel_calls = dataset_config.get('num_parallel_calls', 4)
 
+    def __len__(self):
+        """Return the size of the dataset
+
+        :return: size of the dataset
+        :rtype: int
+        """
+
+        return len(self.df_images)
+
     @staticmethod
     def _validate_config(dataset_config):
         """Vaildate that the necessary keys are in the dataset_config
