@@ -196,6 +196,13 @@ class TestImageNetDataSet(object):
         self._check_batches(batch_size, dataset_config, batches1)
         batches2 = self._get_batches(imagenet_dataset)
 
+        # assert that the batches are the exact same
         for batch_idx in range(len(batches1)):
             assert np.allclose(batches1[batch_idx][0], batches2[batch_idx][0])
             assert np.allclose(batches1[batch_idx][1], batches2[batch_idx][1])
+
+        # check that each individual input is centered
+        images = batches1[0][0]
+        for image in images:
+            assert np.allclose(image.mean(), 0, atol=1e-4)
+            assert np.allclose(image.std(), 1, atol=1e-4)

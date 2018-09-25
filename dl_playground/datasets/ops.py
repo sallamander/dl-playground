@@ -3,6 +3,25 @@
 import tensorflow as tf
 
 
+def center_image(image, label):
+    """Apply tf.image.per_image_standardization to `image`
+
+    Note that `label` remains unchanged.
+
+    :param image: image to center
+    :type image: tensorflow.Tensor
+    :param label: label to pass through
+    :type label: tensorflow.Tensor
+    :return: tensorflow.Tensor objects holding the centered image and
+     unmodified label
+    :rtype: tuple(tensorflow.Tensor)
+    """
+
+    image = tf.image.per_image_standardization(image)
+
+    return image, label
+
+
 def load_image(fpath_image, label):
     """Parse /decode and return the provided image
 
@@ -18,7 +37,7 @@ def load_image(fpath_image, label):
     :type label: tensorflow.Tensor
     :return: tensorflow.Tensor objects holding the parsed / decoded image
      along with the class label
-    :rtype: tuple
+    :rtype: tuple(tensorflow.Tensor)
     """
 
     image_string = tf.read_file(fpath_image)
@@ -44,6 +63,8 @@ def reshape_image_and_label(image, label, target_image_shape,
     :type target_image_shape: tuple or list
     :param num_label_classes: `dense` argument to pass to `tensorflow.one_hot`
     :type num_label_classes: int
+    :return: tensorflow.Tensor objects holding the reshaped image and label
+    :rtype: tuple(tensorflow.Tensor)
     """
 
     image = tf.image.resize_images(image, target_image_shape)

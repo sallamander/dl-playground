@@ -2,7 +2,7 @@
 
 import tensorflow as tf
 
-from datasets.ops import load_image, reshape_image_and_label
+from datasets.ops import load_image, center_image, reshape_image_and_label
 
 
 class ImageNetDataSet(object):
@@ -91,6 +91,7 @@ class ImageNetDataSet(object):
                 image, label, target_image_shape, num_label_classes=1000
             )
         )
+        dataset = dataset.map(center_image)
         dataset = dataset.batch(self.batch_size)
         dataset = dataset.repeat()
 
