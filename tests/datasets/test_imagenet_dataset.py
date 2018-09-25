@@ -143,6 +143,22 @@ class TestImageNetDataSet(object):
             with pytest.raises(KeyError):
                 ImageNetDataSet(df_images_underspecified, dataset_config)
 
+    def test_len(self, df_images, dataset_config):
+        """Test __len__ magic method
+
+        :param df_images : df_images object fixture
+        :type: pandas.DataFrame
+        :param dataset_config: dataset_config object fixture
+        :type dataset_config: dict
+        """
+
+        imagenet_dataset = ImageNetDataSet(df_images, dataset_config)
+        assert len(imagenet_dataset) == 3
+
+        df_images2 = pd.concat([df_images] * 2)
+        imagenet_dataset = ImageNetDataSet(df_images2, dataset_config)
+        assert len(imagenet_dataset) == 6
+
     def test_validate_config(self, df_images, dataset_config):
         """Test _validate_config method
 
