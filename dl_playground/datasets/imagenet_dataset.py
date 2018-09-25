@@ -80,10 +80,10 @@ class ImageNetDataSet(object):
         inputs = self.df_images['fpath_image'].values
         outputs = self.df_images['label'].values
         dataset = tf.data.Dataset.from_tensor_slices((inputs, outputs))
+        dataset = dataset.shuffle(buffer_size=len(self.df_images))
         dataset = dataset.map(
             load_image, num_parallel_calls=self.num_parallel_calls
         )
-        dataset = dataset.shuffle(buffer_size=len(self.df_images))
 
         target_image_shape = (self.height, self.width)
         dataset = dataset.map(
