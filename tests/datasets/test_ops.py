@@ -2,12 +2,58 @@
 
 import os
 import tempfile
+import pytest
 
 import imageio
 import numpy as np
 import tensorflow as tf
 
-from datasets.ops import load_image, reshape_image_and_label
+from datasets.ops import center_image, load_image, reshape_image_and_label
+
+
+@pytest.fixture(scope='module')
+def image():
+    """Return a tensorflow.Tensor holding an image object fixture
+
+    :return: tensorflow.Tensor holding an image to use in tests
+    :rtype: tensorflow.Tensor
+    """
+
+    height, width = np.random.randint(128, 600, 2)
+    num_channels = 3
+    image = np.random.random((height, width, num_channels))
+
+    return image
+
+
+@pytest.fixture(scope='module')
+def label():
+    """Return a tensorflow.Tensor holding an label object fixture
+
+    :return: tensorflow.Tensor holding a label to use in tests
+    :rtype: tensorflow.Tensor
+    """
+
+    label = tf.constant(1, dtype=tf.uint8)
+    return label
+
+
+def test_center_image(image, label):
+    """Test center_image
+
+    :param image: module wide image object fixture
+    :type image: tensorflow.Tensor
+    :param lable: module wide label object fixture
+    :type label: tensorflow.Tensor
+    """
+
+    image_centered_op, label = center_image(image, label)
+
+    with tf.Session() as sess:
+        image_centered = sess.run(image_centered_op)
+
+        assert np.allclose(image_centered.mean(), 0, atol=1e-4)
+        assert np.allclose(image_centered.std(), 1, atol=1e-4)
 
 
 def test_load_image():
@@ -38,15 +84,14 @@ def test_load_image():
             assert label == 1
 
 
-def test_reshape_image_and_label():
-    """Test reshape_image_and_label"""
+def test_reshape_image_and_label(image, label):
+    """Test reshape_image_and_label
 
-    height, width = np.random.randint(128, 600, 2)
-    num_channels = 3
-    image = np.random.random((height, width, num_channels))
-
-    image = tf.constant(image, dtype=tf.float32)
-    label = tf.constant(1, dtype=tf.uint8)
+    :param image: module wide image object fixture
+    :type image: tensorflow.Tensor
+    :param lable: module wide label object fixture
+    :type label: tensorflow.Tensor
+    """
 
     sess = tf.Session()
     test_cases = [
