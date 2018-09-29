@@ -10,6 +10,8 @@ from tensorflow.keras.layers import (
     Conv2D, Dense, Dropout, Flatten, Input, MaxPooling2D
 )
 
+from utils.generic_utils import validate_config
+
 
 class AlexNet(object):
     """AlexNet model"""
@@ -27,33 +29,13 @@ class AlexNet(object):
         :type network_config: dict
         """
 
-        self._validate_config(network_config)
+        required_keys = {'height', 'width', 'n_channels', 'n_classes'}
+        validate_config(network_config, required_keys)
 
         self.height = network_config['height']
         self.width = network_config['width']
         self.n_channels = network_config['n_channels']
         self.n_classes = network_config['n_classes']
-
-    @staticmethod
-    def _validate_config(network_config):
-        """Validate that the necessary keys are in the network_config
-
-        This raises a KeyError if there are required keys that are missing, and
-        otherwise does nothing.
-
-        :param network_config: specifies the configuration for the network
-        :type network_config: dict
-        """
-
-        required_keys = {'height', 'width', 'n_channels', 'n_classes'}
-        missing_keys = required_keys - set(network_config)
-
-        if missing_keys:
-            msg = (
-                '{} keys are missing from the network_config, but are '
-                'required in order to construct the AlexNet model.'
-            ).format(missing_keys)
-            raise KeyError(msg)
 
     def build(self):
         """Return the inputs and outputs to instantiate a tf.keras.Model object

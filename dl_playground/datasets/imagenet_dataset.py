@@ -3,6 +3,7 @@
 import tensorflow as tf
 
 from datasets.ops import load_image, center_image, reshape_image_and_label
+from utils.generic_utils import validate_config
 
 
 class ImageNetDataSet(object):
@@ -23,7 +24,8 @@ class ImageNetDataSet(object):
         :type dataset_config: dict
         """
 
-        self._validate_config(dataset_config)
+        required_keys = {'height', 'width', 'batch_size'}
+        validate_config(dataset_config, required_keys)
 
         if set(df_images.columns) < {'fpath_image', 'label'}:
             msg = (
@@ -48,27 +50,6 @@ class ImageNetDataSet(object):
         """
 
         return len(self.df_images)
-
-    @staticmethod
-    def _validate_config(dataset_config):
-        """Vaildate that the necessary keys are in the dataset_config
-
-        This raises a KeyError if there are required keys that are missing, and
-        otherwise does nothing.
-
-        :param dataset_config: specifies the configuration for the dataset
-        :type dataset_config: dict
-        """
-
-        required_keys = {'height', 'width', 'batch_size'}
-        missing_keys = required_keys - set(dataset_config)
-
-        if missing_keys:
-            msg = (
-                '{} keys are missing from the dataset_config, but are '
-                'required in order to construct the ImageNetDataSet.'
-            ).format(missing_keys)
-            raise KeyError(msg)
 
     def get_infinite_iter(self):
         """Return a tf.data.Dataset that iterates over the data indefinitely

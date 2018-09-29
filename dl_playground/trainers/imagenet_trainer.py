@@ -2,6 +2,8 @@
 
 from tensorflow.keras import Model
 
+from utils.generic_utils import validate_config
+
 
 class ImageNetTrainer(object):
     """ImageNet Trainer"""
@@ -19,33 +21,13 @@ class ImageNetTrainer(object):
         :type trainer_config: dict
         """
 
-        self._validate_config(trainer_config)
+        required_keys = {'optimizer', 'loss', 'batch_size', 'num_epochs'}
+        validate_config(trainer_config, required_keys)
 
         self.optimizer = trainer_config['optimizer']
         self.loss = trainer_config['loss']
         self.batch_size = trainer_config['batch_size']
         self.num_epochs = trainer_config['num_epochs']
-
-    @staticmethod
-    def _validate_config(trainer_config):
-        """Validate that the necessary keys are in the trainer_config
-
-        This raises a KeyError if there are required keys that are missing, and
-        otherwise does nothing.
-
-        :param trainer_config: specifies the configuration for the trainer
-        :type trainer_config: dict
-        """
-
-        required_keys = {'optimizer', 'loss', 'batch_size', 'num_epochs'}
-        missing_keys = required_keys - set(trainer_config)
-
-        if missing_keys:
-            msg = (
-                '{} keys are missing from the trainer_config, but are '
-                'required in order to use the ImageNetTrainer.'
-            ).format(missing_keys)
-            raise KeyError(msg)
 
     def train(self, train_dataset, network, val_dataset=None):
         """Train the network as specified via the __init__ parameters
