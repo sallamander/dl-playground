@@ -93,10 +93,16 @@ class TestImageNetTrainer(object):
     def test_init(self, trainer_config):
         """Test __init__ method
 
+        This tests two things:
+        - All attributes are set correctly in the __init__
+        - A KeyError is raised if 'optimizer', 'loss', 'batch_size', or
+          'num_epochs' is not present in the `trainer_config`
+
         :param trainer_config: trainer_config object fixture
         :type trainer_config: dict
         """
 
+        # === test all attributes are set correctly === #
         imagenet_trainer = ImageNetTrainer(trainer_config)
 
         assert imagenet_trainer.optimizer == 'adam'
@@ -104,13 +110,7 @@ class TestImageNetTrainer(object):
         assert imagenet_trainer.batch_size == self.BATCH_SIZE
         assert imagenet_trainer.num_epochs == 2
 
-    def test_validate_config(self, trainer_config):
-        """Test _validate_config method
-
-        :param trainer_config: trainer_config object fixture
-        :type trainer_config: dict
-        """
-
+        # === test `trainer_config` === #
         for trainer_key in trainer_config:
             trainer_config_copy = trainer_config.copy()
             del trainer_config_copy[trainer_key]

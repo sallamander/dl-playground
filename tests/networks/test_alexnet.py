@@ -26,10 +26,16 @@ class TestAlexNet(object):
     def test_init(self, network_config):
         """Test __init__ method
 
+        This tests two things:
+        - All attributes are set correctly in the __init__
+        - A KeyError is raised if 'height', 'width', 'n_channels', or
+          'n_classes' is not present in the `network_config`
+
         :param network_config: network_config object fixture
         :type network_config: dict
         """
 
+        # === test all attributes are set correctly === #
         alexnet = AlexNet(network_config)
 
         assert alexnet.height == 227
@@ -37,13 +43,7 @@ class TestAlexNet(object):
         assert alexnet.n_channels == 3
         assert alexnet.n_classes == 1000
 
-    def test_validate_config(self, network_config):
-        """Test _validate_config method
-
-        :param network_config: network_config object fixture
-        :type network_config: dict
-        """
-
+        # === test `network_config` === #
         for network_key in network_config:
             network_config_copy = network_config.copy()
             del network_config_copy[network_key]

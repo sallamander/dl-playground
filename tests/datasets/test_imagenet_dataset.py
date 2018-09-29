@@ -117,10 +117,12 @@ class TestImageNetDataSet(object):
     def test_init(self, df_images, dataset_config):
         """Test __init__ method
 
-        This tests two things:
+        This tests three things:
         - All attributes are set correctly in the __init__
         - A KeyError is raised if the fpath_image or label column is missing in
-          the df_images passed to the __init__ of the ImageNetDataSet
+          the `df_images` passed to the __init__ of the ImageNetDataSet
+        - A KeyError is raised if 'height', 'width', or 'batch_size' are not
+          present in the dataset_config
 
         :param df_images : df_images object fixture
         :type: pandas.DataFrame
@@ -128,20 +130,29 @@ class TestImageNetDataSet(object):
         :type dataset_config: dict
         """
 
+        # === test all attributes are set correctly === #
         dataset = ImageNetDataSet(df_images, dataset_config)
 
         assert df_images.equals(dataset.df_images)
         assert dataset.height == 227
         assert dataset.width == 227
         assert dataset.batch_size == 256
-
         assert dataset.num_parallel_calls == 4
 
+        # === test `df_images` === #
         for col in ['fpath_image', 'label']:
             df_images_underspecified = df_images.drop(col, axis=1)
 
             with pytest.raises(KeyError):
                 ImageNetDataSet(df_images_underspecified, dataset_config)
+
+        # === test `dataset_config` === #
+        for dataset_key in dataset_config:
+            dataset_config_copy = dataset_config.copy()
+            del dataset_config_copy[dataset_key]
+
+            with pytest.raises(KeyError):
+                ImageNetDataSet(df_images, dataset_config_copy)
 
     def test_len(self, df_images, dataset_config):
         """Test __len__ magic method
@@ -158,22 +169,6 @@ class TestImageNetDataSet(object):
         df_images2 = pd.concat([df_images] * 2)
         imagenet_dataset = ImageNetDataSet(df_images2, dataset_config)
         assert len(imagenet_dataset) == 6
-
-    def test_validate_config(self, df_images, dataset_config):
-        """Test _validate_config method
-
-        :param df_images : df_images object fixture
-        :type: pandas.DataFrame
-        :param dataset_config: dataset_config object fixture
-        :type dataset_config: dict
-        """
-
-        for dataset_key in dataset_config:
-            dataset_config_copy = dataset_config.copy()
-            del dataset_config_copy[dataset_key]
-
-            with pytest.raises(KeyError):
-                ImageNetDataSet(df_images, dataset_config_copy)
 
     def test_get_infinite_iter(self, df_images, dataset_config):
         """Test get_infinite_iter method
