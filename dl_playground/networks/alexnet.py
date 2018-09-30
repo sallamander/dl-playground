@@ -10,41 +10,34 @@ from tensorflow.keras.layers import (
     Conv2D, Dense, Dropout, Flatten, Input, MaxPooling2D
 )
 
-from utils.generic_utils import validate_config
+from networks.network import Network
 
 
-class AlexNet(object):
-    """AlexNet model"""
+class AlexNet(Network):
+    """AlexNet model
 
-    def __init__(self, network_config):
-        """Init
+    `network_config` passed to the `__init__` must contain the following keys:
+    - int or float height: height of the input to the network
+    - int or float width: width of the input to the network
+    - int or float n_channels: number of channels of the input
+    - int or float n_classes: number of classes in the output layer
+    """
 
-        network_config must contain the following keys:
-        - int or float height: height of the input to the network
-        - int or float width: width of the input to the network
-        - int or float n_channels: number of channels of the input
-        - int or float n_classes: number of classes in the output layer
-
-        :param network_config: specifies the configuration for the network
-        :type network_config: dict
-        """
-
-        required_keys = {'height', 'width', 'n_channels', 'n_classes'}
-        validate_config(network_config, required_keys)
-
-        self.height = network_config['height']
-        self.width = network_config['width']
-        self.n_channels = network_config['n_channels']
-        self.n_classes = network_config['n_classes']
+    required_config_keys = {'height', 'width', 'n_channels', 'n_classes'}
 
     def build(self):
         """Return the inputs and outputs to instantiate a tf.keras.Model object
 
         :return: inputs and outputs
-        :rtype: tuple(tf.Tensor)
+        :rtype: tuple(tensorflow.Tensor)
         """
 
-        inputs = Input(shape=(self.height, self.width, self.n_channels))
+        height = self.network_config['height']
+        width = self.network_config['width']
+        n_channels = self.network_config['n_channels']
+        n_classes = self.network_config['n_classes']
+
+        inputs = Input(shape=(height, width, n_channels))
 
         # === convolutional block 1 === #
         layer = Conv2D(
@@ -79,6 +72,6 @@ class AlexNet(object):
         layer = Dropout(0.5)(layer)
 
         # === output layer === #
-        outputs = Dense(units=self.n_classes, activation='softmax')(layer)
+        outputs = Dense(units=n_classes, activation='softmax')(layer)
 
         return inputs, outputs
