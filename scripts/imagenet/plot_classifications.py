@@ -19,10 +19,7 @@ DIRPATH_CLASSIFICATION_PLOTS = os.path.join(
 )
 
 FPATH_SYNSET_WORDS = os.path.join(
-    DIRPATH_IMAGENET, 'metadata_lists', 'synset_words.txt'
-)
-FPATH_TRAINING_SET = os.path.join(
-    DIRPATH_IMAGENET, 'metadata_lists', 'df_train_set.csv'
+    DIRPATH_IMAGENET, 'synset_lists', 'synset_words.txt'
 )
 
 N_PROCESSES = multiprocessing.cpu_count() // 2
@@ -105,7 +102,7 @@ def parse_args():
     )
     image_classes_arg.add_argument(
         '--all_synset_ids', action='store_true',
-        help='If true, plot images for all classes. Default is True.'
+        help='If True, plot images for all classes. Default is True.'
     )
 
     parser.add_argument(
@@ -115,6 +112,15 @@ def parse_args():
             '{}'.format(DIRPATH_CLASSIFICATION_PLOTS)
         )
     )
+    parser.add_argument(
+        '--from_urls', action='store_true',
+        help=(
+            'If True, plot images from the training set of images downloaded '
+            'from URLS. If False, plot images from the training set of images '
+            'downloaded from ImageNet access links.'
+        )
+    )
+            
     parser.add_argument(
         '--n_images', type=int, default=10,
         help='Number of images to plot per class. Defaults to 10.'
@@ -142,7 +148,21 @@ def main():
     if not os.path.exists(args.dirpath_output):
         os.makedirs(args.dirpath_output)
 
-    df_training_set = pd.read_csv(FPATH_TRAINING_SET)
+    if args.from_urls:
+        fpath_df_training_set = os.path.join(
+            DIRPATH_IMAGENET, 'from_urls', 'metadata_lists',
+            'df_train_set.csv'
+        )
+    else:
+        msg = 'Not passing the --from_urls flag is not supported at this time.'
+        raise ValueError(msg)
+
+        fpath_df_training_set = os.path.join(
+            DIRPATH_IMAGENET, 'from_access_links', 'metadata_lists',
+            'df_train_set.csv'
+        )
+
+    df_training_set = pd.read_csv(fpath_df_training_set)
     df_training_set = add_synset_descriptions(df_training_set)
     # ensure plotted images are always the same for a given set of command line
     # arguments
