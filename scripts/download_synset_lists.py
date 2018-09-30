@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Download ImageNet images from the fall11_urls"""
+"""Download mappings from synset IDs to synset names"""
 
 import os
 import subprocess

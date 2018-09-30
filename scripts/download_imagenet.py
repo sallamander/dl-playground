@@ -15,9 +15,11 @@ from tqdm import tqdm
 from utils import dev_env
 
 DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
-DIRPATH_BBOX_XMLS = os.path.join(DIRPATH_DATA, 'bbox_xmls')
-DIRPATH_IMAGES = os.path.join(DIRPATH_DATA, 'images')
-DIRPATH_METADATA_LISTS = os.path.join(DIRPATH_DATA, 'metadata_lists')
+DIRPATH_BBOX_XMLS = os.path.join(DIRPATH_DATA, 'from_urls', 'bbox_xmls')
+DIRPATH_IMAGES = os.path.join(DIRPATH_DATA, 'from_urls', 'images')
+DIRPATH_METADATA_LISTS = os.path.join(
+    DIRPATH_DATA, 'from_urls', 'metadata_lists'
+)
 FPATH_FAILED_URLS_CSV = os.path.join(
     DIRPATH_METADATA_LISTS, 'failed_download_urls.csv'
 )

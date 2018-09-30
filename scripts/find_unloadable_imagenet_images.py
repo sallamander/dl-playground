@@ -22,8 +22,11 @@ from utils import dev_env
 
 
 DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
-DIRPATH_IMAGES = os.path.join(DIRPATH_DATA, 'images')
-DIRPATH_METADATA_LISTS = os.path.join(DIRPATH_DATA, 'metadata_lists')
+DIRPATH_IMAGES = os.path.join(DIRPATH_DATA, 'from_urls', 'images')
+DIRPATH_METADATA_LISTS = os.path.join(
+    DIRPATH_DATA, 'from_urls', 'metadata_lists'
+)
+DIRPATH_SYNSET_LISTS = os.path.join(DIRPATH_DATA, 'synset_lists')
 FPATH_DF_FPATHS_IMAGES = os.path.join(
     DIRPATH_METADATA_LISTS, 'df_fpaths_images.csv'
 )
@@ -149,7 +152,7 @@ def main():
     args = parse_args()
 
     fpath_synsets_csv = os.path.join(
-        DIRPATH_METADATA_LISTS, 'synset_words.csv'
+        DIRPATH_SYNSET_LISTS, 'synset_words.csv'
     )
     df_synsets = pd.read_csv(fpath_synsets_csv)
     df_fpath_images = get_fpaths_images(df_synsets['synset'])

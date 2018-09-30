@@ -9,7 +9,9 @@ from sklearn.model_selection import train_test_split
 from utils import dev_env
 
 DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
-DIRPATH_METADATA_LISTS = os.path.join(DIRPATH_DATA, 'metadata_lists')
+DIRPATH_METADATA_LISTS = os.path.join(
+    DIRPATH_DATA, 'from_urls', 'metadata_lists'
+)
 
 FPATH_BAD_FILES_TXT = os.path.join(DIRPATH_METADATA_LISTS, 'bad_files.txt')
 FPATH_DF_FPATHS_IMAGES = os.path.join(
@@ -20,7 +22,7 @@ FPATH_UNLOADABLE_FILES_CSV = os.path.join(
 )
 
 FPATH_SYNSET_WORDS = os.path.join(
-    DIRPATH_METADATA_LISTS, 'synset_words.txt'
+    DIRPATH_DATA, 'synset_lists', 'synset_words.txt'
 )
 
 
