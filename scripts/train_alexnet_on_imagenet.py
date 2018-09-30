@@ -18,9 +18,6 @@ FPATH_DF_TRAIN_SET = os.path.join(
 FPATH_DF_VAL_SET = os.path.join(
     DIRPATH_DATA, 'metadata_lists', 'df_val_set.csv'
 )
-FPATH_SYNSET_WORDS = os.path.join(
-    DIRPATH_DATA, 'metadata_lists', 'synset_words.txt'
-)
 
 IMAGE_HEIGHT = 227
 IMAGE_WIDTH = 227
@@ -34,22 +31,13 @@ def get_datasets():
     :rtype: tuple(datasets.imagenet_dataset.ImageNetDataSet)
     """
 
-    df_synsets_text = pd.read_table(FPATH_SYNSET_WORDS, names=['text'])
-    df_synsets, _ = df_synsets_text['text'].str.split(' ', 1).str
-    df_synsets = pd.DataFrame(df_synsets)
-    df_synsets.rename(columns={'text': 'synset'}, inplace=True)
-    df_synsets['label'] = df_synsets.index
-
     df_train = pd.read_csv(FPATH_DF_TRAIN_SET)
-    df_train = pd.merge(df_train, df_synsets, on='synset')
     df_val = pd.read_csv(FPATH_DF_VAL_SET)
-    df_val = pd.merge(df_val, df_synsets, on='synset')
 
     dataset_config = {
         'height': IMAGE_HEIGHT, 'width': IMAGE_WIDTH,
         'batch_size': BATCH_SIZE
     }
-
     train_dataset = ImageNetDataSet(df_train, dataset_config)
     val_dataset = ImageNetDataSet(df_val, dataset_config)
 

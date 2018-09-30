@@ -19,6 +19,32 @@ FPATH_UNLOADABLE_FILES_CSV = os.path.join(
     DIRPATH_METADATA_LISTS, 'unloadable_files.csv'
 )
 
+FPATH_SYNSET_WORDS = os.path.join(
+    DIRPATH_METADATA_LISTS, 'synset_words.txt'
+)
+
+
+def add_label_column(df_fpaths_images):
+    """Add the corresponding 'label' for each 'synset' in `df_fpaths_images`
+
+    This translates the 'synset' column to an integer label for use in
+    training, i.e. n01580077 => 'jay'.
+
+    :param df_fpaths_images: holds the filepaths for the imagenet images
+    :type df_fpaths_images: pandas.DataFrame
+    :return: df_fpaths_images with 'label' column added
+    :rtype: pandas.DataFrame
+    """
+
+    df_synsets_text = pd.read_table(FPATH_SYNSET_WORDS, names=['text'])
+    synsets, _ = df_synsets_text['text'].str.split(' ', 1).str
+    df_synsets = pd.DataFrame(synsets)
+    df_synsets.rename(columns={'text': 'synset'}, inplace=True)
+    df_synsets['label'] = df_synsets.index
+
+    df_fpaths_images = pd.merge(df_fpaths_images, df_synsets, on='synset')
+    return df_fpaths_images
+
 
 def remove_bad_files(df_fpaths_images):
     """Load and remove the bad filenames from `df_fpaths_images`
@@ -99,6 +125,7 @@ def main():
     df_fpaths_images = pd.read_csv(FPATH_DF_FPATHS_IMAGES)
     df_fpaths_images = remove_bad_files(df_fpaths_images)
     df_fpaths_images = remove_unloadable_files(df_fpaths_images)
+    df_fpaths_images = add_label_column(df_fpaths_images)
 
     df_train, df_test = train_test_split(
         df_fpaths_images, train_size=0.80, test_size=0.20, random_state=529,
