@@ -38,10 +38,8 @@ class TestAlexNet(object):
         # === test all attributes are set correctly === #
         alexnet = AlexNet(network_config)
 
-        assert alexnet.height == 227
-        assert alexnet.width == 227
-        assert alexnet.n_channels == 3
-        assert alexnet.n_classes == 1000
+        for key, value in network_config.items():
+            assert alexnet.network_config[key] == value
 
         # === test `network_config` === #
         for network_key in network_config:
