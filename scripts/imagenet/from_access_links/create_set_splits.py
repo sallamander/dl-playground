@@ -88,6 +88,7 @@ def add_train_set_labels(df_fpaths_images, df_synsets_mapping):
 
     return df_fpaths_images
 
+
 def add_val_set_labels(df_fpaths_images, df_synsets_mapping):
     """Merge on the synset labels for each image in the validation set
 
