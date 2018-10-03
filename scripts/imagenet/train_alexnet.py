@@ -13,10 +13,10 @@ from utils import dev_env
 
 DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
 FPATH_DF_TRAIN_SET = os.path.join(
-    DIRPATH_DATA, 'metadata_lists', 'df_train_set.csv'
+    DIRPATH_DATA, 'from_access_links', 'metadata_lists', 'df_train_set.csv'
 )
 FPATH_DF_VAL_SET = os.path.join(
-    DIRPATH_DATA, 'metadata_lists', 'df_val_set.csv'
+    DIRPATH_DATA, 'from_access_links', 'metadata_lists', 'df_val_set.csv'
 )
 
 IMAGE_HEIGHT = 227
