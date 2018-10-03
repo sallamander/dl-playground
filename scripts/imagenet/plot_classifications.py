@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Plot example images from the training set"""
+"""Plot example images from the provided `df_fpaths_images`"""
 
 import argparse
 from concurrent.futures import as_completed, ProcessPoolExecutor
@@ -14,10 +14,6 @@ from tqdm import tqdm
 from utils import dev_env
 
 DIRPATH_IMAGENET = dev_env.get('imagenet', 'dirpath_data')
-DIRPATH_CLASSIFICATION_PLOTS = os.path.join(
-    DIRPATH_IMAGENET, 'classification_plots', 'training_set', 'ground_truth'
-)
-
 FPATH_SYNSET_WORDS = os.path.join(
     DIRPATH_IMAGENET, 'synset_lists', 'synset_words.txt'
 )
@@ -25,13 +21,13 @@ FPATH_SYNSET_WORDS = os.path.join(
 N_PROCESSES = multiprocessing.cpu_count() // 2
 
 
-def add_synset_descriptions(df_training_set):
+def add_synset_descriptions(df_fpaths_images):
     """Add the synset description to each training image
 
-    :param df_training_set: rows hold a filepath and sysnet ID for a single
+    :param df_fpaths_images: rows hold a filepath and sysnet ID for a single
      image
-    :type df_training_set: pandas.DataFrame
-    :return: df_training_set with a 'synset_description' column added
+    :type df_fpaths_images: pandas.DataFrame
+    :return: df_fpaths_images with a 'synset_description' column added
     :rtype: pandas.DataFrame
     """
 
@@ -43,20 +39,20 @@ def add_synset_descriptions(df_training_set):
             'synset_description': synset_description
         })
     df_synsets = pd.DataFrame(synsets)
-    df_training_set = pd.merge(df_training_set, df_synsets, on='synset')
+    df_fpaths_images = pd.merge(df_fpaths_images, df_synsets, on='synset')
 
-    return df_training_set
+    return df_fpaths_images
 
 
-def plot_synset(df_training_set, synset, n_images, dirpath_output):
-    """Plot `n_images` from `df_training_set` for the given `synset`
+def plot_synset(df_fpaths_images, synset, n_images, dirpath_output):
+    """Plot `n_images` from `df_fpaths_images` for the given `synset`
 
     This will save `n_images` to the `--dirpath_output` passed into the
-    script, which defaults to DIRPATH_CLASSIFICATION_PLOTS.
+    script.
 
-    :param df_training_set: rows hold a filepath and sysnet ID for a single
+    :param df_fpaths_images: rows hold a filepath and sysnet ID for a single
      image
-    :type df_training_set: pandas.DataFrame
+    :type df_fpaths_images: pandas.DataFrame
     :param synset: identifier of the synset to plot images for
     :type synset: str
     :param n_images: number of images to plot
@@ -65,15 +61,14 @@ def plot_synset(df_training_set, synset, n_images, dirpath_output):
     :type dirpath_output: str
     """
 
-    idx_synset = df_training_set['synset'] == synset
-    df_synset = df_training_set[idx_synset]
+    idx_synset = df_fpaths_images['synset'] == synset
+    df_synset = df_fpaths_images[idx_synset]
     synset_description = df_synset['synset_description'].iloc[0]
 
     for fpath_image in df_synset.iloc[:n_images]['fpath_image']:
         fname_image = os.path.basename(fpath_image)
-        dirname_image = os.path.basename(os.path.dirname(fpath_image))
 
-        dirpath_image = os.path.join(dirpath_output, dirname_image)
+        dirpath_image = os.path.join(dirpath_output, synset)
         if not os.path.exists(dirpath_image):
             os.makedirs(dirpath_image)
         fpath_plot = os.path.join(dirpath_image, fname_image)
@@ -106,21 +101,20 @@ def parse_args():
     )
 
     parser.add_argument(
-        '--dirpath_output', type=str, default=DIRPATH_CLASSIFICATION_PLOTS,
-        help=(
-            'Directory path to save plots in. Defaults to '
-            '{}'.format(DIRPATH_CLASSIFICATION_PLOTS)
-        )
+        '--dirpath_output', type=str, required=True,
+        help=('Directory path to save plots in; if it doesn\'t exist, it '
+              'will be created.')
     )
     parser.add_argument(
-        '--from_urls', action='store_true',
+        '--fpath_df_fpaths_images', type=str, required=True,
         help=(
-            'If True, plot images from the training set of images downloaded '
-            'from URLS. If False, plot images from the training set of images '
-            'downloaded from ImageNet access links.'
+            'Filepath to a CSV full of image filepaths to plot. The CSV must '
+            'contain a \'fpath_image\' and \'synset\' column that old the '
+            'filepath to the image to plot and the wordnet synset ID category '
+            'of the image.'
         )
     )
-            
+
     parser.add_argument(
         '--n_images', type=int, default=10,
         help='Number of images to plot per class. Defaults to 10.'
@@ -148,35 +142,23 @@ def main():
     if not os.path.exists(args.dirpath_output):
         os.makedirs(args.dirpath_output)
 
-    if args.from_urls:
-        fpath_df_training_set = os.path.join(
-            DIRPATH_IMAGENET, 'from_urls', 'metadata_lists',
-            'df_train_set.csv'
-        )
-    else:
-        msg = 'Not passing the --from_urls flag is not supported at this time.'
-        raise ValueError(msg)
-
-        fpath_df_training_set = os.path.join(
-            DIRPATH_IMAGENET, 'from_access_links', 'metadata_lists',
-            'df_train_set.csv'
-        )
-
-    df_training_set = pd.read_csv(fpath_df_training_set)
-    df_training_set = add_synset_descriptions(df_training_set)
+    df_fpaths_images = pd.read_csv(args.fpath_df_fpaths_images)
+    df_fpaths_images = add_synset_descriptions(df_fpaths_images)
     # ensure plotted images are always the same for a given set of command line
     # arguments
-    df_training_set.sort_values('fpath_image', inplace=True)
+    df_fpaths_images.sort_values('fpath_image', inplace=True)
 
     if args.synset_ids:
-        idx_requested_synsets = df_training_set['synset'].isin(args.synset_ids)
-        df_training_set = df_training_set[idx_requested_synsets]
+        idx_requested_synsets = (
+            df_fpaths_images['synset'].isin(args.synset_ids)
+        )
+        df_fpaths_images = df_fpaths_images[idx_requested_synsets]
 
-    unique_synsets = df_training_set['synset'].unique()
+    unique_synsets = df_fpaths_images['synset'].unique()
     with ProcessPoolExecutor(max_workers=args.n_processes) as process_pool:
         futures = [
             process_pool.submit(
-                plot_synset, df_training_set, synset, args.n_images,
+                plot_synset, df_fpaths_images, synset, args.n_images,
                 args.dirpath_output
             )
             for synset in unique_synsets
