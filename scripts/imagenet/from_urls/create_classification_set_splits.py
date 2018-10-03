@@ -26,7 +26,7 @@ def add_label_column(df_fpaths_images):
     """Add the corresponding 'label' for each 'synset' in `df_fpaths_images`
 
     This translates the 'synset' column to an integer label for use in
-    training, i.e. n01580077 => 'jay'.
+    training, i.e. n01580077 => 17.
 
     :param df_fpaths_images: holds the filepaths for the imagenet images
     :type df_fpaths_images: pandas.DataFrame
@@ -60,17 +60,17 @@ def main():
     )
 
     fpath_test_set = os.path.join(
-        DIRPATH_METADATA_LISTS, 'df_test_set.csv'
+        DIRPATH_METADATA_LISTS, 'df_classiication_test_set.csv'
     )
     df_test.to_csv(fpath_test_set, index=False)
 
     fpath_val_set = os.path.join(
-        DIRPATH_METADATA_LISTS, 'df_val_set.csv'
+        DIRPATH_METADATA_LISTS, 'df_classification_val_set.csv'
     )
     df_val.to_csv(fpath_val_set, index=False)
 
     fpath_train_set = os.path.join(
-        DIRPATH_METADATA_LISTS, 'df_train_set.csv'
+        DIRPATH_METADATA_LISTS, 'df_classification_train_set.csv'
     )
     df_train.to_csv(fpath_train_set, index=False)
 
