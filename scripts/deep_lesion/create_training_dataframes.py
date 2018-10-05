@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Split the DeepLesion dataset into train, test, and val sets
+"""Create train, test, and val training dataframes
 
 Note that this script expects a metadata CSV ('DL_info.csv') script to be
 present at '/data/deep_lesion/metadata_lists/DL_info.csv'. This CSV contains

@@ -146,7 +146,7 @@ def get_fpaths_images(dirpath_images):
     """
 
     fpaths_images = []
-    for dirpath, dirnames, fnames in os.walk(dirpath_images, topdown=False):
+    for dirpath, _, fnames in os.walk(dirpath_images, topdown=False):
         for fname_image in fnames:
             fpath_image = os.path.join(dirpath, fname_image)
             fpaths_images.append({

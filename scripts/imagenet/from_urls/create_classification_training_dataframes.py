@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Split Imagnet into train, val, and test sets for object classification"""
+"""Create train, val, and test training dataframes for object classification"""
 
 import os
 
@@ -15,6 +15,15 @@ DIRPATH_METADATA_LISTS = os.path.join(
 
 FPATH_DF_FPATHS_IMAGES_FILTERED = os.path.join(
     DIRPATH_METADATA_LISTS, 'df_fpaths_images_filtered.csv'
+)
+FPATH_TRAIN_SET = os.path.join(
+    DIRPATH_METADATA_LISTS, 'df_classification_train.csv'
+)
+FPATH_VAL_SET = os.path.join(
+    DIRPATH_METADATA_LISTS, 'df_classification_val.csv'
+)
+FPATH_TEST_SET = os.path.join(
+    DIRPATH_METADATA_LISTS, 'df_classification_test_set.csv'
 )
 
 FPATH_SYNSET_WORDS = os.path.join(
@@ -59,20 +68,9 @@ def main():
         stratify=df_test['synset']
     )
 
-    fpath_test_set = os.path.join(
-        DIRPATH_METADATA_LISTS, 'df_classiication_test_set.csv'
-    )
-    df_test.to_csv(fpath_test_set, index=False)
-
-    fpath_val_set = os.path.join(
-        DIRPATH_METADATA_LISTS, 'df_classification_val_set.csv'
-    )
-    df_val.to_csv(fpath_val_set, index=False)
-
-    fpath_train_set = os.path.join(
-        DIRPATH_METADATA_LISTS, 'df_classification_train_set.csv'
-    )
-    df_train.to_csv(fpath_train_set, index=False)
+    df_train.to_csv(FPATH_TRAIN_SET, index=False)
+    df_val.to_csv(FPATH_VAL_SET, index=False)
+    df_test.to_csv(FPATH_TEST_SET, index=False)
 
 
 if __name__ == '__main__':
