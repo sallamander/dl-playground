@@ -105,16 +105,16 @@ def main():
 
     df_fpaths_images = pd.read_csv(FPATH_DF_FPATHS_IMAGES_FILTERED)
 
-    df_fpaths_images = add_fpath_xml_column(df_fpaths_images)
-    df_fpaths_images = add_label_column(df_fpaths_images)
+    df_fpaths_inputs_targets = add_fpath_xml_column(df_fpaths_images)
+    df_fpaths_inputs_targets = add_label_column(df_fpaths_inputs_targets)
 
     # factor out null XMLs *post-splitting*, because otherwise there are
     # typically not enough in some classes to split on; note this assumes that
     # the null XMLs will be randomly distributed with respect to the seed we
     # choose
     df_train, df_test = train_test_split(
-        df_fpaths_images, train_size=0.80, test_size=0.20, random_state=529,
-        stratify=df_fpaths_images['synset']
+        df_fpaths_inputs_targets, train_size=0.80, test_size=0.20,
+        random_state=529, stratify=df_fpaths_inputs_targets['synset']
     )
     df_val, df_test = train_test_split(
         df_test, train_size=0.50, test_size=0.50, random_state=529,
