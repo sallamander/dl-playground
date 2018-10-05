@@ -2,7 +2,7 @@
 """Download the DeepLesion dataset
 
 Note that this does not download the metadata CSV that is provided with the
-data (`DL_info.csv`), as there wasn't an explicit link available for that. This
+data ('DL_info.csv'), as there wasn't an explicit link available for that. This
 must be downloaded manually from [1].
 
 [1] Dropbox source: https://nihcc.app.box.com/v/DeepLesion
