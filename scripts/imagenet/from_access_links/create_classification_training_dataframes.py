@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Create train, val, and test set DataFrames for training
+"""Create train, val, and test training dataframes for object classification
 
 This script assumes that ImageNet was downloaded from the access links provided
 when access is granted through imagenet-org.com/downloads, and that the images
@@ -33,8 +33,8 @@ downloaded data in the following directory structure:
 |    |    |    |--- ...
 
 It will create a `metadata_lists` directory at
-/data/imagenet/from_access_links/ and place the train, test, and val dataframe
-CSVs in that directory.
+/data/imagenet/from_access_links/ if it doesn't exist, and place the train,
+test, and val dataframe CSVs in that directory.
 """
 
 import os
@@ -46,16 +46,13 @@ from utils import dev_env
 
 DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
 DIRPATH_ILSVRC = os.path.join(DIRPATH_DATA, 'from_access_links', 'ILSVRC')
-DIRPATH_METADATA = os.path.join(
+DIRPATH_METADATA_LISTS = os.path.join(
     DIRPATH_DATA, 'from_access_links', 'metadata_lists'
 )
 
 DIRPATH_IMAGES = os.path.join(DIRPATH_ILSVRC, 'Data', 'CLS-LOC')
-DIRPATH_TRAIN_IMAGES = os.path.join(DIRPATH_IMAGES, 'train')
-DIRPATH_VAL_IMAGES = os.path.join(DIRPATH_IMAGES, 'val')
-DIRPATH_TEST_IMAGES = os.path.join(DIRPATH_IMAGES, 'test')
-
 DIRPATH_DEVKIT = os.path.join(DIRPATH_ILSVRC, 'devkit', 'data')
+
 FPATH_SYNSETS_MAPPING = os.path.join(DIRPATH_DEVKIT, 'map_clsloc.txt')
 FPATH_SYNSETS_VAL = os.path.join(
     DIRPATH_DEVKIT, 'ILSVRC2015_clsloc_validation_ground_truth.txt'
@@ -161,14 +158,8 @@ def get_fpaths_images(dirpath_images):
 def main():
     """Main"""
 
-    if not os.path.exists(DIRPATH_METADATA):
-        os.makedirs(DIRPATH_METADATA, exist_ok=True)
-
-    sets = {
-        'train': {'dirpath_images': DIRPATH_TRAIN_IMAGES},
-        'val': {'dirpath_images': DIRPATH_VAL_IMAGES},
-        'test': {'dirpath_images': DIRPATH_TEST_IMAGES}
-    }
+    if not os.path.exists(DIRPATH_METADATA_LISTS):
+        os.makedirs(DIRPATH_METADATA_LISTS, exist_ok=True)
 
     df_synsets_mapping = pd.read_table(
         FPATH_SYNSETS_MAPPING, names=['synset', 'label', 'description'],
@@ -176,8 +167,8 @@ def main():
     )
     df_synsets_mapping.drop(columns=['description'], inplace=True, axis=1)
 
-    for set_name, set_metadata in sets.items():
-        dirpath_images = set_metadata['dirpath_images']
+    for set_name in ('train', 'val', 'test'):
+        dirpath_images = os.path.join(DIRPATH_IMAGES, set_name)
         df_fpaths_images = get_fpaths_images(dirpath_images)
 
         if set_name == 'train':
@@ -190,7 +181,8 @@ def main():
             )
 
         fpath_df_fpaths_images = os.path.join(
-            DIRPATH_METADATA, 'df_{}_set.csv'.format(set_name)
+            DIRPATH_METADATA_LISTS,
+            'df_classification_{}_set.csv'.format(set_name)
         )
         df_fpaths_images.to_csv(fpath_df_fpaths_images, index=False)
 
