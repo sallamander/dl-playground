@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Create train, val, and test training dataframes for object detection
+"""Create train, val, and test dataframes for object detection/localization
 
 This script assumes that ImageNet was downloaded from the access links provided
 when access is granted through imagenet-org.com/downloads, and that the images
@@ -11,6 +11,15 @@ downloaded data in the following directory structure:
 
 |--- ILSVRC
 |    |--- Annotations
+|    |    |--- CLS-LOC
+|    |    |    |--- train
+|    |    |    |    |--- ILSVRC_2013_train
+|    |    |    |    |--- ILSVRC_2014_train_0000
+|    |    |    |    |--- ...
+|    |    |    |--- val
+|    |    |    |    |--- ILSVRC2012_val_0021650.xml
+|    |    |    |    |--- ILSVRC2012_val_0021651.xml
+|    |    |    |    |--- ...
 |    |    |--- DET
 |    |    |    |--- train
 |    |    |    |    |--- ILSVRC_2013_train
@@ -30,11 +39,27 @@ downloaded data in the following directory structure:
 |    |    |    |--- train2.txt
 |    |    |    |--- train3.txt
 |    |    |    |--- ...
+|    |    |--- CLS-LOC
+|    |    |    |--- train_loc.txt
+|    |    |    |--- val.txt
+|    |    |    |--- test.txt
 |    |--- Data
 |    |    |--- DET
 |    |    |    |--- train
 |    |    |    |    |--- ILSVRC_2013_train
 |    |    |    |    |--- ILSVRC_2014_train_0000
+|    |    |    |    |--- ...
+|    |    |    |--- val
+|    |    |    |    |--- ILSVRC2012_val_0021650.JPEG
+|    |    |    |    |--- ILSVRC2012_val_0021651.JPEG
+|    |    |    |--- test
+|    |    |    |    |--- ILSVRC2012_test_00100000.JPEG
+|    |    |    |    |--- ILSVRC2012_test_00068512.JPEG
+|    |    |    |    |--- ...
+|    |    |--- CLS-LOC
+|    |    |    |--- train
+|    |    |    |    |--- n15075141
+|    |    |    |    |--- n13054560
 |    |    |    |    |--- ...
 |    |    |    |--- val
 |    |    |    |    |--- ILSVRC2012_val_0021650.JPEG
@@ -53,6 +78,7 @@ It will create a `metadata_lists` directory at
 test, and val dataframe CSVs in that directory.
 """
 
+import argparse
 import os
 
 import numpy as np
@@ -67,12 +93,12 @@ DIRPATH_METADATA_LISTS = os.path.join(
     DIRPATH_DATA, 'from_access_links', 'metadata_lists'
 )
 
-DIRPATH_IMAGES = os.path.join(DIRPATH_ILSVRC, 'Data', 'DET')
-DIRPATH_XMLS = os.path.join(DIRPATH_ILSVRC, 'Annotations', 'DET')
-DIRPATH_IMAGE_LISTS = os.path.join(DIRPATH_ILSVRC, 'ImageSets', 'DET')
+DIRPATH_IMAGES = os.path.join(DIRPATH_ILSVRC, 'Data')
+DIRPATH_XMLS = os.path.join(DIRPATH_ILSVRC, 'Annotations')
+DIRPATH_IMAGE_LISTS = os.path.join(DIRPATH_ILSVRC, 'ImageSets')
 
 
-def add_fpath_xml_column(df_fpaths_images, set_name):
+def add_fpath_xml_column(df_fpaths_images, set_name, task):
     """Add a column holding the XML file holding bbox coordinates
 
     If the given image doesn't have a corresponding XML file, an `np.nan` will
@@ -83,6 +109,9 @@ def add_fpath_xml_column(df_fpaths_images, set_name):
     :type df_fpaths_images: pandas.DataFrame
     :param set_name: set name that the images are from
     :type set_name: str
+    :param task: task to return the image filepaths for, one of 'CLS-LOC' or
+     'DET'
+    :type task: str
     :return: df_fpaths_images with 'fpath_xml' column added
     :rtype: pandas.DataFrame
     """
@@ -90,8 +119,8 @@ def add_fpath_xml_column(df_fpaths_images, set_name):
     msg = '`set_name` must be one of {\'train\', \'val\'}'
     assert set_name in {'train', 'val'}, msg
 
-    dirpath_images = os.path.join(DIRPATH_IMAGES, set_name)
-    dirpath_xmls = os.path.join(DIRPATH_XMLS, set_name)
+    dirpath_images = os.path.join(DIRPATH_IMAGES, task, set_name)
+    dirpath_xmls = os.path.join(DIRPATH_XMLS, task, set_name)
 
     def _get_fpath_xml(fpath_image, dirpath_images, dirpath_xmls):
         """Return the `fpath_xml` for the corresponding image
@@ -127,11 +156,14 @@ def add_fpath_xml_column(df_fpaths_images, set_name):
     return df_fpaths_images
 
 
-def get_fpaths_images(set_name):
+def get_fpaths_images(set_name, task):
     """Return a DataFrame of image filepaths for the provided set name
 
     :param set_name: set name to return the dataframe for
     :type set_name: str
+    :param task: task to return the image filepaths for, one of 'CLS-LOC' or
+     'DET'
+    :type task: str
     :return: dataframe holding:
     - str fpath_image: filepath pointing to the input image
     :rtype: pandas.DataFrame
@@ -140,10 +172,15 @@ def get_fpaths_images(set_name):
     msg = '`set_name` must be one of {\'train\', \'val\', \'test\'}'
     assert set_name in {'train', 'val', 'test'}, msg
 
-    dirpath_images = os.path.join(DIRPATH_IMAGES, set_name)
+    dirpath_images = os.path.join(DIRPATH_IMAGES, task, set_name)
+
+    if task == 'CLS-LOC' and set_name == 'train':
+        fname_set_txt = 'train_loc.txt'
+    else:
+        fname_set_txt = '{}.txt'.format(set_name)
 
     fpath_fnames_set_txt = os.path.join(
-        DIRPATH_IMAGE_LISTS, '{}.txt'.format(set_name)
+        DIRPATH_IMAGE_LISTS, task, fname_set_txt
     )
     df_fnames_images = pd.read_table(
         fpath_fnames_set_txt, names=['fname_image', 'observation_id'],
@@ -162,22 +199,50 @@ def get_fpaths_images(set_name):
     return df_fpaths_images
 
 
+def parse_args():
+    """Parse command line arguments
+
+    :return: name space holding the command line arguments
+    :rtype: argparse.Namespace
+    """
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--task', required=True, choices=['localization', 'detection'],
+        help='Whether to use synsets from the localization or detection task.'
+    )
+
+    args = parser.parse_args()
+    return args
+
+
 def main():
     """Main"""
+
+    args = parse_args()
 
     if not os.path.exists(DIRPATH_METADATA_LISTS):
         os.makedirs(DIRPATH_METADATA_LISTS, exist_ok=True)
 
+    if args.task == 'detection':
+        task_shortname = 'DET'
+    else:
+        task_shortname = 'CLS-LOC'
+
     for set_name in ('train', 'val', 'test'):
-        df_fpaths_images = get_fpaths_images(set_name=set_name)
+        df_fpaths_images = get_fpaths_images(
+            set_name=set_name, task=task_shortname
+        )
 
         if set_name in {'train', 'val'}:
             df_fpaths_inputs_targets = add_fpath_xml_column(
-                df_fpaths_images, set_name
+                df_fpaths_images, set_name, task_shortname
             )
 
         fpath_set = os.path.join(
-            DIRPATH_METADATA_LISTS, 'df_detection_{}_set'.format(set_name)
+            DIRPATH_METADATA_LISTS,
+            'df_{}_{}_set.csv'.format(args.task, set_name)
         )
         df_fpaths_inputs_targets.to_csv(fpath_set, index=False)
 
