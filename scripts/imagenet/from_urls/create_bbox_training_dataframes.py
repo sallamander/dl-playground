@@ -1,6 +1,7 @@
 #! /usr/bin/env python
-"""Create train, val, and test training dataframes for object detection"""
+"""Create train, val, and test dataframes for object detection/localization"""
 
+import argparse
 import os
 
 import numpy as np
@@ -13,6 +14,7 @@ DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
 DIRPATH_METADATA_LISTS = os.path.join(
     DIRPATH_DATA, 'from_urls', 'metadata_lists'
 )
+DIRPATH_SYNSET_LISTS = os.path.join(DIRPATH_DATA, 'synset_lists')
 DIRPATH_XMLS = os.path.join(
     DIRPATH_DATA, 'from_urls', 'bbox_xmls'
 )
@@ -20,16 +22,6 @@ DIRPATH_XMLS = os.path.join(
 FPATH_DF_FPATHS_IMAGES_FILTERED = os.path.join(
     DIRPATH_METADATA_LISTS, 'df_fpaths_images_filtered.csv'
 )
-FPATH_TRAIN_SET = os.path.join(
-    DIRPATH_METADATA_LISTS, 'df_detection_train_set.csv'
-)
-FPATH_VAL_SET = os.path.join(
-    DIRPATH_METADATA_LISTS, 'df_detection_val_set.csv'
-)
-FPATH_TEST_SET = os.path.join(
-    DIRPATH_METADATA_LISTS, 'df_detection_test_set.csv'
-)
-
 FPATH_SYNSET_WORDS = os.path.join(
     DIRPATH_DATA, 'synset_lists', 'synset_words.txt'
 )
@@ -99,14 +91,43 @@ def add_label_column(df_fpaths_images):
     df_fpaths_images = pd.merge(df_fpaths_images, df_synsets, on='synset')
     return df_fpaths_images
 
+def parse_args():
+    """Parse command line arguments
+
+    :return: name space holding the command line arguments
+    :rtype: argparse.Namespace
+    """
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--task', required=True, choices=['localization', 'detection'],
+        help='Whether to use synsets from the localization or detection task.'
+    )
+
+    args = parser.parse_args()
+    return args
+
 
 def main():
     """Main logic"""
+
+    args = parse_args()
 
     df_fpaths_images = pd.read_csv(FPATH_DF_FPATHS_IMAGES_FILTERED)
 
     df_fpaths_inputs_targets = add_fpath_xml_column(df_fpaths_images)
     df_fpaths_inputs_targets = add_label_column(df_fpaths_inputs_targets)
+
+    if args.task == 'localization':
+        fpath_synsets = os.path.join(DIRPATH_SYNSET_LISTS, 'synset_words.csv')
+    else:
+        fpath_synsets = os.path.join(
+            DIRPATH_SYNSET_LISTS, 'det_synset_words.csv'
+        )
+    df_synsets = pd.read_csv(fpath_synsets)
+    idx_keep = df_fpaths_inputs_targets['synset'].isin(df_synsets['synset'])
+    df_fpaths_inputs_targets = df_fpaths_inputs_targets[idx_keep]
 
     # factor out null XMLs *post-splitting*, because otherwise there are
     # typically not enough in some classes to split on; note this assumes that
@@ -128,9 +149,19 @@ def main():
     idx_null_xmls_train = pd.isnull(df_train['fpath_xml'])
     df_train = df_train[idx_null_xmls_train]
 
-    df_train.to_csv(FPATH_TRAIN_SET, index=False)
-    df_val.to_csv(FPATH_VAL_SET, index=False)
-    df_test.to_csv(FPATH_TEST_SET, index=False)
+    fpath_train_set = os.path.join(
+        DIRPATH_METADATA_LISTS, 'df_{}_train_set.csv'.format(args.task)
+    )
+    fpath_val_set = os.path.join(
+        DIRPATH_METADATA_LISTS, 'df_{}_val_set.csv'.format(args.task)
+    )
+    fpath_test_set = os.path.join(
+        DIRPATH_METADATA_LISTS, 'df_{}_test_set.csv'.format(args.task)
+    )
+
+    df_train.to_csv(fpath_train_set, index=False)
+    df_val.to_csv(fpath_val_set, index=False)
+    df_test.to_csv(fpath_test_set, index=False)
 
 
 if __name__ == '__main__':
