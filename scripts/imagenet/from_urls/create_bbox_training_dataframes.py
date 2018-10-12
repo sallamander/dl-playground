@@ -91,6 +91,7 @@ def add_label_column(df_fpaths_images):
     df_fpaths_images = pd.merge(df_fpaths_images, df_synsets, on='synset')
     return df_fpaths_images
 
+
 def parse_args():
     """Parse command line arguments
 
@@ -116,8 +117,8 @@ def main():
 
     df_fpaths_images = pd.read_csv(FPATH_DF_FPATHS_IMAGES_FILTERED)
 
-    df_fpaths_inputs_targets = add_fpath_xml_column(df_fpaths_images)
-    df_fpaths_inputs_targets = add_label_column(df_fpaths_inputs_targets)
+    df_fpaths = add_fpath_xml_column(df_fpaths_images)
+    df_fpaths = add_label_column(df_fpaths)
 
     if args.task == 'localization':
         fpath_synsets = os.path.join(DIRPATH_SYNSET_LISTS, 'synset_words.csv')
@@ -126,16 +127,16 @@ def main():
             DIRPATH_SYNSET_LISTS, 'det_synset_words.csv'
         )
     df_synsets = pd.read_csv(fpath_synsets)
-    idx_keep = df_fpaths_inputs_targets['synset'].isin(df_synsets['synset'])
-    df_fpaths_inputs_targets = df_fpaths_inputs_targets[idx_keep]
+    idx_keep = df_fpaths['synset'].isin(df_synsets['synset'])
+    df_fpaths = df_fpaths[idx_keep]
 
     # factor out null XMLs *post-splitting*, because otherwise there are
     # typically not enough in some classes to split on; note this assumes that
     # the null XMLs will be randomly distributed with respect to the seed we
     # choose
     df_train, df_test = train_test_split(
-        df_fpaths_inputs_targets, train_size=0.80, test_size=0.20,
-        random_state=529, stratify=df_fpaths_inputs_targets['synset']
+        df_fpaths, train_size=0.80, test_size=0.20,
+        random_state=529, stratify=df_fpaths['synset']
     )
     df_val, df_test = train_test_split(
         df_test, train_size=0.50, test_size=0.50, random_state=529,
@@ -143,11 +144,11 @@ def main():
     )
 
     idx_null_xmls_test = pd.isnull(df_test['fpath_xml'])
-    df_test = df_test[idx_null_xmls_test]
+    df_test = df_test[~idx_null_xmls_test]
     idx_null_xmls_val = pd.isnull(df_val['fpath_xml'])
-    df_val = df_val[idx_null_xmls_val]
+    df_val = df_val[~idx_null_xmls_val]
     idx_null_xmls_train = pd.isnull(df_train['fpath_xml'])
-    df_train = df_train[idx_null_xmls_train]
+    df_train = df_train[~idx_null_xmls_train]
 
     fpath_train_set = os.path.join(
         DIRPATH_METADATA_LISTS, 'df_{}_train_set.csv'.format(args.task)
