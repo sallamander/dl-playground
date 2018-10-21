@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Plot example images from the provided `df_fpaths_images`"""
+"""Plot images from the provided `df_fpaths_images`"""
 
 import argparse
 from concurrent.futures import as_completed, ProcessPoolExecutor
@@ -85,7 +85,11 @@ def plot_synset(df_fpaths_images, synset, n_images, dirpath_output):
 
 
 def parse_args():
-    """Parse command line arguments"""
+    """Parse command line arguments
+
+    :return: name space holding the command line arguments
+    :rtype: argparse.Namespace
+    """
 
     parser = argparse.ArgumentParser()
 

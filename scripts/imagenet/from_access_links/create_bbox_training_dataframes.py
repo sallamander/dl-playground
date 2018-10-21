@@ -236,7 +236,7 @@ def main():
         )
 
         if set_name in {'train', 'val'}:
-            df_fpaths_inputs_targets = add_fpath_xml_column(
+            df_fpaths = add_fpath_xml_column(
                 df_fpaths_images, set_name, task_shortname
             )
 
@@ -244,7 +244,7 @@ def main():
             DIRPATH_METADATA_LISTS,
             'df_{}_{}_set.csv'.format(args.task, set_name)
         )
-        df_fpaths_inputs_targets.to_csv(fpath_set, index=False)
+        df_fpaths.to_csv(fpath_set, index=False)
 
 
 if __name__ == '__main__':

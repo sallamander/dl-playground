@@ -24,13 +24,13 @@ FPATH_METADATA_CSV = os.path.join(
 )
 
 FPATH_TRAIN_SET = os.path.join(
-    DIRPATH_DATA, 'metadata_lists', 'df_train_set.csv'
+    DIRPATH_DATA, 'metadata_lists', 'df_train_set.pickle'
 )
 FPATH_VAL_SET = os.path.join(
-    DIRPATH_DATA, 'metadata_lists', 'df_val_set.csv'
+    DIRPATH_DATA, 'metadata_lists', 'df_val_set.pickle'
 )
 FPATH_TEST_SET = os.path.join(
-    DIRPATH_DATA, 'metadata_lists', 'df_test_set.csv'
+    DIRPATH_DATA, 'metadata_lists', 'df_test_set.pickle'
 )
 
 
@@ -159,11 +159,11 @@ def main():
     validate_splits(df_train, df_val, df_test)
 
     df_train.drop('dataset_split', axis=1, inplace=True)
-    df_train.to_csv(FPATH_TRAIN_SET, index=False)
+    df_train.to_pickle(FPATH_TRAIN_SET)
     df_val.drop('dataset_split', axis=1, inplace=True)
-    df_val.to_csv(FPATH_VAL_SET, index=False)
+    df_val.to_pickle(FPATH_VAL_SET)
     df_test.drop('dataset_split', axis=1, inplace=True)
-    df_test.to_csv(FPATH_TEST_SET, index=False)
+    df_test.to_pickle(FPATH_TEST_SET)
 
 
 if __name__ == '__main__':
