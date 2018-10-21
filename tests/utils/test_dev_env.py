@@ -8,3 +8,6 @@ def test_get():
 
     value = dev_env.get('imagenet', 'dirpath_data')
     assert value == '/data/imagenet'
+
+    value = dev_env.get('deep_lesion', 'dirpath_data')
+    assert value == '/data/deep_lesion'
