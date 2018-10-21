@@ -1,6 +1,7 @@
-"""Tests for utils.generic_utils.py"""
+"""Unit tests for utils.generic_utils"""
 
 import random
+
 import pytest
 
 from utils.generic_utils import validate_config

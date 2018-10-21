@@ -3,7 +3,8 @@
 Reference paper (using bitly link to save line length): https://bit.ly/2v4Aihl
 
 The main difference between this implementation and the paper is that it does
-not use any parallelization across GPUs.
+not use any parallelization across GPUs, nor include a local response
+normalization layer.
 """
 
 from tensorflow.keras.layers import (

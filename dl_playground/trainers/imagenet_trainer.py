@@ -8,6 +8,8 @@ from utils.generic_utils import validate_config
 class ImageNetTrainer(object):
     """ImageNet Trainer"""
 
+    required_config_keys = {'batch_size', 'loss', 'num_epochs', 'optimizer'}
+
     def __init__(self, trainer_config):
         """Init
 
@@ -21,8 +23,7 @@ class ImageNetTrainer(object):
         :type trainer_config: dict
         """
 
-        required_keys = {'optimizer', 'loss', 'batch_size', 'num_epochs'}
-        validate_config(trainer_config, required_keys)
+        validate_config(trainer_config, self.required_config_keys)
 
         self.optimizer = trainer_config['optimizer']
         self.loss = trainer_config['loss']
@@ -44,9 +45,7 @@ class ImageNetTrainer(object):
 
         inputs, outputs = network.build()
         model = Model(inputs=inputs, outputs=outputs)
-        model.compile(
-            optimizer=self.optimizer, loss=self.loss
-        )
+        model.compile(optimizer=self.optimizer, loss=self.loss)
 
         if val_dataset is not None:
             validation_data = val_dataset.get_infinite_iter()

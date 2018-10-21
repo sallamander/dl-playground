@@ -1,11 +1,12 @@
-"""Tests for networks.alexnet.py"""
+"""Unit tests for networks.alexnet"""
 
-import pytest
+from unittest.mock import MagicMock
 
 import numpy as np
+import pytest
 import tensorflow as tf
 
-from networks.alexnet import AlexNet
+from networks.alexnet import AlexNet, Network
 
 
 class TestAlexNet(object):
@@ -23,31 +24,35 @@ class TestAlexNet(object):
             'height': 227, 'width': 227, 'n_channels': 3, 'n_classes': 1000
         }
 
-    def test_init(self, network_config):
+    def test_init(self, network_config, monkeypatch):
         """Test __init__ method
 
         This tests two things:
         - All attributes are set correctly in the __init__
-        - A KeyError is raised if 'height', 'width', 'n_channels', or
-          'n_classes' is not present in the `network_config`
+        - The `required_config_keys` attribute holds the expected values
 
         :param network_config: network_config object fixture
         :type network_config: dict
+        :param monkeypatch: monkeypatch object
+        :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
         """
 
-        # === test all attributes are set correctly === #
-        alexnet = AlexNet(network_config)
+        assert AlexNet.required_config_keys == {
+            'height', 'width', 'n_channels', 'n_classes'
+        }
 
+        def mock_init(self, network_config):
+            """Mock __init__
+
+            The `__init__` only needs to set `self.network_config` equal to the
+            input `network_config.`
+            """
+            self.network_config = network_config
+        monkeypatch.setattr(Network, '__init__', mock_init)
+
+        alexnet = AlexNet(network_config)
         for key, value in network_config.items():
             assert alexnet.network_config[key] == value
-
-        # === test `network_config` === #
-        for network_key in network_config:
-            network_config_copy = network_config.copy()
-            del network_config_copy[network_key]
-
-            with pytest.raises(KeyError):
-                AlexNet(network_config_copy)
 
     def test_build(self, network_config):
         """Test build method
@@ -58,8 +63,10 @@ class TestAlexNet(object):
           expected types
         """
 
-        alexnet = AlexNet(network_config)
-        inputs, outputs = alexnet.build()
+        alexnet = MagicMock()
+        alexnet.build = AlexNet.build
+        alexnet.network_config = network_config
+        inputs, outputs = alexnet.build(self=alexnet)
 
         assert isinstance(inputs, tf.Tensor)
         assert isinstance(outputs, tf.Tensor)

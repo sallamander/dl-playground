@@ -9,6 +9,8 @@ from utils.generic_utils import validate_config
 class ImageNetDataSet(object):
     """ImageNet dataset"""
 
+    required_config_keys = {'height', 'width', 'batch_size'}
+
     def __init__(self, df_images, dataset_config):
         """Init
 
@@ -24,8 +26,7 @@ class ImageNetDataSet(object):
         :type dataset_config: dict
         """
 
-        required_keys = {'height', 'width', 'batch_size'}
-        validate_config(dataset_config, required_keys)
+        validate_config(dataset_config, self.required_config_keys)
 
         if set(df_images.columns) < {'fpath_image', 'label'}:
             msg = (

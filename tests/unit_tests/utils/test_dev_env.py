@@ -1,4 +1,4 @@
-"""Tests for utils.dev_env.py"""
+"""Unit tests for utils.dev_env"""
 
 from utils import dev_env
 
