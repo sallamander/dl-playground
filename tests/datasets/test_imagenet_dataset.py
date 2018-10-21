@@ -1,51 +1,16 @@
-"""Tests for datasets.imagenet.py"""
+"""Tests for datasets.imagenet"""
 
-import os
-import tempfile
-
-import imageio
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 import pytest
 
 from datasets.imagenet_dataset import ImageNetDataSet
+from utils.test_utils import df_images
 
 
 class TestImageNetDataSet(object):
     """Tests for ImageNetDataSet"""
-
-    @pytest.fixture(scope='class')
-    def df_images(self):
-        """df_images object fixture
-
-        df_images will contain three rows with two columns, `fpath_image` and
-        `label`. Each `fpath_image` will point to a `numpy.ndarray` saved as
-        a JPEG, and the `label` will be equal to the index of that row (i.e.
-        0, 1, and 2).
-
-        :return: dataframe holding the filepath to the input image and the
-         target label for the image
-        :rtype: pandas.DataFrame
-        """
-
-        tempdir = tempfile.TemporaryDirectory()
-
-        rows = []
-        for idx in range(3):
-            height, width = np.random.randint(128, 600, 2)
-            num_channels = 3
-
-            input_image = np.random.random((height, width, num_channels))
-            fpath_image = os.path.join(tempdir.name, '{}.jpg'.format(idx))
-            imageio.imwrite(fpath_image, input_image)
-
-            rows.append({
-                'fpath_image': fpath_image, 'label': idx
-            })
-
-        df_images = pd.DataFrame(rows)
-        yield df_images
 
     @pytest.fixture(scope='class')
     def dataset_config(self):

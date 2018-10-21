@@ -1,4 +1,4 @@
-"""Tests for datasets.ops.py"""
+"""Tests for datasets.ops"""
 
 import os
 import tempfile
