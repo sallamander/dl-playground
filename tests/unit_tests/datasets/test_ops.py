@@ -1,11 +1,11 @@
-"""Tests for datasets.ops.py"""
+"""Unit tests for datasets.ops"""
 
 import os
 import tempfile
-import pytest
 
 import imageio
 import numpy as np
+import pytest
 import tensorflow as tf
 
 from datasets.ops import center_image, load_image, reshape_image_and_label
