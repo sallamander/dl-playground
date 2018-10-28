@@ -15,10 +15,8 @@ class Network(object):
         :type network_config: dict
         """
 
-        msg = ('Class attribute `required_config_keys` must be specified, '
-               'but is None.')
-        assert self.required_config_keys, msg
-        validate_config(network_config, self.required_config_keys)
+        if self.required_config_keys:
+            validate_config(network_config, self.required_config_keys)
 
         self.network_config = network_config
 
