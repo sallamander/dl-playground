@@ -29,8 +29,7 @@ class TestImageNetDataSet(object):
     def _check_batches(self, dataset_config, batches):
         """Assert the size of the inputs and outputs of `batches`
 
-        :param dataset_config: dataset_config object fixture, with 'batch_size'
-         key equal to `batch_size`
+        :param dataset_config: dataset_config object fixture
         :type dataset_config: dict
         :param batches: batches of input and output pairs
         :type batches: list[numpy.ndarray]
