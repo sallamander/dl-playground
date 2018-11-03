@@ -22,9 +22,7 @@ class TestImageNetDataSet(object):
         :rtype: dict
         """
 
-        return {
-            'height': 227, 'width': 227, 'batch_size': 3,
-        }
+        return {'height': 227, 'width': 227, 'batch_size': 3}
 
     def _check_batches(self, dataset_config, batches):
         """Assert the size of the inputs and outputs of `batches`
@@ -132,7 +130,7 @@ class TestImageNetDataSet(object):
     def test_get_infinite_iter(self, df_images, dataset_config, monkeypatch):
         """Test get_infinite_iter method
 
-        :param df_images : df_images object fixture
+        :param df_images: df_images object fixture
         :type: pandas.DataFrame
         :param dataset_config: dataset_config object fixture
         :type dataset_config: dict
