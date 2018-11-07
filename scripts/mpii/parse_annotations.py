@@ -6,8 +6,9 @@ the directory paths used throughout the script can be altered, the script is
 currently built to work with the downloaded annotations at the following
 location: /data/mpii/annotations/mpii_human_pose_v1_u12_2
 
-References include the `misc.conver_annot` and `misc.mpii` modules at
-'https://github.com/princeton-vl/pose-hg-train'.
+Reference Implementations:
+https://github.com/princeton-vl/pose-hg-train/blob/master/src/misc/convert_annot.py
+https://github.com/princeton-vl/pose-hg-train/blob/master/src/misc/mpii.py
 """
 
 import os
@@ -35,9 +36,9 @@ def parse_annotations(annotations):
     For details on the structure of the annotations, see the 'Annotation
     description' section at http://human-pose.mpi-inf.mpg.de/#download.
 
-    For reference implementations on how to parse the dataset, see the
-    'misc.convert_annot' and 'misc.mpii' modules in the
-    'https://github.com/princeton-vl/pose-hg-train' repository.
+    Reference Implementations:
+    https://github.com/princeton-vl/pose-hg-train/blob/master/src/misc/convert_annot.py
+    https://github.com/princeton-vl/pose-hg-train/blob/master/src/misc/mpii.py
 
     :param annotations: structured array holding the annotations
     :type annotations: numpy.ndarray
@@ -50,7 +51,7 @@ def parse_annotations(annotations):
 
     annolist = annotations['annolist'][0][0][0]
     images = list(annolist['image'])
-    body_annotations_per_image = list(annolist['annorect'])
+    person_annotations_per_image = list(annolist['annorect'])
 
     joint_annotations = []
     for idx_image in tqdm(range(n_images), total=n_images):
@@ -59,9 +60,13 @@ def parse_annotations(annotations):
             continue
 
         fname_image = images[idx_image][0][0][0][0]
-        body_annotations = body_annotations_per_image[idx_image]
+        person_annotations = person_annotations_per_image[idx_image]
+        if person_annotations.size:
+            person_annotations = person_annotations[0]
+        else:
+            continue
 
-        for idx_person, person_annotation in enumerate(body_annotations):
+        for idx_person, person_annotation in enumerate(person_annotations):
             joint_annotations.extend(
                 parse_person_annotation(
                     idx_image, idx_person, fname_image, person_annotation
@@ -109,32 +114,33 @@ def parse_person_annotation(idx_image, idx_person, fname_image,
     if 'scale' not in person_annotation.dtype.fields:
         return []
     scale = person_annotation['scale']
-    if scale[0][0].size:
-        scale = scale[0][0][0]
+    if scale[0].size:
+        scale = scale[0][0]
     else:
         return []
 
-    x_position = person_annotation['objpos'][0]['x'][0][0][0][0]
-    y_position = person_annotation['objpos'][0]['y'][0][0][0][0]
+    x_position = person_annotation['objpos'][0]['x'][0][0][0]
+    y_position = person_annotation['objpos'][0]['y'][0][0][0]
     position = (x_position, y_position)
 
-    xmin_head_bbox = person_annotation['x1'][0][0][0]
-    xmax_head_bbox = person_annotation['x2'][0][0][0]
-    ymin_head_bbox = person_annotation['y1'][0][0][0]
-    ymax_head_bbox = person_annotation['y2'][0][0][0]
+    xmin_head_bbox = person_annotation['x1'][0][0]
+    xmax_head_bbox = person_annotation['x2'][0][0]
+    ymin_head_bbox = person_annotation['y1'][0][0]
+    ymax_head_bbox = person_annotation['y2'][0][0]
     head_bbox = (
         xmin_head_bbox, ymin_head_bbox, xmax_head_bbox, ymax_head_bbox
     )
 
     joint_annotations = []
-    joints = person_annotation['annopoints'][0][0][0][0][0]
+    joints = person_annotation['annopoints'][0][0][0][0]
     for joint in joints:
         joint_id = joint['id'][0][0]
         x_joint, y_joint = joint['x'][0][0], joint['y'][0][0]
 
-        is_visible = joint['is_visible']
-        if is_visible:
-            is_visible = is_visible[0][0]
+        if 'is_visible' not in joint.dtype.fields:
+            continue
+        if joint['is_visible'].size:
+            is_visible = bool(joint['is_visible'][0][0])
         else:
             is_visible = True
 
@@ -158,6 +164,16 @@ def main():
 
     annotations = loadmat(FPATH_ANNOTATIONS_MAT)['RELEASE']
     df_annotations = parse_annotations(annotations)
+
+    num_duplicates = (
+        df_annotations.duplicated(['idx_image', 'idx_person', 'joint_id'])
+    ).sum()
+    percent_duplicates = num_duplicates / len(df_annotations)
+    assert percent_duplicates <= 0.01
+
+    df_annotations.drop_duplicates(
+        ['idx_image', 'idx_person', 'joint_id'], inplace=True
+    )
     df_annotations.to_pickle(FPATH_ANNOTATIONS_PICKLE)
 
 

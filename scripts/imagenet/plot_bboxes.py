@@ -142,7 +142,7 @@ def parse_args():
 
 
 def main():
-    """Main logic"""
+    """Main"""
 
     args = parse_args()
     os.makedirs(args.dirpath_output, exist_ok=True)

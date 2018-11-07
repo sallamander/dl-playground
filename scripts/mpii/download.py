@@ -61,7 +61,7 @@ def download_images():
 
 
 def main():
-    """Main logic"""
+    """Main"""
 
     os.makedirs(DIRPATH_ANNOTATIONS, exist_ok=True)
     os.makedirs(DIRPATH_IMAGES, exist_ok=True)

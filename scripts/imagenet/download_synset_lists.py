@@ -61,7 +61,7 @@ def download_synset_lists():
 
 
 def main():
-    """Main logic"""
+    """Main"""
 
     download_synset_lists()
 
