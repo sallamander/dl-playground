@@ -93,10 +93,9 @@ def download_image(image_name, image_url):
 
     dirname_image = image_name.split('_')[0]
     dirpath_save = os.path.join(DIRPATH_IMAGES, dirname_image)
-    if not os.path.exists(dirpath_save):
-        os.makedirs(dirpath_save, exist_ok=True)
-    fpath_save = os.path.join(dirpath_save, image_name)
+    os.makedirs(dirpath_save, exist_ok=True)
 
+    fpath_save = os.path.join(dirpath_save, image_name)
     if os.path.exists(fpath_save):
         return
 
@@ -184,8 +183,7 @@ def main():
     args = parse_args()
 
     for dirpath in [DIRPATH_DATA, DIRPATH_IMAGES]:
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
+        os.makedirs(dirpath, exist_ok=True)
 
     download_bbox_xmls()
 

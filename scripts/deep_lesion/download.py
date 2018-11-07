@@ -126,10 +126,8 @@ def unzip_zipfiles(fpaths_zipfiles):
 def main():
     """Main"""
 
-    if not os.path.exists(DIRPATH_ZIPS):
-        os.makedirs(DIRPATH_ZIPS, exist_ok=True)
-    if not os.path.exists(DIRPATH_IMAGES):
-        os.makedirs(DIRPATH_IMAGES, exist_ok=True)
+    os.makedirs(DIRPATH_ZIPS, exist_ok=True)
+    os.makedirs(DIRPATH_IMAGES, exist_ok=True)
 
     fpaths_zipfiles = download_zips()
     unzip_zipfiles(fpaths_zipfiles)

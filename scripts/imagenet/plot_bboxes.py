@@ -95,8 +95,7 @@ def plot_image_and_bboxes(fpath_image, fpath_xml, dirpath_output):
         fname_plot = '{}'.format(fname_image)
 
         dirpath_plot = os.path.join(dirpath_output, synset)
-        if not os.path.exists(dirpath_plot):
-            os.makedirs(dirpath_plot)
+        os.makedirs(dirpath_plot, exist_ok=True)
         fpath_plot = os.path.join(dirpath_plot, fname_plot)
 
         plt.savefig(fpath_plot, bbox_inches='tight')
@@ -146,9 +145,7 @@ def main():
     """Main logic"""
 
     args = parse_args()
-
-    if not os.path.exists(args.dirpath_output):
-        os.makedirs(args.dirpath_output)
+    os.makedirs(args.dirpath_output, exist_ok=True)
 
     df_fpaths = pd.read_csv(args.fpath_df_fpaths)
     # ensure plotted images are always the same for a given set of command line

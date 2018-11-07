@@ -63,10 +63,8 @@ def download_images():
 def main():
     """Main logic"""
 
-    if not os.path.exists(DIRPATH_ANNOTATIONS):
-        os.makedirs(DIRPATH_ANNOTATIONS)
-    if not os.path.exists(DIRPATH_IMAGES):
-        os.makedirs(DIRPATH_IMAGES)
+    os.makedirs(DIRPATH_ANNOTATIONS, exist_ok=True)
+    os.makedirs(DIRPATH_IMAGES, exist_ok=True)
 
     download_annotations()
     download_images()
