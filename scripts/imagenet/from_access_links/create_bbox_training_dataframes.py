@@ -221,9 +221,7 @@ def main():
     """Main"""
 
     args = parse_args()
-
-    if not os.path.exists(DIRPATH_METADATA_LISTS):
-        os.makedirs(DIRPATH_METADATA_LISTS, exist_ok=True)
+    os.makedirs(DIRPATH_METADATA_LISTS, exist_ok=True)
 
     if args.task == 'detection':
         task_shortname = 'DET'

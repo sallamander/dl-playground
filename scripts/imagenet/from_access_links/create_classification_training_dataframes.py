@@ -158,8 +158,7 @@ def get_fpaths_images(dirpath_images):
 def main():
     """Main"""
 
-    if not os.path.exists(DIRPATH_METADATA_LISTS):
-        os.makedirs(DIRPATH_METADATA_LISTS, exist_ok=True)
+    os.makedirs(DIRPATH_METADATA_LISTS, exist_ok=True)
 
     df_synsets_mapping = pd.read_table(
         FPATH_SYNSETS_MAPPING, names=['synset', 'label', 'description'],

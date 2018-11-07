@@ -69,8 +69,8 @@ def plot_synset(df_fpaths_images, synset, n_images, dirpath_output):
         fname_image = os.path.basename(fpath_image)
 
         dirpath_image = os.path.join(dirpath_output, synset)
-        if not os.path.exists(dirpath_image):
-            os.makedirs(dirpath_image)
+        os.makedirs(dirpath_image, exist_ok=True)
+
         fpath_plot = os.path.join(dirpath_image, fname_image)
         image = imageio.imread(fpath_image)
 
@@ -143,8 +143,7 @@ def main():
 
     args = parse_args()
 
-    if not os.path.exists(args.dirpath_output):
-        os.makedirs(args.dirpath_output)
+    os.makedirs(args.dirpath_output, exist_ok=True)
 
     df_fpaths_images = pd.read_csv(args.fpath_df_fpaths_images)
     df_fpaths_images = add_synset_descriptions(df_fpaths_images)
