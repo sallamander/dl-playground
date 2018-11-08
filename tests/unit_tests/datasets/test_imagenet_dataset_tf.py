@@ -1,4 +1,4 @@
-"""Unit tests for datasets.imagenet"""
+"""Unit tests for datasets.imagenet_dataset_tf"""
 
 from unittest.mock import MagicMock
 
@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 import tensorflow as tf
 
-from datasets.imagenet_dataset import ImageNetDataSet
+from datasets.imagenet_dataset_tf import ImageNetDataSet
 from utils.test_utils import df_images
 
 

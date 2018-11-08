@@ -1,6 +1,6 @@
 """Integration tests for trainers.imagenet_trainer"""
 
-from datasets.imagenet_dataset import ImageNetDataSet
+from datasets.imagenet_dataset_tf import ImageNetDataSet
 from networks.alexnet import AlexNet
 from trainers.imagenet_trainer import ImageNetTrainer
 from utils.test_utils import df_images

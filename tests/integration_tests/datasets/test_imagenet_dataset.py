@@ -3,7 +3,7 @@
 import numpy as np
 import tensorflow as tf
 
-from datasets.imagenet_dataset import ImageNetDataSet
+from datasets.imagenet_dataset_tf import ImageNetDataSet
 from utils.test_utils import df_images
 
 

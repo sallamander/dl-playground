@@ -5,7 +5,7 @@ import os
 
 import pandas as pd
 
-from datasets.imagenet_dataset import ImageNetDataSet
+from datasets.imagenet_dataset_tf import ImageNetDataSet
 from networks.alexnet import AlexNet
 from trainers.imagenet_trainer import ImageNetTrainer
 from utils import dev_env
