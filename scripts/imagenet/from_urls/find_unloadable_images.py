@@ -147,7 +147,7 @@ def parse_args():
 
 
 def main():
-    """Main logic"""
+    """Main"""
 
     args = parse_args()
 

@@ -102,7 +102,7 @@ def remove_unloadable_files(df_fpaths_images):
 
 
 def main():
-    """Main logic"""
+    """Main"""
 
     files_exist = (
         os.path.exists(FPATH_BAD_FILES_TXT) and

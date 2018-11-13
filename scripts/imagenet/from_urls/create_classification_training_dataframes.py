@@ -54,7 +54,7 @@ def add_label_column(df_fpaths_images):
 
 
 def main():
-    """Main logic"""
+    """Main"""
 
     df_fpaths_images = pd.read_csv(FPATH_DF_FPATHS_IMAGES_FILTERED)
     df_fpaths_images = add_label_column(df_fpaths_images)
