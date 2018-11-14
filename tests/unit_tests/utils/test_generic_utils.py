@@ -51,7 +51,7 @@ class TestImportObject():
         assert dataframe1.equals(dataframe2)
 
 
-class TestValidateConfig():
+class TestValidateConfig(object):
     """Test `validate_config` function"""
 
     def test_validate_config__good(self):
