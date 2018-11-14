@@ -1,5 +1,22 @@
 """Generic utilities used throughout dl-playground."""
 
+import importlib
+
+
+def import_object(object_importpath):
+    """Return the object specified by `object_importpath`
+
+    :param object_importpath: import path to the object to import
+    :type object_importpath: str
+    :return: object at `object_importpath`
+    :rtype: object
+    """
+
+    module_path, object_name = object_importpath.rsplit('.', 1)
+    module = importlib.import_module(module_path)
+
+    return getattr(module, object_name)
+
 
 def validate_config(config, required_keys):
     """Validate that the `config` has the `required_keys`
