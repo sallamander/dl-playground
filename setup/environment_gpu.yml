@@ -1,5 +1,6 @@
 name: dl-playground
 channels:
+  - pytorch
   - defaults
 dependencies:
   - astroid=1.6.5=py35_0
@@ -9,6 +10,7 @@ dependencies:
   - blas=1.0=mkl
   - ca-certificates=2018.03.07=0
   - certifi=2018.4.16=py35_0
+  - cffi=1.11.5=py35he75722e_1
   - cycler=0.10.0=py35hc4d5149_0
   - dbus=1.13.2=h714fa37_1
   - decorator=4.3.0=py35_0
@@ -45,6 +47,7 @@ dependencies:
   - mkl_random=1.0.1=py35h629b387_0
   - more-itertools=4.2.0=py35_0
   - ncurses=6.1=hf484d3e_0
+  - ninja=1.8.2=py35h6bb024c_1
   - numpy=1.15.0=py35h1b885b7_0
   - numpy-base=1.15.0=py35h3dfced4_0
   - olefile=0.45.1=py35_0
@@ -62,6 +65,7 @@ dependencies:
   - prompt_toolkit=1.0.15=py35hc09de7a_0
   - ptyprocess=0.6.0=py35_0
   - py=1.5.4=py35_0
+  - pycparser=2.19=py35_0
   - pygments=2.2.0=py35h0f41973_0
   - pylint=1.9.2=py35_0
   - pyparsing=2.2.0=py35h041ed72_1
@@ -92,6 +96,8 @@ dependencies:
   - wrapt=1.10.11=py35hfdafd39_0
   - xz=5.2.4=h14c3975_4
   - zlib=1.2.11=ha838bed_2
+  - pytorch=0.4.1=py35_py27__9.0.176_7.1.2_2
+  - torchvision=0.2.1=py35_1
   - pip:
     - absl-py==0.3.0
     - astor==0.7.1
@@ -102,4 +108,5 @@ dependencies:
     - tensorboard==1.9.0
     - tensorflow-gpu==1.9.0
     - termcolor==1.1.0
+    - torch==0.4.1.post2
     - werkzeug==0.14.1

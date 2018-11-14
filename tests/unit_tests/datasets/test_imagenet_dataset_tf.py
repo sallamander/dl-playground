@@ -1,4 +1,4 @@
-"""Unit tests for datasets.imagenet"""
+"""Unit tests for datasets.imagenet_dataset_tf"""
 
 from unittest.mock import MagicMock
 
@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 import tensorflow as tf
 
-from datasets.imagenet_dataset import ImageNetDataSet
+from datasets.imagenet_dataset_tf import ImageNetDataSet
 from utils.test_utils import df_images
 
 
@@ -91,7 +91,8 @@ class TestImageNetDataSet(object):
             """Mock validate_config to pass"""
             pass
         monkeypatch.setattr(
-            'datasets.imagenet_dataset.validate_config', mock_validate_config
+            'datasets.imagenet_dataset_tf.validate_config',
+            mock_validate_config
         )
 
         # === test all attributes are set correctly === #
@@ -164,14 +165,14 @@ class TestImageNetDataSet(object):
             return image, label
 
         monkeypatch.setattr(
-            'datasets.imagenet_dataset.load_image', mock_load_image
+            'datasets.imagenet_dataset_tf.load_image', mock_load_image
         )
         monkeypatch.setattr(
-            'datasets.imagenet_dataset.reshape_image_and_label',
+            'datasets.imagenet_dataset_tf.reshape_image_and_label',
             mock_reshape_image_and_label
         )
         monkeypatch.setattr(
-            'datasets.imagenet_dataset.center_image', mock_center_image
+            'datasets.imagenet_dataset_tf.center_image', mock_center_image
         )
 
         imagenet_dataset = MagicMock()

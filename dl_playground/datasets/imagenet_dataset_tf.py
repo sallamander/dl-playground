@@ -1,4 +1,4 @@
-"""DataSet for training a model on ImageNet"""
+"""Tensorflow DataSet for training a model on ImageNet"""
 
 import tensorflow as tf
 
