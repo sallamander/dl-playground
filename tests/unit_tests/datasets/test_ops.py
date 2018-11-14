@@ -8,7 +8,9 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from datasets.ops import center_image, load_image, reshape_image_and_label
+from datasets.ops import (
+    apply_op, center_image, load_image, reshape_image_and_label
+)
 
 
 @pytest.fixture(scope='module')
@@ -22,6 +24,7 @@ def image():
     height, width = np.random.randint(128, 600, 2)
     num_channels = 3
     image = np.random.random((height, width, num_channels))
+    image = tf.constant(image)
 
     return image
 
@@ -43,7 +46,7 @@ def test_center_image(image, label):
 
     :param image: module wide image object fixture
     :type image: tensorflow.Tensor
-    :param lable: module wide label object fixture
+    :param label: module wide label object fixture
     :type label: tensorflow.Tensor
     """
 
@@ -89,7 +92,7 @@ def test_reshape_image_and_label(image, label):
 
     :param image: module wide image object fixture
     :type image: tensorflow.Tensor
-    :param lable: module wide label object fixture
+    :param label: module wide label object fixture
     :type label: tensorflow.Tensor
     """
 
@@ -116,3 +119,103 @@ def test_reshape_image_and_label(image, label):
         assert np.allclose(label_reshaped.shape, (num_label_classes,))
 
     sess.close()
+
+
+class TestApplyOp(object):
+    """Tests for `apply_op` over different use cases"""
+
+    def test_apply_op__image_centering(self, image, label):
+        """Test `apply_op` with `tf.image.per_image_standardization`
+
+        This only tests the centering of the 'image' key in the `sample` below,
+        but 'label' is still included to simulate a more realistic scenario
+        where the `sample` has both an 'image' and 'label' key.
+
+        :param image: module wide image object fixture
+        :type image: tensorflow.Tensor
+        :param label: module wide label object fixture
+        :type label: tensorflow.Tensor
+        """
+
+        sample = {'image': image, 'label': label}
+        sample_keys = {'image'}
+        map_op = tf.image.per_image_standardization
+
+        sample_centered_op = apply_op(map_op, sample, sample_keys)
+
+        with tf.Session() as sess:
+            sample_centered = sess.run(sample_centered_op)
+
+        assert sample_centered['image'].shape == sample['image'].shape
+        assert np.allclose(sample_centered['image'].mean(), 0, atol=1e-4)
+        assert np.allclose(sample_centered['image'].std(), 1, atol=1e-4)
+        assert sample_centered['label'] == 1
+
+    @pytest.mark.parametrize('num_classes', [1000, 10, 3, 2])
+    def test_apply_op__one_hot(self, image, label, num_classes):
+        """Test `apply_op` with `tf.one_hot`
+
+        This only tests that `tf.one_hot` is applied correctly to the 'label'.
+        The 'image' is still included to simulate a more realistic scenario
+        where the `sample` has both an 'image' and a 'label' key.
+
+        :param image: module wide image object fixture
+        :type image: tensorflow.Tensor
+        :param label: module wide label object fixture
+        :type label: tensorflow.Tensor
+        :param num_classes: number of classes to use as the `depth` argument to
+         `tf.one_hot`
+        :type number_classes: int
+        """
+
+        sample = {'image': image, 'label': label}
+        sample_keys = {'label'}
+        map_op = tf.one_hot
+        map_op_kwargs = {'depth': num_classes}
+
+        sample_one_hotted_op = apply_op(
+            map_op, sample, sample_keys, map_op_kwargs
+        )
+
+        with tf.Session() as sess:
+            sample_one_hotted = sess.run(sample_one_hotted_op)
+
+        assert sample_one_hotted['image'].shape == sample['image'].shape
+        assert sample_one_hotted['label'].shape == (num_classes, )
+        assert sample_one_hotted['label'].argmax() == 1
+
+    @pytest.mark.parametrize('target_image_shape', [
+        (227, 227), (64, 64), (128, 196), (64, 32)
+    ])
+    def test_apply_op__resize_images(self, image, label, target_image_shape):
+        """Test `apply_op` with `tf.image_resize_images`
+
+        `label` is not directly used in the testing, but is still included to
+        simulate a more realistic scenario where the `sample` has a 'label'
+        key.
+
+        :param image: module wide image object fixture
+        :type image: tensorflow.Tensor
+        :param label: module wide label object fixture
+        :type label: tensorflow.Tensor
+        :param target_image_shape: (height, width) to reshape `image` to
+        :type target_image_shape: tuple(int)
+        """
+
+        sample = {'image1': image, 'image2': image, 'label': label}
+        sample_keys = {'image1', 'image2'}
+        map_op = tf.image.resize_images
+        map_op_kwargs = {'size': target_image_shape}
+
+        sample_resized_op = apply_op(
+            map_op, sample, sample_keys, map_op_kwargs
+        )
+
+        with tf.Session() as sess:
+            sample_resized = sess.run(sample_resized_op)
+
+        num_channels = (3, )
+        expected_target_shape = target_image_shape + num_channels
+        assert sample_resized['image1'].shape == expected_target_shape
+        assert sample_resized['image2'].shape == expected_target_shape
+        assert sample_resized['label'] == 1

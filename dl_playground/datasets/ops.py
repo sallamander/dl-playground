@@ -3,6 +3,29 @@
 import tensorflow as tf
 
 
+def apply_op(map_op, sample, sample_keys, map_op_kwargs=None):
+    """Apply an operation to certain elements of the provided sample
+
+    :param map_op: function to apply to each of the values located at the given
+     `sample_keys` of `sample`
+    :type map_op: function
+    :param sample: holds the elements to apply the `map_op` to
+    :type sample: dict
+    :param sample_keys: holds the keys corresponding to the elements of
+     `sample` to apply the `map_op` to
+    :type sample_keys: list[str]
+    :param map_op_kwargs: holds keyword arguments to pass to the `map_op`
+    :type map_op_kwargs: dict
+    :return: `sample` with `map_op` applied to the specified elements
+    """
+
+    map_op_kwargs = {} if map_op_kwargs is None else map_op_kwargs
+    for key in sample_keys:
+        sample[key] = map_op(sample[key], **map_op_kwargs)
+
+    return sample
+
+
 def center_image(image, label):
     """Apply tf.image.per_image_standardization to `image`
 
