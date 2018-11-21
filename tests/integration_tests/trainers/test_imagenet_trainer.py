@@ -28,7 +28,7 @@ class TestImageNetTrainer(object):
             'optimizer': 'adam', 'loss': 'categorical_crossentropy',
             'batch_size': batch_size, 'num_epochs': 2
         }
-        map_ops = [
+        transformations = [
             (resize_images,
              {'size': (height, width), 'sample_keys': ['image']}),
             (tf.one_hot,
@@ -42,7 +42,7 @@ class TestImageNetTrainer(object):
 
         imagenet_dataset = ImageNetDataSet(df_images)
         tf_data_loader = TFDataLoader(imagenet_dataset)
-        tf_data_loader = TFDataLoader(imagenet_dataset, map_ops)
+        tf_data_loader = TFDataLoader(imagenet_dataset, transformations)
         dataset = tf_data_loader.get_infinite_iter(
             batch_size=batch_size
         )

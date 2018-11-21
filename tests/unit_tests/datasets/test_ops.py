@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from datasets.ops import apply_op, format_batch, resize_images
+from datasets.ops import apply_transformation, format_batch, resize_images
 
 
 @pytest.fixture(scope='module')
@@ -96,11 +96,11 @@ def test_resize_images():
         resize_images_op = resize_images(images, target_shape)
 
 
-class TestApplyOp(object):
-    """Tests for `apply_op` over different use cases"""
+class TestApplyTransformation(object):
+    """Tests for `apply_transformation` over different use cases"""
 
-    def test_apply_op__image_centering(self, image, label):
-        """Test `apply_op` with `tf.image.per_image_standardization`
+    def test_apply_transformation__image_centering(self, image, label):
+        """Test `apply_transformation` with `tf.image.per_image_standardization`
 
         This only tests the centering of the 'image' key in the `sample` below,
         but 'label' is still included to simulate a more realistic scenario
@@ -114,9 +114,11 @@ class TestApplyOp(object):
 
         sample = {'image': image, 'label': label}
         sample_keys = {'image'}
-        map_op_fn = tf.image.per_image_standardization
+        transformation_fn = tf.image.per_image_standardization
 
-        sample_centered_op = apply_op(map_op_fn, sample, sample_keys)
+        sample_centered_op = apply_transformation(
+            transformation_fn, sample, sample_keys
+        )
 
         with tf.Session() as sess:
             sample_centered = sess.run(sample_centered_op)
@@ -127,8 +129,8 @@ class TestApplyOp(object):
         assert sample_centered['label'] == 1
 
     @pytest.mark.parametrize('num_classes', [1000, 10, 3, 2])
-    def test_apply_op__one_hot(self, image, label, num_classes):
-        """Test `apply_op` with `tf.one_hot`
+    def test_apply_transformation__one_hot(self, image, label, num_classes):
+        """Test `apply_transformation` with `tf.one_hot`
 
         This only tests that `tf.one_hot` is applied correctly to the 'label'.
         The 'image' is still included to simulate a more realistic scenario
@@ -145,11 +147,11 @@ class TestApplyOp(object):
 
         sample = {'image': image, 'label': label}
         sample_keys = {'label'}
-        map_op_fn = tf.one_hot
-        map_op_fn_kwargs = {'depth': num_classes}
+        transformation_fn = tf.one_hot
+        transformation_fn_kwargs = {'depth': num_classes}
 
-        sample_one_hotted_op = apply_op(
-            map_op_fn, sample, sample_keys, map_op_fn_kwargs
+        sample_one_hotted_op = apply_transformation(
+            transformation_fn, sample, sample_keys, transformation_fn_kwargs
         )
 
         with tf.Session() as sess:
@@ -162,8 +164,9 @@ class TestApplyOp(object):
     @pytest.mark.parametrize('target_image_shape', [
         (227, 227), (64, 64), (128, 196), (64, 32)
     ])
-    def test_apply_op__resize_images(self, image, label, target_image_shape):
-        """Test `apply_op` with `tf.image_resize_images`
+    def test_apply_transformation__resize_images(self, image, label,
+                                                 target_image_shape):
+        """Test `apply_transformation` with `tf.image_resize_images`
 
         `label` is not directly used in the testing, but is still included to
         simulate a more realistic scenario where the `sample` has a 'label'
@@ -179,11 +182,11 @@ class TestApplyOp(object):
 
         sample = {'image1': image, 'image2': image, 'label': label}
         sample_keys = {'image1', 'image2'}
-        map_op_fn = tf.image.resize_images
-        map_op_fn_kwargs = {'size': target_image_shape}
+        transformation_fn = tf.image.resize_images
+        transformation_fn_kwargs = {'size': target_image_shape}
 
-        sample_resized_op = apply_op(
-            map_op_fn, sample, sample_keys, map_op_fn_kwargs
+        sample_resized_op = apply_transformation(
+            transformation_fn, sample, sample_keys, transformation_fn_kwargs
         )
 
         with tf.Session() as sess:

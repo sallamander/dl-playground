@@ -59,7 +59,7 @@ class TestTFDataLoader(object):
         """
 
         target_shape = (227, 227)
-        map_ops = [
+        transformations = [
             (resize_images,
              {'size': target_shape, 'sample_keys': ['image']}),
             (tf.one_hot,
@@ -69,7 +69,7 @@ class TestTFDataLoader(object):
         ]
 
         imagenet_dataset = ImageNetDataSet(df_images)
-        tf_data_loader = TFDataLoader(imagenet_dataset, map_ops)
+        tf_data_loader = TFDataLoader(imagenet_dataset, transformations)
 
         batches1 = self._get_batches(tf_data_loader)
         batches2 = self._get_batches(tf_data_loader)

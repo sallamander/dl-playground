@@ -3,25 +3,30 @@
 import tensorflow as tf
 
 
-def apply_op(map_op_fn, sample, sample_keys, map_op_fn_kwargs=None):
-    """Apply an operation to certain elements of the provided sample
+def apply_transformation(transformation_fn, sample, sample_keys,
+                         transformation_fn_kwargs=None):
+    """Apply a transformation to certain elements of the provided sample
 
-    :param map_op_fn: function to apply to each of the values located at the
-     given `sample_keys` of `sample`
-    :type map_op_fn: function
-    :param sample: holds the elements to apply the `map_op_fn` to
+    :param transformation_fn: function to apply to each of the values located
+     at the given `sample_keys` of `sample`
+    :type transformation_fn: function
+    :param sample: holds the elements to apply the `transformation_fn` to
     :type sample: dict
     :param sample_keys: holds the keys corresponding to the elements of
-     `sample` to apply the `map_op_fn` to
+     `sample` to apply the `transformation_fn` to
     :type sample_keys: list[str]
-    :param map_op_fn_kwargs: holds keyword arguments to pass to the `map_op_fn`
-    :type map_op_fn_kwargs: dict
-    :return: `sample` with `map_op_fn` applied to the specified elements
+    :param transformation_fn_kwargs: holds keyword arguments to pass to the
+     `transformation_fn`
+    :type transformation_fn_kwargs: dict
+    :return: `sample` with `transformation_fn` applied to the specified
+     elements
     """
 
-    map_op_fn_kwargs = {} if map_op_fn_kwargs is None else map_op_fn_kwargs
+    transformation_fn_kwargs = transformation_fn_kwargs or {}
     for key in sample_keys:
-        sample[key] = map_op_fn(sample[key], **map_op_fn_kwargs)
+        sample[key] = transformation_fn(
+            sample[key], **transformation_fn_kwargs
+        )
 
     return sample
 

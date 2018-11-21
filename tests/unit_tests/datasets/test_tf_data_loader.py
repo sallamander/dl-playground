@@ -49,13 +49,13 @@ class TestTFDataLoader(object):
         numpy_dataset = MagicMock()
         tf_data_loader = TFDataLoader(numpy_dataset=numpy_dataset)
         assert id(tf_data_loader.numpy_dataset) == id(numpy_dataset)
-        assert not tf_data_loader.map_ops
+        assert not tf_data_loader.transformations
 
-        map_ops = MagicMock()
+        transformations = MagicMock()
         tf_data_loader = TFDataLoader(
-            numpy_dataset=numpy_dataset, map_ops=map_ops
+            numpy_dataset=numpy_dataset, transformations=transformations
         )
-        assert id(tf_data_loader.map_ops) == id(map_ops)
+        assert id(tf_data_loader.transformations) == id(transformations)
 
     def test_get_infinite_iter(self):
         """Test get_infinite_iter method"""
@@ -74,7 +74,7 @@ class TestTFDataLoader(object):
             """Add 1 to the provided label"""
             return label + 1
 
-        map_ops = [
+        transformations = [
             (add_to_label, {'sample_keys': ['label']}),
             (return_max_val, {'sample_keys': ['element'], 'ceiling': 10})
         ]
@@ -87,7 +87,7 @@ class TestTFDataLoader(object):
 
         tf_data_loader = MagicMock()
         tf_data_loader.numpy_dataset = numpy_dataset
-        tf_data_loader.map_ops = map_ops
+        tf_data_loader.transformations = transformations
         tf_data_loader.get_infinite_iter = TFDataLoader.get_infinite_iter
 
         batches = self._get_batches(tf_data_loader)
