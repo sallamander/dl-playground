@@ -7,6 +7,9 @@ from torch.utils.data import Dataset
 class ImageNetDataSet(Dataset):
     """ImageNet dataset"""
 
+    input_keys = ['image']
+    target_keys = ['label']
+
     def __init__(self, df_images):
         """Init
 
@@ -24,7 +27,7 @@ class ImageNetDataSet(Dataset):
 
         self.df_images = df_images
         self.df_images['label'] = (
-            self.df_images['label'].astype(self.output_types['label'])
+            self.df_images['label'].astype(self.sample_types['label'])
         )
 
     def __getitem__(self, idx):
@@ -37,9 +40,9 @@ class ImageNetDataSet(Dataset):
         """
 
         fpath_image = self.df_images.loc[idx, 'fpath_image']
-        image = imageio.imread(fpath_image).astype(self.output_types['image'])
+        image = imageio.imread(fpath_image).astype(self.sample_types['image'])
         label = self.df_images.loc[idx, 'label']
-        assert label.dtype == self.output_types['label']
+        assert label.dtype == self.sample_types['label']
 
         sample = {'image': image, 'label': label}
 
@@ -55,7 +58,7 @@ class ImageNetDataSet(Dataset):
         return len(self.df_images)
 
     @property
-    def output_types(self):
+    def sample_types(self):
         """Return the output types corresponding to the outputs of the dataset
 
         :return: output types
@@ -66,7 +69,7 @@ class ImageNetDataSet(Dataset):
           returned from the `__getitem__` method
         """
 
-        return {'image': 'float32', 'label': 'int8'}
+        return {'image': 'float32', 'label': 'uint8'}
 
     def as_generator(self):
         """Return a generator that yields the entire dataset once

@@ -9,7 +9,7 @@ import pytest
 from utils.generic_utils import import_object, validate_config
 
 
-class TestImportObject():
+class TestImportObject(object):
     """Test `import_object` function"""
 
     def test_import_object__dev_env(self, monkeypatch):

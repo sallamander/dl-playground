@@ -1,6 +1,10 @@
 """Integration tests for trainers.imagenet_trainer"""
 
-from datasets.imagenet_dataset_tf import ImageNetDataSet
+import tensorflow as tf
+
+from datasets.imagenet_dataset_np import ImageNetDataSet
+from datasets.ops import resize_images
+from datasets.tf_data_loader import TFDataLoader
 from networks.alexnet import AlexNet
 from trainers.imagenet_trainer import ImageNetTrainer
 from utils.test_utils import df_images
@@ -20,19 +24,31 @@ class TestImageNetTrainer(object):
             'height': height, 'width': width, 'n_channels': 3,
             'n_classes': 1000
         }
-        dataset_config = {
-            'height': height, 'width': width, 'batch_size': batch_size
-        }
         trainer_config = {
             'optimizer': 'adam', 'loss': 'categorical_crossentropy',
             'batch_size': batch_size, 'num_epochs': 2
         }
+        map_ops = [
+            (resize_images,
+             {'size': (height, width), 'sample_keys': ['image']}),
+            (tf.one_hot,
+             {'sample_keys': ['label'], 'depth': 1000}),
+            (tf.image.per_image_standardization,
+             {'sample_keys': ['image']}),
+        ]
 
         alexnet = AlexNet(network_config)
-        imagenet_dataset = ImageNetDataSet(df_images, dataset_config)
         imagenet_trainer = ImageNetTrainer(trainer_config)
 
+        imagenet_dataset = ImageNetDataSet(df_images)
+        tf_data_loader = TFDataLoader(imagenet_dataset)
+        tf_data_loader = TFDataLoader(imagenet_dataset, map_ops)
+        dataset = tf_data_loader.get_infinite_iter(
+            batch_size=batch_size
+        )
+
         imagenet_trainer.train(
-            train_dataset=imagenet_dataset, val_dataset=imagenet_dataset,
+            train_dataset=dataset, steps_per_epoch=len(imagenet_dataset),
+            validation_dataset=dataset, validation_steps=len(imagenet_dataset),
             network=alexnet
         )
