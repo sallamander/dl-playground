@@ -70,6 +70,7 @@ class TestImageNetTrainer(object):
         imagenet_dataset.get_infinite_iter = MagicMock()
 
         imagenet_trainer = MagicMock()
+        imagenet_trainer.num_epochs = 2
         imagenet_trainer.optimizer = 'adam'
         imagenet_trainer.loss = 'categorical_crossentropy'
 
@@ -77,20 +78,25 @@ class TestImageNetTrainer(object):
         with patch.object(Model, 'fit') as fit_fn:
             imagenet_trainer.train(
                 self=imagenet_trainer,
-                train_dataset=imagenet_dataset, network=alexnet
+                train_dataset=imagenet_dataset, network=alexnet,
+                steps_per_epoch=1
             )
             assert fit_fn.call_count == 1
-        assert imagenet_dataset.get_infinite_iter.call_count == 1
-        assert imagenet_dataset.__len__.call_count == 1
+            fit_fn.assert_called_with(
+                x=imagenet_dataset, steps_per_epoch=1,
+                epochs=2, verbose=True, validation_data=None,
+                validation_steps=None
+            )
 
-        # reassign `get_infinite_iter` and `__len__` to reset their call count
-        imagenet_dataset.get_infinite_iter = MagicMock()
-        imagenet_dataset.__len__ = MagicMock()
         with patch.object(Model, 'fit') as fit_fn:
             imagenet_trainer.train(
                 self=imagenet_trainer, train_dataset=imagenet_dataset,
-                network=alexnet, val_dataset=imagenet_dataset
+                network=alexnet, validation_dataset=imagenet_dataset,
+                steps_per_epoch=45, validation_steps=2
             )
             assert fit_fn.call_count == 1
-        assert imagenet_dataset.get_infinite_iter.call_count == 2
-        assert imagenet_dataset.__len__.call_count == 2
+            fit_fn.assert_called_with(
+                x=imagenet_dataset, steps_per_epoch=45,
+                epochs=2, verbose=True, validation_data=imagenet_dataset,
+                validation_steps=2
+            )

@@ -30,35 +30,29 @@ class ImageNetTrainer(object):
         self.batch_size = trainer_config['batch_size']
         self.num_epochs = trainer_config['num_epochs']
 
-    def train(self, train_dataset, network, val_dataset=None):
+    def train(self, network, train_dataset, steps_per_epoch,
+              validation_dataset=None, validation_steps=None):
         """Train the network as specified via the __init__ parameters
 
         :param train_dataset: dataset that iterates over the training data
          indefinitely
-        :type train_dataset: tf.data.Dataset
+        :type train_data: tf.data.Dataset
         :param network: network object to use for training
         :type network: networks.alexnet.AlexNet
-        :param val_dataset: optional dataset that iterates over the validation
-         data indefinitly
-        :type val_dataset: tf.data.Dataset
+        :param validation_dataset: optional dataset that iterates over the
+         validation data indefinitly
+        :type validation_dataset: tf.data.Dataset
         """
 
         inputs, outputs = network.build()
         model = Model(inputs=inputs, outputs=outputs)
         model.compile(optimizer=self.optimizer, loss=self.loss)
 
-        if val_dataset is not None:
-            validation_data = val_dataset.get_infinite_iter()
-            validation_steps = len(val_dataset) // self.batch_size
-        else:
-            validation_data = None
-            validation_steps = None
-
         model.fit(
-            x=train_dataset.get_infinite_iter(),
-            steps_per_epoch=len(train_dataset) // self.batch_size,
+            x=train_dataset,
+            steps_per_epoch=steps_per_epoch,
             epochs=self.num_epochs,
             verbose=True,
-            validation_data=validation_data,
+            validation_data=validation_dataset,
             validation_steps=validation_steps
         )

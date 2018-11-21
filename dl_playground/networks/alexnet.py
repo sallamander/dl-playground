@@ -38,7 +38,7 @@ class AlexNet(Network):
         n_channels = self.network_config['n_channels']
         n_classes = self.network_config['n_classes']
 
-        inputs = Input(shape=(height, width, n_channels))
+        inputs = Input(shape=(height, width, n_channels), name='image')
 
         # === convolutional block 1 === #
         layer = Conv2D(
@@ -73,6 +73,8 @@ class AlexNet(Network):
         layer = Dropout(0.5)(layer)
 
         # === output layer === #
-        outputs = Dense(units=n_classes, activation='softmax')(layer)
+        outputs = Dense(
+            units=n_classes, activation='softmax', name='label'
+        )(layer)
 
         return inputs, outputs

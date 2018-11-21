@@ -20,7 +20,7 @@ class TestImageNetDataSet(object):
         - All attributes are set correctly in the __init__
         - A KeyError is raised if the fpath_image or label column is missing in
           the `df_images` passed to the __init__ of the ImageNetDataSet
-        - The `output_types` property is returned correctly
+        - The `sample_types` property is returned correctly
 
         :param df_images : df_images object fixture
         :type: pandas.DataFrame
@@ -37,9 +37,9 @@ class TestImageNetDataSet(object):
             with pytest.raises(KeyError):
                 ImageNetDataSet(df_images_underspecified)
 
-        # === test `output_types` === #
-        expected_output_types = {'image': 'float32', 'label': 'int8'}
-        assert dataset.output_types == expected_output_types
+        # === test `sample_types` === #
+        expected_sample_types = {'image': 'float32', 'label': 'uint8'}
+        assert dataset.sample_types == expected_sample_types
 
     def test_len(self, df_images):
         """Test __len__ method
@@ -61,19 +61,19 @@ class TestImageNetDataSet(object):
         :type: pandas.DataFrame
         """
 
-        output_types = {'image': 'float16', 'label': 'int16'}
-        df_images['label'] = df_images['label'].astype(output_types['label'])
+        sample_types = {'image': 'float16', 'label': 'int16'}
+        df_images['label'] = df_images['label'].astype(sample_types['label'])
 
         imagenet_dataset = MagicMock()
         imagenet_dataset.df_images = df_images
-        imagenet_dataset.output_types = output_types
+        imagenet_dataset.sample_types = sample_types
         imagenet_dataset.__getitem__ = ImageNetDataSet.__getitem__
 
         for idx in range(3):
             sample = imagenet_dataset[idx]
 
-            assert sample['image'].dtype == output_types['image']
-            assert sample['label'].dtype == output_types['label']
+            assert sample['image'].dtype == sample_types['image']
+            assert sample['label'].dtype == sample_types['label']
 
             assert sample['label'] == df_images.loc[idx, 'label']
             assert np.array_equal(
