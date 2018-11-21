@@ -2,25 +2,26 @@
 
 import tensorflow as tf
 
-from datasets.ops import apply_op, format_batch
+from datasets.ops import apply_transformation, format_batch
 
 
 class TFDataLoader(object):
     """Loader for batches of a tf.data.Dataset"""
 
-    def __init__(self, numpy_dataset, map_ops=None):
+    def __init__(self, numpy_dataset, transformations=None):
         """Init
 
         :param numpy_dataset: dataset that provides samples for training
         :type numpy_dataset: torch.utils.data.Dataset object
-        :param map_ops: holds 2 element tuples with the first element being a
-         function to apply to the dataset samples and the second element being
-         a dictionary of keyword arguments to pass to those functions
-        :type map_ops: list[tuple(function, dict)]
+        :param transformations: holds 2 element tuples with the first
+         element being a function to apply to the dataset samples and the
+         second element being a dictionary of keyword arguments to pass to
+         those functions
+        :type transformations: list[tuple(function, dict)]
         """
 
         self.numpy_dataset = numpy_dataset
-        self.map_ops = [] if map_ops is None else map_ops
+        self.transformations = transformations or []
 
     def get_infinite_iter(self, batch_size, shuffle_buffer_size=10000,
                           prefetch_buffer_size=1, num_parallel_calls=1):
@@ -46,13 +47,15 @@ class TFDataLoader(object):
         dataset = dataset.shuffle(shuffle_buffer_size)
         dataset = dataset.repeat()
 
-        for map_op_fn, map_op_kwargs in self.map_ops:
-            map_op_kwargs = map_op_kwargs.copy()
-            sample_keys = map_op_kwargs.pop('sample_keys')
+        it = self.transformations
+        for transformation_fn, transformation_fn_kwargs in it:
+            transformation_fn_kwargs = transformation_fn_kwargs.copy()
+            sample_keys = transformation_fn_kwargs.pop('sample_keys')
 
             dataset = dataset.map(
-                lambda sample: apply_op(
-                    map_op_fn, sample, sample_keys, map_op_kwargs
+                lambda sample: apply_transformation(
+                    transformation_fn, sample,
+                    sample_keys, transformation_fn_kwargs
                 ), num_parallel_calls=num_parallel_calls
             )
 

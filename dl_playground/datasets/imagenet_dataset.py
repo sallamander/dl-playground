@@ -9,6 +9,7 @@ class ImageNetDataSet(Dataset):
 
     input_keys = ['image']
     target_keys = ['label']
+    sample_types = {'image': 'float32', 'label': 'uint8'}
 
     def __init__(self, df_images):
         """Init
@@ -56,20 +57,6 @@ class ImageNetDataSet(Dataset):
         """
 
         return len(self.df_images)
-
-    @property
-    def sample_types(self):
-        """Return the output types corresponding to the outputs of the dataset
-
-        :return: output types
-        :rtype: dict with keys:
-        - str image: holds the data type of the 'image' key for each sample
-          returned from the `__getitem__` method
-        - str label: holds the data type of the 'label' key for each sample
-          returned from the `__getitem__` method
-        """
-
-        return {'image': 'float32', 'label': 'uint8'}
 
     def as_generator(self):
         """Return a generator that yields the entire dataset once

@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 import imageio
 
-from datasets.imagenet_dataset_np import ImageNetDataSet
+from datasets.imagenet_dataset import ImageNetDataSet
 from utils.test_utils import df_images
 
 

@@ -2,7 +2,7 @@
 
 import tensorflow as tf
 
-from datasets.imagenet_dataset_np import ImageNetDataSet
+from datasets.imagenet_dataset import ImageNetDataSet
 from datasets.ops import resize_images
 from datasets.tf_data_loader import TFDataLoader
 from networks.alexnet import AlexNet
@@ -28,7 +28,7 @@ class TestImageNetTrainer(object):
             'optimizer': 'adam', 'loss': 'categorical_crossentropy',
             'batch_size': batch_size, 'num_epochs': 2
         }
-        map_ops = [
+        transformations = [
             (resize_images,
              {'size': (height, width), 'sample_keys': ['image']}),
             (tf.one_hot,
@@ -42,7 +42,7 @@ class TestImageNetTrainer(object):
 
         imagenet_dataset = ImageNetDataSet(df_images)
         tf_data_loader = TFDataLoader(imagenet_dataset)
-        tf_data_loader = TFDataLoader(imagenet_dataset, map_ops)
+        tf_data_loader = TFDataLoader(imagenet_dataset, transformations)
         dataset = tf_data_loader.get_infinite_iter(
             batch_size=batch_size
         )
