@@ -4,8 +4,11 @@
 import os
 
 import pandas as pd
+import tensorflow as tf
 
-from datasets.imagenet_dataset_tf import ImageNetDataSet
+from datasets.imagenet_dataset import ImageNetDataSet
+from datasets.ops import resize_images
+from datasets.tf_data_loader import TFDataLoader
 from networks.alexnet import AlexNet
 from trainers.imagenet_trainer import ImageNetTrainer
 from utils import dev_env
@@ -24,24 +27,33 @@ IMAGE_WIDTH = 227
 BATCH_SIZE = 128
 
 
-def get_datasets():
-    """Return train and val datasets
+def get_data_loaders():
+    """Return train and validation data loaders
 
-    :return: datasets to pass to an ImageNetTrainer object
-    :rtype: tuple(datasets.imagenet_dataset.ImageNetDataSet)
+    :return: loaders of the training and validation data
+    :rtype: tuple(datasets.tf_data_loader.TFDataLoader)
     """
 
     df_train = pd.read_csv(FPATH_DF_TRAIN_SET)
     df_val = pd.read_csv(FPATH_DF_VAL_SET)
 
-    dataset_config = {
-        'height': IMAGE_HEIGHT, 'width': IMAGE_WIDTH,
-        'batch_size': BATCH_SIZE
-    }
-    train_dataset = ImageNetDataSet(df_train, dataset_config)
-    val_dataset = ImageNetDataSet(df_val, dataset_config)
+    train_dataset = ImageNetDataSet(df_train)
+    validation_dataset = ImageNetDataSet(df_val)
 
-    return train_dataset, val_dataset
+    transformations = [
+        (resize_images,
+         {'sample_keys': ['image'], 'size': (IMAGE_HEIGHT, IMAGE_WIDTH)}),
+        (tf.one_hot,
+         {'sample_keys': ['label'], 'depth': 1000}),
+        (tf.image.per_image_standardization,
+         {'sample_keys': ['image']})
+    ]
+    train_loader = TFDataLoader(train_dataset, transformations)
+    validation_loader = (
+        TFDataLoader(validation_dataset, transformations)
+    )
+
+    return train_loader, validation_loader
 
 
 def get_network():
@@ -75,13 +87,21 @@ def get_trainer():
 def main():
     """Train AlexNet on ImageNet"""
 
-    train_dataset, val_dataset = get_datasets()
-    network = get_network()
+    train_loader, validation_loader = get_data_loaders()
+    alexnet = get_network()
     trainer = get_trainer()
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-    trainer.train(train_dataset, network, val_dataset)
+    train_dataset = train_loader.get_infinite_iter(BATCH_SIZE)
+    validation_dataset = validation_loader.get_infinite_iter(BATCH_SIZE)
 
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    trainer.train(
+        network=alexnet,
+        train_dataset=train_dataset,
+        steps_per_epoch=len(train_loader.numpy_dataset),
+        validation_dataset=validation_dataset,
+        validation_steps=len(validation_loader.numpy_dataset)
+    )
 
 if __name__ == '__main__':
     main()
