@@ -1,4 +1,4 @@
-"""AlexNet implementation
+"""AlexNet implementation written with tensorflow.keras
 
 Reference paper (using bitly link to save line length): https://bit.ly/2v4Aihl
 
@@ -42,26 +42,26 @@ class AlexNet(Network):
 
         # === convolutional block 1 === #
         layer = Conv2D(
-            filters=96, kernel_size=(11, 11), strides=(4, 4), padding='same',
+            filters=96, kernel_size=(11, 11), strides=(4, 4), padding='valid',
             activation='relu'
         )(inputs)
         layer = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(layer)
 
         # === convolutional block 2 === #
         layer = Conv2D(
-            filters=256, kernel_size=(5, 5), padding='same', activation='relu'
+            filters=256, kernel_size=(5, 5), padding='valid', activation='relu'
         )(layer)
         layer = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(layer)
 
         # === convolutional blocks 3, 4, 5 === #
         layer = Conv2D(
-            filters=384, kernel_size=(3, 3), padding='same', activation='relu'
+            filters=384, kernel_size=(3, 3), padding='valid', activation='relu'
         )(layer)
         layer = Conv2D(
-            filters=384, kernel_size=(3, 3), padding='same', activation='relu'
+            filters=384, kernel_size=(3, 3), padding='valid', activation='relu'
         )(layer)
         layer = Conv2D(
-            filters=256, kernel_size=(3, 3), padding='same', activation='relu'
+            filters=256, kernel_size=(3, 3), padding='valid', activation='relu'
         )(layer)
         layer = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(layer)
 

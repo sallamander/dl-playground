@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from networks.alexnet import AlexNet, Network
+from networks.alexnet_tf import AlexNet, Network
 
 
 class TestAlexNet(object):
