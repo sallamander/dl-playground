@@ -44,7 +44,7 @@ class ImageNetTrainer(object):
         :type validation_dataset: tf.data.Dataset
         """
 
-        inputs, outputs = network.build()
+        inputs, outputs = network.forward()
         model = Model(inputs=inputs, outputs=outputs)
         model.compile(optimizer=self.optimizer, loss=self.loss)
 

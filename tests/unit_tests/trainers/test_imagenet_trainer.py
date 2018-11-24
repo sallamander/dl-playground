@@ -23,7 +23,7 @@ class TestImageNetTrainer(object):
         :rtype: unittest.mock.MagicMock
         """
 
-        def mock_build():
+        def mock_forward():
             """Return mock `inputs` and `outputs`"""
 
             inputs = Input(shape=(self.HEIGHT, self.WIDTH, self.NUM_CHANNELS))
@@ -31,7 +31,7 @@ class TestImageNetTrainer(object):
             return inputs, outputs
 
         alexnet = MagicMock()
-        alexnet.build = mock_build
+        alexnet.forward = mock_forward
         return alexnet
 
     def test_init(self, monkeypatch):
