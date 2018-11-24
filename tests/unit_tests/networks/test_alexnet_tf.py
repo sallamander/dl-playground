@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from networks.alexnet_tf import AlexNet, Network
+from networks.alexnet_tf import AlexNet
 
 
 class TestAlexNet(object):
@@ -41,18 +41,16 @@ class TestAlexNet(object):
             'height', 'width', 'n_channels', 'n_classes'
         }
 
-        def mock_init(self, network_config):
-            """Mock __init__
-
-            The `__init__` only needs to set `self.network_config` equal to the
-            input `network_config.`
-            """
-            self.network_config = network_config
-        monkeypatch.setattr(Network, '__init__', mock_init)
+        mock_validate_config = MagicMock()
+        monkeypatch.setattr(
+            'networks.alexnet_tf.validate_config', mock_validate_config
+        )
 
         alexnet = AlexNet(network_config)
-        for key, value in network_config.items():
-            assert alexnet.network_config[key] == value
+        assert alexnet.network_config == network_config
+        mock_validate_config.assert_called_once_with(
+            network_config, AlexNet.required_config_keys
+        )
 
     def test_build(self, network_config):
         """Test build method
