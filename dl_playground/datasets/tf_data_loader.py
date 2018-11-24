@@ -13,10 +13,10 @@ class TFDataLoader(object):
 
         :param numpy_dataset: dataset that provides samples for training
         :type numpy_dataset: torch.utils.data.Dataset object
-        :param transformations: holds 2 element tuples with the first
-         element being a function to apply to the dataset samples and the
-         second element being a dictionary of keyword arguments to pass to
-         those functions
+        :param transformations: holds 2 element tuples with the first element
+         being a function to apply to the dataset samples and the second
+         element being a dictionary of keyword arguments to pass to those
+         functions
         :type transformations: list[tuple(function, dict)]
         """
 

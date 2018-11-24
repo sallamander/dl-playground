@@ -38,6 +38,7 @@ class ImageNetDataSet(Dataset):
         - numpy.ndarray image: pixel data loaded from the `fpath_image` at
           index `idx` of `self.df_images`
         - int label: class label assigned to the returned image
+        :rtype: dict
         """
 
         fpath_image = self.df_images.loc[idx, 'fpath_image']

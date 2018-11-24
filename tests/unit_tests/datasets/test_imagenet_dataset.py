@@ -54,7 +54,7 @@ class TestImageNetDataSet(object):
 
         assert len(imagenet_dataset) == 3
 
-    def test_get_item(self, df_images):
+    def test_getitem(self, df_images):
         """Test __getitem__ method
 
         :param df_images : df_images object fixture
