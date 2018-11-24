@@ -35,8 +35,11 @@ class AlexNet(object):
         validate_config(network_config, self.required_config_keys)
         self.network_config = network_config
 
-    def build(self):
-        """Return the inputs and outputs to instantiate a tf.keras.Model object
+    def forward(self):
+        """Return the inputs and outputs representing a forward pass of AlexNet
+
+        The returned inputs and outputs can be placed right into a
+        `tf.keras.Model` object as the `inputs` and `outputs` arguments.
 
         :return: inputs of shape (batch_size, height, width, n_channels)
          and outputs of shape (batch_size, n_classes)

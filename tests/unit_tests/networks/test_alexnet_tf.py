@@ -52,8 +52,8 @@ class TestAlexNet(object):
             network_config, AlexNet.required_config_keys
         )
 
-    def test_build(self, network_config):
-        """Test build method
+    def test_forward(self, network_config):
+        """Test forward method
 
         This tests a couple of things:
         - The input and output layers are of the right type and shape
@@ -62,9 +62,9 @@ class TestAlexNet(object):
         """
 
         alexnet = MagicMock()
-        alexnet.build = AlexNet.build
+        alexnet.forward = AlexNet.forward
         alexnet.network_config = network_config
-        inputs, outputs = alexnet.build(self=alexnet)
+        inputs, outputs = alexnet.forward(self=alexnet)
 
         assert isinstance(inputs, tf.Tensor)
         assert isinstance(outputs, tf.Tensor)
