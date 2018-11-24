@@ -1,4 +1,4 @@
-"""AlexNet implementation
+"""AlexNet implementation written with tensorflow.keras
 
 Reference paper (using bitly link to save line length): https://bit.ly/2v4Aihl
 
@@ -18,10 +18,10 @@ class AlexNet(Network):
     """AlexNet model
 
     `network_config` passed to the `__init__` must contain the following keys:
-    - int or float height: height of the input to the network
-    - int or float width: width of the input to the network
-    - int or float n_channels: number of channels of the input
-    - int or float n_classes: number of classes in the output layer
+    - int height: height of the input to the network
+    - int width: width of the input to the network
+    - int n_channels: number of channels of the input
+    - int n_classes: number of classes in the output layer
     """
 
     required_config_keys = {'height', 'width', 'n_channels', 'n_classes'}
@@ -29,7 +29,8 @@ class AlexNet(Network):
     def build(self):
         """Return the inputs and outputs to instantiate a tf.keras.Model object
 
-        :return: inputs and outputs
+        :return: inputs of shape (batch_size, height, width, n_channels)
+         and outputs of shape (batch_size, n_classes)
         :rtype: tuple(tensorflow.Tensor)
         """
 
@@ -42,26 +43,26 @@ class AlexNet(Network):
 
         # === convolutional block 1 === #
         layer = Conv2D(
-            filters=96, kernel_size=(11, 11), strides=(4, 4), padding='same',
+            filters=96, kernel_size=(11, 11), strides=(4, 4), padding='valid',
             activation='relu'
         )(inputs)
         layer = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(layer)
 
         # === convolutional block 2 === #
         layer = Conv2D(
-            filters=256, kernel_size=(5, 5), padding='same', activation='relu'
+            filters=256, kernel_size=(5, 5), padding='valid', activation='relu'
         )(layer)
         layer = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(layer)
 
         # === convolutional blocks 3, 4, 5 === #
         layer = Conv2D(
-            filters=384, kernel_size=(3, 3), padding='same', activation='relu'
+            filters=384, kernel_size=(3, 3), padding='valid', activation='relu'
         )(layer)
         layer = Conv2D(
-            filters=384, kernel_size=(3, 3), padding='same', activation='relu'
+            filters=384, kernel_size=(3, 3), padding='valid', activation='relu'
         )(layer)
         layer = Conv2D(
-            filters=256, kernel_size=(3, 3), padding='same', activation='relu'
+            filters=256, kernel_size=(3, 3), padding='valid', activation='relu'
         )(layer)
         layer = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(layer)
 

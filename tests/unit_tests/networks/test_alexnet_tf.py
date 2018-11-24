@@ -1,4 +1,4 @@
-"""Unit tests for networks.alexnet"""
+"""Unit tests for networks.alexnet_tf"""
 
 from unittest.mock import MagicMock
 
@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from networks.alexnet import AlexNet, Network
+from networks.alexnet_tf import AlexNet, Network
 
 
 class TestAlexNet(object):

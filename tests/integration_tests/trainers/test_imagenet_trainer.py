@@ -5,7 +5,7 @@ import tensorflow as tf
 from datasets.imagenet_dataset import ImageNetDataSet
 from datasets.ops import resize_images
 from datasets.tf_data_loader import TFDataLoader
-from networks.alexnet import AlexNet
+from networks.alexnet_tf import AlexNet
 from trainers.imagenet_trainer import ImageNetTrainer
 from utils.test_utils import df_images
 
