@@ -1,4 +1,4 @@
-"""Unit tests for networks.alexnet"""
+"""Unit tests for networks.alexnet_tf"""
 
 from unittest.mock import MagicMock
 

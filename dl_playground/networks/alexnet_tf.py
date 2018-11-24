@@ -18,10 +18,10 @@ class AlexNet(Network):
     """AlexNet model
 
     `network_config` passed to the `__init__` must contain the following keys:
-    - int or float height: height of the input to the network
-    - int or float width: width of the input to the network
-    - int or float n_channels: number of channels of the input
-    - int or float n_classes: number of classes in the output layer
+    - int height: height of the input to the network
+    - int width: width of the input to the network
+    - int n_channels: number of channels of the input
+    - int n_classes: number of classes in the output layer
     """
 
     required_config_keys = {'height', 'width', 'n_channels', 'n_classes'}
@@ -29,7 +29,8 @@ class AlexNet(Network):
     def build(self):
         """Return the inputs and outputs to instantiate a tf.keras.Model object
 
-        :return: inputs and outputs
+        :return: inputs of shape (batch_size, height, width, n_channels)
+         and outputs of shape (batch_size, n_classes)
         :rtype: tuple(tensorflow.Tensor)
         """
 
