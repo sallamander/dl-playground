@@ -63,3 +63,17 @@ class TestPyTorchDataSetTransformer(object):
         )
         mock_apply_transformation.assert_any_call(1, 10, ['label'], {})
         mock_apply_transformation.assert_called_with(2, 10, ['element'], {})
+
+    def test_len(self):
+        """Test __len__ method"""
+
+        dataset_transformer = MagicMock()
+        dataset_transformer.__len__ = PyTorchDataSetTransformer.__len__
+        dataset_transformer.numpy_dataset = MagicMock()
+
+        mock_len = MagicMock()
+        dataset_transformer.numpy_dataset.__len__ = mock_len
+
+        for len_value in [1, 3, 5]:
+            mock_len.return_value = len_value
+            assert len(dataset_transformer) == len_value
