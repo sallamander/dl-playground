@@ -1,7 +1,5 @@
 """Tensorflow operations for tf.Dataset objects"""
 
-import tensorflow as tf
-
 
 def apply_transformation(transformation_fn, sample, sample_keys,
                          transformation_fn_kwargs=None):
@@ -48,20 +46,3 @@ def format_batch(batch, input_keys, target_keys):
     inputs = {input_key: batch[input_key] for input_key in input_keys}
     targets = {target_key: batch[target_key] for target_key in target_keys}
     return (inputs, targets)
-
-
-def resize_images(images, size):
-    """Wrapper around tf.image.resize_images to resolve unknown shape errors
-
-    :param images: 4-D tensor of shape (batch, height, width, n_channels) or a
-     3-D tensor of shape (height, with, n_channels)
-    :type image: tensorflow.Tensor
-    :param size: the new (height, width) to resize `images` to
-    :type size: iterable of ints
-    :return: `images` resized
-    :rtype: tensorflow.Tensor
-    """
-
-    images.set_shape((None, None, None))
-    images = tf.image.resize_images(images, size=size)
-    return images

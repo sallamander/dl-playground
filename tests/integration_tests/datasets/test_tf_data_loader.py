@@ -4,7 +4,6 @@ import numpy as np
 import tensorflow as tf
 
 from datasets.imagenet_dataset import ImageNetDataSet
-from datasets.ops import resize_images
 from datasets.tf_data_loader import TFDataLoader
 from utils.test_utils import df_images
 
@@ -58,17 +57,15 @@ class TestTFDataLoader(object):
         :type df_images: pandas.DataFrame
         """
 
-        target_shape = (227, 227)
         transformations = [
-            (resize_images,
-             {'size': target_shape, 'sample_keys': ['image']}),
             (tf.one_hot,
              {'sample_keys': ['label'], 'depth': 1000}),
             (tf.image.per_image_standardization,
              {'sample_keys': ['image']}),
         ]
 
-        imagenet_dataset = ImageNetDataSet(df_images)
+        dataset_config = {'height': 227, 'width': 227}
+        imagenet_dataset = ImageNetDataSet(df_images, dataset_config)
         tf_data_loader = TFDataLoader(imagenet_dataset, transformations)
 
         batches1 = self._get_batches(tf_data_loader)
