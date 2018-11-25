@@ -77,25 +77,6 @@ def test_format_batch():
     assert np.array_equal(formatted_batch[1]['labels2'], labels2)
 
 
-def test_resize_images():
-    """Test resize_images"""
-
-    images = tf.placeholder(tf.float32, name='images')
-
-    target_shape = (227, 227)
-    resize_images_op = resize_images(images, target_shape)
-    with tf.Session() as sess:
-        resized_images = sess.run(
-            resize_images_op, feed_dict={images: np.ones((128, 64, 3))}
-        )
-    assert resized_images.shape == (227, 227, 3)
-
-    images = tf.placeholder(tf.float32, name='images')
-    images.set_shape = MagicMock()
-    with pytest.raises(ValueError):
-        resize_images_op = resize_images(images, target_shape)
-
-
 class TestApplyTransformation(object):
     """Tests for `apply_transformation` over different use cases"""
 
