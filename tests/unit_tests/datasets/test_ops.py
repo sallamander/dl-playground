@@ -1,12 +1,10 @@
 """Unit tests for datasets.ops"""
 
-from unittest.mock import MagicMock
-
 import numpy as np
 import pytest
 import tensorflow as tf
 
-from datasets.ops import apply_transformation, format_batch, resize_images
+from datasets.ops import apply_transformation, format_batch
 
 
 @pytest.fixture(scope='module')
@@ -141,40 +139,3 @@ class TestApplyTransformation(object):
         assert sample_one_hotted['image'].shape == sample['image'].shape
         assert sample_one_hotted['label'].shape == (num_classes, )
         assert sample_one_hotted['label'].argmax() == 1
-
-    @pytest.mark.parametrize('target_image_shape', [
-        (227, 227), (64, 64), (128, 196), (64, 32)
-    ])
-    def test_apply_transformation__resize_images(self, image, label,
-                                                 target_image_shape):
-        """Test `apply_transformation` with `tf.image_resize_images`
-
-        `label` is not directly used in the testing, but is still included to
-        simulate a more realistic scenario where the `sample` has a 'label'
-        key.
-
-        :param image: module wide image object fixture
-        :type image: tensorflow.Tensor
-        :param label: module wide label object fixture
-        :type label: tensorflow.Tensor
-        :param target_image_shape: (height, width) to reshape `image` to
-        :type target_image_shape: tuple(int)
-        """
-
-        sample = {'image1': image, 'image2': image, 'label': label}
-        sample_keys = {'image1', 'image2'}
-        transformation_fn = tf.image.resize_images
-        transformation_fn_kwargs = {'size': target_image_shape}
-
-        sample_resized_op = apply_transformation(
-            transformation_fn, sample, sample_keys, transformation_fn_kwargs
-        )
-
-        with tf.Session() as sess:
-            sample_resized = sess.run(sample_resized_op)
-
-        num_channels = (3, )
-        expected_target_shape = target_image_shape + num_channels
-        assert sample_resized['image1'].shape == expected_target_shape
-        assert sample_resized['image2'].shape == expected_target_shape
-        assert sample_resized['label'] == 1
