@@ -1,9 +1,11 @@
 """Integration tests for datasets.pytorch_dataset_transformer"""
 
+import numpy as np
 from torch import Tensor
 from torchvision.transforms.functional import to_tensor
 
 from datasets.imagenet_dataset import ImageNetDataSet
+from datasets.ops import per_image_standardization
 from datasets.pytorch_dataset_transformer import PyTorchDataSetTransformer
 from utils.test_utils import df_images
 
@@ -21,7 +23,10 @@ class TestPyTorchDataSetTransformer(object):
         dataset_config = {'height': 227, 'width': 227}
         imagenet_dataset = ImageNetDataSet(df_images, dataset_config)
 
-        transformations = [(to_tensor, {'sample_keys': ['image']})]
+        transformations = [
+            (per_image_standardization, {'sample_keys': ['image']}),
+            (to_tensor, {'sample_keys': ['image']})
+        ]
         imagenet_datsaet_transformed = PyTorchDataSetTransformer(
             numpy_dataset=imagenet_dataset, transformations=transformations
         )
@@ -29,6 +34,10 @@ class TestPyTorchDataSetTransformer(object):
         for idx in range(2):
             sample = imagenet_datsaet_transformed[idx]
             assert set(sample) == {'image', 'label'}
+
             assert sample['image'].shape == (3, 227, 227)
+            assert np.allclose(sample['image'].mean(), 0, atol=1e-6)
+            assert np.allclose(sample['image'].std(), 1, atol=1e-6)
             assert isinstance(sample['image'], Tensor)
+
             assert sample['label'] == idx
