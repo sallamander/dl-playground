@@ -4,7 +4,9 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from datasets.ops import apply_transformation, format_batch
+from datasets.ops import (
+    apply_transformation, format_batch, per_image_standardization
+)
 
 
 @pytest.fixture(scope='module')
@@ -139,3 +141,35 @@ class TestApplyTransformation(object):
         assert sample_one_hotted['image'].shape == sample['image'].shape
         assert sample_one_hotted['label'].shape == (num_classes, )
         assert sample_one_hotted['label'].argmax() == 1
+
+
+class TestPerImageStandardization(object):
+    """Test `per_image_standardization`"""
+
+    def test_per_image_standardization(self):
+        """Test `per_image_standardization` on a non-uniform image"""
+
+        image = np.random.random((227, 227, 3))
+        image_standardized = per_image_standardization(image)
+
+        assert np.allclose(image_standardized.mean(), 0)
+        assert np.allclose(image_standardized.std(), 1)
+
+        with pytest.raises(ValueError):
+            image = np.random.random((1, 2, 3, 4))
+            image_standardized = per_image_standardization(image)
+
+    def test_per_image_standardization__uniform(self):
+        """Test `per_image_standardization` on a uniform image
+
+        The main point of this test is to ensure that there is no division by
+        zero because of the uniformity of the image. In this case, we expect
+        that the standard deviation of the pixel values will be 0, but that the
+        resulting mean will still also be 0.
+        """
+
+        image = np.ones((227, 227, 3))
+        image_standardized = per_image_standardization(image)
+
+        assert np.allclose(image_standardized.mean(), 0)
+        assert np.allclose(image_standardized.std(), 0)
