@@ -11,7 +11,9 @@ dependencies:
   - ca-certificates=2018.03.07=0
   - certifi=2018.4.16=py35_0
   - cffi=1.11.5=py35he75722e_1
+  - cloudpickle=0.5.5=py35_0
   - cycler=0.10.0=py35hc4d5149_0
+  - dask-core=0.19.2=py35_0
   - dbus=1.13.2=h714fa37_1
   - decorator=4.3.0=py35_0
   - execnet=1.3.0=py35_1
@@ -47,6 +49,7 @@ dependencies:
   - mkl_random=1.0.1=py35h629b387_0
   - more-itertools=4.2.0=py35_0
   - ncurses=6.1=hf484d3e_0
+  - networkx=2.1=py35_0
   - ninja=1.8.2=py35h6bb024c_1
   - numpy=1.15.0=py35h1b885b7_0
   - numpy-base=1.15.0=py35h3dfced4_0
@@ -76,8 +79,10 @@ dependencies:
   - python=3.5.5=hc3d631a_4
   - python-dateutil=2.7.3=py35_0
   - pytz=2018.5=py35_0
+  - pywavelets=0.5.2=py35h53ec731_0
   - qt=5.9.5=h7e424d6_0
   - readline=7.0=ha6073c6_4
+  - scikit-image=0.14.0=py35hf484d3e_1
   - scikit-learn=0.19.1=py35hbf1f462_0
   - scipy=1.1.0=py35hfc37229_0
   - seaborn=0.9.0=py35_0
@@ -88,6 +93,7 @@ dependencies:
   - sqlite=3.24.0=h84994c4_0
   - statsmodels=0.9.0=py35h3010b51_0
   - tk=8.6.7=hc745277_3
+  - toolz=0.9.0=py35_0
   - tornado=5.0.2=py35_0
   - tqdm=4.24.0=py35_0
   - traitlets=4.3.2=py35ha522a97_0
@@ -101,6 +107,7 @@ dependencies:
   - pip:
     - absl-py==0.3.0
     - astor==0.7.1
+    - dask==0.19.2
     - gast==0.2.0
     - grpcio==1.13.0
     - markdown==2.6.11
