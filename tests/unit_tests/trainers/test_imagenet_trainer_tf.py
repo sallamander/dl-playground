@@ -1,11 +1,11 @@
-"""Unit tests for trainers.imagenet_trainer"""
+"""Unit tests for trainers.imagenet_trainer_tf"""
 
 from unittest.mock import patch, MagicMock
 
 from tensorflow.keras.layers import Input
 from tensorflow.keras import Model
 
-from trainers.imagenet_trainer import ImageNetTrainer
+from trainers.imagenet_trainer_tf import ImageNetTrainer
 
 
 class TestImageNetTrainer(object):
@@ -47,7 +47,8 @@ class TestImageNetTrainer(object):
             """Mock validate_config to pass"""
             pass
         monkeypatch.setattr(
-            'trainers.imagenet_trainer.validate_config', mock_validate_config
+            'trainers.imagenet_trainer_tf.validate_config',
+            mock_validate_config
         )
 
         trainer_config = {
