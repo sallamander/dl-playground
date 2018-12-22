@@ -35,13 +35,6 @@ class TestAlexNet(object):
         """
 
         layers_dict = {}
-        layers_dict['convolutional'] = {
-            'expected_count': 5,
-            'wrapped_layer': patch.object(
-                networks.alexnet_pytorch, 'Conv2d',
-                wraps=networks.alexnet_pytorch.Conv2d
-            )
-        }
         layers_dict['relu'] = {
             'expected_count': 7,
             'wrapped_layer': patch.object(
@@ -54,13 +47,6 @@ class TestAlexNet(object):
             'wrapped_layer': patch.object(
                 networks.alexnet_pytorch, 'MaxPool2d',
                 wraps=networks.alexnet_pytorch.MaxPool2d
-            )
-        }
-        layers_dict['linear'] = {
-            'expected_count': 3,
-            'wrapped_layer': patch.object(
-                networks.alexnet_pytorch, 'Linear',
-                wraps=networks.alexnet_pytorch.Linear
             )
         }
         layers_dict['dropout'] = {
@@ -90,6 +76,11 @@ class TestAlexNet(object):
         monkeypatch.setattr(
             'networks.alexnet_pytorch.validate_config', mock_validate_config
         )
+        mock_set_layers = MagicMock()
+        monkeypatch.setattr(
+            'networks.alexnet_pytorch.AlexNet._set_layers',
+            mock_set_layers
+        )
         alexnet = AlexNet(network_config)
 
         assert alexnet.required_config_keys == {'n_channels', 'n_classes'}
@@ -98,9 +89,47 @@ class TestAlexNet(object):
         mock_validate_config.assert_called_with(
             network_config, AlexNet.required_config_keys
         )
+        assert mock_set_layers.call_count == 1
+
+    def test_set_layers(self, network_config):
+        """Test _set_layers method
+
+        This test checks that parameterized layers (convs & linear layers) are
+        not set as attributes *before* `_set_layers` is called, but are set as
+        attributes *after* `_set_layers` is called.
+
+        :param network_config: network_config object fixture
+        :type network_config: dict
+        """
+
+        alexnet = MagicMock()
+        alexnet.network_config = network_config
+        alexnet._set_layers = AlexNet._set_layers
+
+        layer_names = [
+            'conv1', 'conv2', 'conv3', 'conv4', 'conv5',
+            'linear1', 'linear2', 'linear3'
+        ]
+
+        # layers should just be MagicMock objects before calling `_set_layers`
+        for layer_name in layer_names:
+            assert isinstance(getattr(alexnet, layer_name), MagicMock)
+        alexnet._set_layers(self=alexnet)
+        for layer_name in layer_names:
+            if 'conv' in layer_name:
+                assert isinstance(
+                    getattr(alexnet, layer_name), torch.nn.Conv2d
+                )
+            else:
+                assert isinstance(
+                    getattr(alexnet, layer_name), torch.nn.Linear
+                )
 
     def test_forward(self, network_config, layers_dict):
         """Test forward method
+
+        This checks that the right number of each of the different kinds of
+        layers are called during a forward pass.
 
         :param network_config: network_config object fixture
         :type network_config: dict
@@ -113,6 +142,17 @@ class TestAlexNet(object):
         alexnet.forward = AlexNet.forward
 
         inputs = torch.randn((1, 227, 227, 3))
+        layer_names = [
+            'conv1', 'conv2', 'conv3', 'conv4', 'conv5',
+            'linear1', 'linear2', 'linear3'
+        ]
+        for layer_name in layer_names:
+            mock = MagicMock()
+            # the layers just need to return something that is a tensor and can
+            # be passed into ReLU, MaxPool2d, and Dropout layers, so the
+            # `inputs` will work
+            mock.return_value = inputs
+            setattr(alexnet, layer_name, mock)
 
         wrapped_layer_contexts = []
         with ExitStack() as stack:
@@ -123,8 +163,7 @@ class TestAlexNet(object):
                 wrapped_layer_contexts.append(
                     (wrapped_layer_context, layer_dict['expected_count'])
                 )
-            outputs = alexnet.forward(self=alexnet, inputs=inputs)
-            assert outputs.shape == (1, 1000)
+            alexnet.forward(self=alexnet, inputs=inputs)
 
             it = wrapped_layer_contexts
             for wrapped_layer_context, expected_call_count in it:

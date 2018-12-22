@@ -32,6 +32,42 @@ class AlexNet(Module):
 
         validate_config(network_config, self.required_config_keys)
         self.network_config = network_config
+        self._set_layers()
+
+    def _set_layers(self):
+        """Set the networks layers used in the forward pass
+
+        This sets 5 convolutional layers (self.conv[1-5]) and 3 linear layers
+        (self.linear[1-3]) in place.
+        """
+
+        n_channels = self.network_config['n_channels']
+        n_classes = self.network_config['n_classes']
+
+        self.conv1 = Conv2d(
+            in_channels=n_channels, out_channels=96,
+            kernel_size=(11, 11), stride=(4, 4)
+        )
+        self.conv2 = Conv2d(
+            in_channels=96, out_channels=256,
+            kernel_size=(5, 5), padding=(2, 2)
+        )
+        self.conv3 = Conv2d(
+            in_channels=256, out_channels=384,
+            kernel_size=(3, 3), padding=(1, 1)
+        )
+        self.conv4 = Conv2d(
+            in_channels=384, out_channels=384,
+            kernel_size=(3, 3), padding=(1, 1)
+        )
+        self.conv5 = Conv2d(
+            in_channels=384, out_channels=256,
+            kernel_size=(3, 3), padding=(1, 1)
+        )
+
+        self.linear1 = Linear(256 * 6 * 6, out_features=4096)
+        self.linear2 = Linear(in_features=4096, out_features=4096)
+        self.linear3 = Linear(in_features=4096, out_features=n_classes)
 
     def forward(self, inputs):
         """Return the output of a forward pass of AlexNet
@@ -44,53 +80,35 @@ class AlexNet(Module):
         :rtype: torch.Tensor
         """
 
-        n_channels = self.network_config['n_channels']
-        n_classes = self.network_config['n_classes']
-
-        # (batch_size, height, width, n_channels) =>
-        # (batch_size, n_channels, height, width)
-        inputs = inputs.transpose(1, 3)
-
         # === convolutional block 1 === #
-        layer = Conv2d(
-            in_channels=n_channels, out_channels=96,
-            kernel_size=(11, 11), stride=(4, 4)
-        )(inputs)
+        layer = self.conv1(inputs)
         layer = ReLU()(layer)
         layer = MaxPool2d(kernel_size=(3, 3), stride=(2, 2))(layer)
 
         # === convolutional block 2 === #
-        layer = Conv2d(
-            in_channels=96, out_channels=256, kernel_size=(5, 5)
-        )(layer)
+        layer = self.conv2(layer)
         layer = ReLU()(layer)
         layer = MaxPool2d(kernel_size=(3, 3), stride=(2, 2))(layer)
 
         # === convolutional blocks 3, 4, 5 === #
-        layer = Conv2d(
-            in_channels=256, out_channels=384, kernel_size=(3, 3)
-        )(layer)
+        layer = self.conv3(layer)
         layer = ReLU()(layer)
-        layer = Conv2d(
-            in_channels=384, out_channels=384, kernel_size=(3, 3)
-        )(layer)
+        layer = self.conv4(layer)
         layer = ReLU()(layer)
-        layer = Conv2d(
-            in_channels=384, out_channels=256, kernel_size=(3, 3)
-        )(layer)
+        layer = self.conv5(layer)
         layer = ReLU()(layer)
         layer = MaxPool2d(kernel_size=(3, 3), stride=(2, 2))(layer)
 
         # === dense layers (2) === #
         layer = layer.view(layer.size(0), -1)
-        layer = Linear(in_features=layer.size(1), out_features=4096)(layer)
+        layer = self.linear1(layer)
         layer = ReLU()(layer)
         layer = Dropout(0.5)(layer)
-        layer = Linear(in_features=4096, out_features=4096)(layer)
+        layer = self.linear2(layer)
         layer = ReLU()(layer)
         layer = Dropout(0.5)(layer)
 
         # === output layer === #
-        outputs = Linear(in_features=4096, out_features=n_classes)(layer)
+        outputs = self.linear3(layer)
 
         return outputs
