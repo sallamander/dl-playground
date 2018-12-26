@@ -1,6 +1,7 @@
 """Numpy backed dataset for training a model on ImageNet"""
 
 import imageio
+import numpy as np
 from skimage.transform import resize
 from torch.utils.data import Dataset
 
@@ -64,7 +65,7 @@ class ImageNetDataSet(Dataset):
         image = resize(image, output_shape=target_shape)
         image = image.astype(self.sample_types['image'])
 
-        label = self.df_images.loc[idx, 'label']
+        label = np.array(self.df_images.loc[idx, 'label'])
         assert label.dtype == self.sample_types['label']
 
         sample = {'image': image, 'label': label}
