@@ -1,6 +1,5 @@
 """Integration tests for trainers.pytorch_model"""
 
-from itertools import cycle
 from unittest.mock import patch
 
 from torch.utils.data import DataLoader
@@ -11,6 +10,7 @@ from datasets.ops import per_image_standardization
 from datasets.pytorch_dataset_transformer import PyTorchDataSetTransformer
 from networks.alexnet_pytorch import AlexNet
 from trainers.pytorch_model import Model
+from utils.generic_utils import cycle
 from utils.test_utils import df_images
 
 
