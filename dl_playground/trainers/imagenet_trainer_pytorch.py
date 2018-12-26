@@ -1,6 +1,6 @@
-"""Trainer for training a tensorflow model on ImageNet"""
+"""Trainer for training a pytorch model on ImageNet"""
 
-from tensorflow.keras import Model
+from trainers.pytorch_model import Model
 
 from utils.generic_utils import validate_config
 
@@ -19,6 +19,10 @@ class ImageNetTrainer(object):
         - int batch_size: batch size to use during training
         - int n_epochs: number of epochs to train for
 
+        trainer_config can addtionally optionally contain the following keys:
+        - str device: device to train the model on, e.g. 'cuda:0'; defaults to
+          'cpu'
+
         :param trainer_config: specifies the configuration of the trainer
         :type trainer_config: dict
         """
@@ -29,35 +33,25 @@ class ImageNetTrainer(object):
         self.loss = trainer_config['loss']
         self.batch_size = trainer_config['batch_size']
         self.n_epochs = trainer_config['n_epochs']
+        self.device = trainer_config.get('device')
 
-    def train(self, network, train_dataset, n_steps_per_epoch,
-              validation_dataset=None, n_validation_steps=None):
+    def train(self, network, train_dataset, n_steps_per_epoch):
         """Train the network as specified via the __init__ parameters
 
         :param network: network object to use for training
-        :type network: networks.alexnet_tf.AlexNet
+        :type network: networks.alexnet_pytorch.AlexNet
         :param train_dataset: dataset that iterates over the training data
          indefinitely
         :type train_data: tf.data.Dataset
         :param n_steps_per_epoch: number of batches to train on in one epoch
         :type n_steps_per_epoch: int
-        :param validation_dataset: optional dataset that iterates over the
-         validation data indefinitly
-        :type validation_dataset: tf.data.Dataset
-        :param n_validation_steps: number of batches to validate on after each
-         epoch
-        :type n_validation_steps: int
         """
 
-        inputs, outputs = network.forward()
-        model = Model(inputs=inputs, outputs=outputs)
+        model = Model(network, self.device)
         model.compile(optimizer=self.optimizer, loss=self.loss)
 
-        model.fit(
-            x=train_dataset,
-            steps_per_epoch=n_steps_per_epoch,
-            epochs=self.n_epochs,
-            verbose=True,
-            validation_data=validation_dataset,
-            validation_steps=n_validation_steps
+        model.fit_generator(
+            generator=train_dataset,
+            n_steps_per_epoch=n_steps_per_epoch,
+            n_epochs=self.n_epochs,
         )

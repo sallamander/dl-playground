@@ -25,7 +25,7 @@ class TestImageNetTrainer(object):
         }
         trainer_config = {
             'optimizer': 'adam', 'loss': 'categorical_crossentropy',
-            'batch_size': batch_size, 'num_epochs': 2
+            'batch_size': batch_size, 'n_epochs': 2
         }
         dataset_config = {'height': height, 'width': width}
         transformations = [
@@ -46,7 +46,7 @@ class TestImageNetTrainer(object):
         )
 
         imagenet_trainer.train(
-            train_dataset=dataset, steps_per_epoch=len(imagenet_dataset),
-            validation_dataset=dataset, validation_steps=len(imagenet_dataset),
-            network=alexnet
+            train_dataset=dataset, n_steps_per_epoch=len(imagenet_dataset),
+            validation_dataset=dataset,
+            n_validation_steps=len(imagenet_dataset), network=alexnet
         )
