@@ -96,7 +96,7 @@ class Model(object):
                     targets = targets.to(self.device)
 
                 outputs = self.network(inputs)
-                loss = self.loss(outputs, targets.long())
+                loss = self.loss(outputs, targets)
 
                 self.optimizer.zero_grad()
                 loss.backward()

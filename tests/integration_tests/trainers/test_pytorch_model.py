@@ -2,6 +2,7 @@
 
 from unittest.mock import patch
 
+import torch
 from torch.utils.data import DataLoader
 from torchvision.transforms.functional import to_tensor
 
@@ -25,6 +26,7 @@ class TestModel(object):
         transformations = [
             (per_image_standardization, {'sample_keys': ['image']}),
             (to_tensor, {'sample_keys': ['image']}),
+            (torch.tensor, {'sample_keys': ['label'], 'dtype': torch.long})
         ]
         train_dataset = PyTorchDataSetTransformer(
             numpy_dataset=train_dataset, transformations=transformations
