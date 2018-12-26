@@ -1,11 +1,11 @@
-"""Integration tests for trainers.imagenet_trainer"""
+"""Integration tests for trainers.imagenet_trainer_tf"""
 
 import tensorflow as tf
 
 from datasets.imagenet_dataset import ImageNetDataSet
 from datasets.tf_data_loader import TFDataLoader
 from networks.alexnet_tf import AlexNet
-from trainers.imagenet_trainer import ImageNetTrainer
+from trainers.imagenet_trainer_tf import ImageNetTrainer
 from utils.test_utils import df_images
 
 
@@ -25,7 +25,7 @@ class TestImageNetTrainer(object):
         }
         trainer_config = {
             'optimizer': 'adam', 'loss': 'categorical_crossentropy',
-            'batch_size': batch_size, 'num_epochs': 2
+            'batch_size': batch_size, 'n_epochs': 2
         }
         dataset_config = {'height': height, 'width': width}
         transformations = [
@@ -46,7 +46,7 @@ class TestImageNetTrainer(object):
         )
 
         imagenet_trainer.train(
-            train_dataset=dataset, steps_per_epoch=len(imagenet_dataset),
-            validation_dataset=dataset, validation_steps=len(imagenet_dataset),
-            network=alexnet
+            train_dataset=dataset, n_steps_per_epoch=len(imagenet_dataset),
+            validation_dataset=dataset,
+            n_validation_steps=len(imagenet_dataset), network=alexnet
         )
