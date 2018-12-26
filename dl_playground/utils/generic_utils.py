@@ -3,6 +3,31 @@
 import importlib
 
 
+def cycle(iterable):
+    """Cycle over `iterable` without caching individual iterable elements
+
+    The `itertools.cycle` function caches the results of iterable elements
+    during the first pass, and in subsequent passes uses the cached results.
+    For iterables to return non-deterministic output, the caching must not be
+    used.
+
+    Reference implementation: https://stackoverflow.com/a/49987606
+
+    :param iterable: iterable object to cycle over; must implement the
+     `__iter__` magic method
+    :type iterable: Iterable
+    """
+
+    if not hasattr(iterable, '__iter__'):
+        msg = ('`iterable` must implement the `__iter__` magic method, but '
+               'doesn\'t.')
+        raise AttributeError(msg)
+
+    while True:
+        for element in iterable:
+            yield element
+
+
 def import_object(object_importpath):
     """Return the object specified by `object_importpath`
 
