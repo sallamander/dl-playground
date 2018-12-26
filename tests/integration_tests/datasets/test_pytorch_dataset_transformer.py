@@ -32,12 +32,11 @@ class TestPyTorchDataSetTransformer(object):
         )
 
         for idx in range(2):
-            sample = imagenet_datsaet_transformed[idx]
-            assert set(sample) == {'image', 'label'}
+            image, label = imagenet_datsaet_transformed[idx]
 
-            assert sample['image'].shape == (3, 227, 227)
-            assert np.allclose(sample['image'].mean(), 0, atol=1e-6)
-            assert np.allclose(sample['image'].std(), 1, atol=1e-6)
-            assert isinstance(sample['image'], Tensor)
+            assert image.shape == (3, 227, 227)
+            assert np.allclose(image.mean(), 0, atol=1e-6)
+            assert np.allclose(image.std(), 1, atol=1e-6)
+            assert isinstance(image, Tensor)
 
-            assert sample['label'] == idx
+            assert label == idx

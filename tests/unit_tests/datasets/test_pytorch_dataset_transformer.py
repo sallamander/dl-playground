@@ -36,6 +36,8 @@ class TestPyTorchDataSetTransformer(object):
 
         dataset_transformer = MagicMock()
         dataset_transformer.numpy_dataset = MagicMock()
+        dataset_transformer.numpy_dataset.input_keys = ['element']
+        dataset_transformer.numpy_dataset.target_keys = ['label']
         dataset_transformer.numpy_dataset.__getitem__ = mock_getitem
         dataset_transformer.__getitem__ = PyTorchDataSetTransformer.__getitem__
 
@@ -45,24 +47,30 @@ class TestPyTorchDataSetTransformer(object):
             mock_apply_transformation
         )
 
-        sample = dataset_transformer[10]
-        assert sample == {'element': 10, 'label': 1}
+        element, label = dataset_transformer[10]
         assert not mock_apply_transformation.call_count
 
-        mock_apply_transformation.return_value = 10
+        mock_apply_transformation.return_value = {
+            'element': 2, 'label': 10
+        }
         dataset_transformer.transformations = [
             (0, {'sample_keys': ['element']}),
             (1, {'sample_keys': ['label']}),
             (2, {'sample_keys': ['element']})
         ]
-        sample = dataset_transformer[10]
-        assert sample == 10
+        element, label = dataset_transformer[10]
+        assert element == 2
+        assert label == 10
         assert mock_apply_transformation.call_count == 3
         mock_apply_transformation.assert_any_call(
             0, {'element': 10, 'label': 1}, ['element'], {}
         )
-        mock_apply_transformation.assert_any_call(1, 10, ['label'], {})
-        mock_apply_transformation.assert_called_with(2, 10, ['element'], {})
+        mock_apply_transformation.assert_any_call(
+            1, {'element': 2, 'label': 10}, ['label'], {}
+        )
+        mock_apply_transformation.assert_any_call(
+            2, {'element': 2, 'label': 10}, ['element'], {}
+        )
 
     def test_len(self):
         """Test __len__ method"""
