@@ -42,7 +42,19 @@ class PyTorchDataSetTransformer(Dataset):
                 transformation_fn_kwargs
             )
 
-        return sample
+        inputs = [
+            sample[input_key] for input_key in self.numpy_dataset.input_keys
+        ]
+        targets = [
+            sample[target_key] for target_key in self.numpy_dataset.target_keys
+        ]
+
+        if len(inputs) == 1:
+            inputs = inputs[0]
+        if len(targets) == 1:
+            targets = targets[0]
+
+        return inputs, targets
 
     def __len__(self):
         """Return the size of the dataset
