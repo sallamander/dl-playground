@@ -37,7 +37,6 @@ class TestModel(object):
         )
 
         alexnet = AlexNet(network_config={'n_channels': 3, 'n_classes': 1000})
-
         model = Model(network=alexnet)
 
         assert not model._compiled

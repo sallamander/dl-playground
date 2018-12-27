@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Train AlexNet on ImageNet"""
+"""Train AlexNet on ImageNet using Tensorflow"""
 
 import os
 
@@ -7,10 +7,9 @@ import pandas as pd
 import tensorflow as tf
 
 from datasets.imagenet_dataset import ImageNetDataSet
-from datasets.ops import resize_images
 from datasets.tf_data_loader import TFDataLoader
 from networks.alexnet_tf import AlexNet
-from trainers.imagenet_trainer import ImageNetTrainer
+from trainers.imagenet_trainer_tf import ImageNetTrainer
 from utils import dev_env
 
 
@@ -37,12 +36,11 @@ def get_data_loaders():
     df_train = pd.read_csv(FPATH_DF_TRAIN_SET)
     df_val = pd.read_csv(FPATH_DF_VAL_SET)
 
-    train_dataset = ImageNetDataSet(df_train)
-    validation_dataset = ImageNetDataSet(df_val)
+    dataset_config = {'height': IMAGE_HEIGHT, 'width': IMAGE_WIDTH}
+    train_dataset = ImageNetDataSet(df_train, dataset_config)
+    validation_dataset = ImageNetDataSet(df_val, dataset_config)
 
     transformations = [
-        (resize_images,
-         {'sample_keys': ['image'], 'size': (IMAGE_HEIGHT, IMAGE_WIDTH)}),
         (tf.one_hot,
          {'sample_keys': ['label'], 'depth': 1000}),
         (tf.image.per_image_standardization,
@@ -74,12 +72,12 @@ def get_trainer():
     """Return a trainer to train AlexNet on ImageNet
 
     :return: trainer to train alexnet on imagenet
-    :rtype: trainers.imagenet_trainer.ImageNetTrainer
+    :rtype: trainers.imagenet_trainer_tf.ImageNetTrainer
     """
 
     trainer_config = {
         'optimizer': 'adam', 'loss': 'categorical_crossentropy',
-        'batch_size': BATCH_SIZE, 'num_epochs': 10
+        'batch_size': BATCH_SIZE, 'n_epochs': 10
     }
     return ImageNetTrainer(trainer_config)
 
@@ -98,9 +96,9 @@ def main():
     trainer.train(
         network=alexnet,
         train_dataset=train_dataset,
-        steps_per_epoch=len(train_loader.numpy_dataset),
+        n_steps_per_epoch=len(train_loader.numpy_dataset),
         validation_dataset=validation_dataset,
-        validation_steps=len(validation_loader.numpy_dataset)
+        n_validation_steps=len(validation_loader.numpy_dataset)
     )
 
 if __name__ == '__main__':
