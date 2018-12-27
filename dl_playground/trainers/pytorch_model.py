@@ -31,6 +31,20 @@ class Model(object):
         self.optimizer = None
         self.loss = None
 
+    def _assert_compiled(self):
+        """Raise a value error if the model is not compiled
+
+        This is a convenience wrapper to avoid duplicating these lines in
+        multiple methods.
+
+        :raises: RuntimeError if `self._compiled` is not True
+        """
+
+        if not self._compiled:
+            msg = ('Model must be compiled before training; please call '
+                   'the `compile` method before training.')
+            raise RuntimeError(msg)
+
     def compile(self, optimizer, loss):
         """Setup the model for training
 
@@ -80,10 +94,7 @@ class Model(object):
         :type n_epochs: int
         """
 
-        if not self._compiled:
-            msg = ('Model must be compiled before training; please call '
-                   'the `compile` method before training.')
-            raise RuntimeError(msg)
+        self._assert_compiled()
 
         if self.device:
             self.network.to(self.device)
@@ -91,13 +102,31 @@ class Model(object):
         for _ in range(n_epochs):
             for _ in range(n_steps_per_epoch):
                 inputs, targets = next(generator)
-                if self.device:
-                    inputs = inputs.to(self.device)
-                    targets = targets.to(self.device)
+                _ = self.train_on_batch(inputs, targets)
 
-                outputs = self.network(inputs)
-                loss = self.loss(outputs, targets)
+    def train_on_batch(self, inputs, targets):
+        """Run a single forward / backward pass on a single batch of data
 
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
+        :param inputs: inputs to use in the forward / backward pass
+        :type inputs: torch.Tensor
+        :param targets: targets to use in the forward / backward pass
+        :type targets: torch.Tensor
+        :return: scalar training loss
+        :rtype: float
+        """
+
+        self._assert_compiled()
+
+        self.network.train(mode=True)
+        if self.device:
+            inputs = inputs.to(self.device)
+            targets = targets.to(self.device)
+
+        outputs = self.network(inputs)
+        loss = self.loss(outputs, targets)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        return loss.tolist()
