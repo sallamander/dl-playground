@@ -1,7 +1,7 @@
 """Unit tests for trainers.pytorch_model"""
 
 from itertools import product
-from unittest.mock import MagicMock
+from unittest.mock import create_autospec, patch, MagicMock
 import pytest
 
 import torch
@@ -30,6 +30,19 @@ class TestModel(object):
 
         model = Model(network)
         assert not model.device
+
+    def test_assert_compiled(self):
+        """Test _assert_compiled method"""
+
+        model = MagicMock()
+        model._assert_compiled = Model._assert_compiled
+
+        model._compiled = False
+        with pytest.raises(RuntimeError):
+            model._assert_compiled(self=model)
+
+        model._compiled = True
+        model._assert_compiled(self=model)
 
     def test_compile(self):
         """Test compile method
@@ -81,28 +94,25 @@ class TestModel(object):
         with pytest.raises(AttributeError):
             model.compile(self=model, optimizer='Adam', loss='BadLoss')
 
-    def test_fit_generator__compiled(self):
-        """Test fit_generator method when the network is compiled first
+    def test_fit_generator(self):
+        """Test fit_generator method
 
         This tests that the correct total number of steps are taken for a given
         `fit_generator` call with a specified `n_steps_per_epoch` and
         `n_epochs`.
         """
 
-        def mock_generator_fn():
-            """Mock generator yielding (inputs, targets) indefinitely"""
-
-            inputs = torch.randn((2, 64, 64, 3))
-            targets = torch.randn((2, 1))
-
-            while True:
-                yield (inputs, targets)
-
         model = MagicMock()
-        model.fit_generator = Model.fit_generator
-        model._compiled = True
         model.network = MagicMock()
-        model.loss = MagicMock()
+        model.train_on_batch = MagicMock()
+        model.device = MagicMock()
+        model.fit_generator = Model.fit_generator
+
+        generator = MagicMock()
+        inputs = torch.randn((2, 64, 64, 3))
+        targets = torch.randn((2, 1))
+        generator.__next__ = MagicMock()
+        generator.__next__.return_value = (inputs, targets)
 
         test_cases = [
             {'n_steps_per_epoch': 1, 'n_epochs': 1, 'device': 'cpu'},
@@ -117,29 +127,46 @@ class TestModel(object):
 
             model.device = device
             model.fit_generator(
-                self=model, generator=mock_generator_fn(),
+                self=model, generator=generator,
                 n_steps_per_epoch=n_steps_per_epoch, n_epochs=n_epochs
             )
 
-            assert model.loss.call_count == n_steps_per_epoch * n_epochs
-            assert model.network.call_count == n_steps_per_epoch * n_epochs
+            assert model._assert_compiled.call_count == 1
+            n_expected_calls = n_steps_per_epoch * n_epochs
+            assert model.train_on_batch.call_count == n_expected_calls
+            model.train_on_batch.assert_called_with(inputs, targets)
+            assert generator.__next__.call_count == n_expected_calls
 
-            model.loss.call_count = 0
-            model.network.call_count = 0
+            # reset the call counts for the next iteration
+            model._assert_compiled.call_count = 0
+            model.train_on_batch.call_count = 0
+            generator.__next__.call_count = 0
 
-    def test_fit_generator__not_compiled(self):
-        """Test fit_generator method when the network is not compiled first
+    def test_train_on_batch(self):
+        """Test train_on_batch method"""
 
-        This simply tests that a RuntimeError is raised if the network is not
-        compiled before `fit_generator` is called.
-        """
+        model = create_autospec(Model)
+        model.device = 'cpu'
+        model.train_on_batch = Model.train_on_batch
+        model.network = MagicMock()
 
-        model = MagicMock()
-        model.fit_generator = Model.fit_generator
+        inputs = torch.randn((2, 3), requires_grad=True)
+        targets = torch.randint(size=(2,), high=2, dtype=torch.int64)
+        outputs = torch.nn.Sigmoid()(inputs)
 
-        model._compiled = False
-        with pytest.raises(RuntimeError):
-            model.fit_generator(
-                self=model, generator=MagicMock(), n_steps_per_epoch=1,
-                n_epochs=1
+        model.loss = MagicMock()
+        loss_value = torch.nn.CrossEntropyLoss()(outputs, targets)
+        model.loss.return_value = loss_value
+        model.optimizer = create_autospec(torch.optim.Adam)
+
+        with patch.object(loss_value, 'backward') as patched_backward:
+            loss = model.train_on_batch(
+                self=model, inputs=inputs, targets=targets
             )
+
+        assert loss == loss_value.tolist()
+        assert model.network.call_count == 1
+        assert model.loss.call_count == 1
+        assert model.optimizer.zero_grad.call_count == 1
+        assert model.optimizer.step.call_count == 1
+        assert patched_backward.call_count == 1
