@@ -82,8 +82,36 @@ class Model(object):
 
         self._compiled = True
 
+    def evaluate_generator(self, generator, n_steps):
+        """Evaluate the network on batches of data generated from `generator`
+
+        :param generator: a generator yielding batches indefinitely, where each
+         batch is a tuple of (inputs, targets)
+        :type generator: generator
+        :param n_steps: number of batches to evaluate on
+        :type n_steps: int
+        :return: scalar test loss
+        :rtype: float
+        """
+
+        self._assert_compiled()
+
+        if self.device:
+            self.network.to(self.device)
+
+        total_loss = 0
+        n_obs = 0
+        for _ in range(n_steps):
+            inputs, targets = next(generator)
+            n_obs += inputs.shape[0]
+
+            loss = self.test_on_batch(inputs, targets)
+            total_loss += loss
+
+        return total_loss / n_obs
+
     def fit_generator(self, generator, n_steps_per_epoch, n_epochs=1):
-        """Train the network on data generated batch-by-batch from `generator`
+        """Train the network on batches of data generated from `generator`
 
         :param generator: a generator yielding batches indefinitely, where each
          batch is a tuple of (inputs, targets)
@@ -103,6 +131,29 @@ class Model(object):
             for _ in range(n_steps_per_epoch):
                 inputs, targets = next(generator)
                 _ = self.train_on_batch(inputs, targets)
+
+    def test_on_batch(self, inputs, targets):
+        """Evaluate the model on a single batch of samples
+
+        :param inputs: inputs to predict on
+        :type inputs: torch.Tensor
+        :param targets: targets to compare model predictions to
+        :type targets: torch.Tensor
+        :return: scalar test loss
+        :rtype: float
+        """
+
+        self._assert_compiled()
+
+        self.network.train(mode=False)
+        if self.device:
+            inputs = inputs.to(self.device)
+            targets = targets.to(self.device)
+
+        outputs = self.network(inputs)
+        loss = self.loss(outputs, targets)
+
+        return loss.tolist()
 
     def train_on_batch(self, inputs, targets):
         """Run a single forward / backward pass on a single batch of data
