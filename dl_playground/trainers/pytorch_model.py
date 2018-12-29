@@ -110,7 +110,8 @@ class Model(object):
 
         return total_loss / n_obs
 
-    def fit_generator(self, generator, n_steps_per_epoch, n_epochs=1):
+    def fit_generator(self, generator, n_steps_per_epoch, n_epochs=1,
+                      validation_data=None, n_validation_steps=None):
         """Train the network on batches of data generated from `generator`
 
         :param generator: a generator yielding batches indefinitely, where each
@@ -120,9 +121,28 @@ class Model(object):
         :type n_steps_per_epoch: int
         :param n_epochs: number of epochs to train the model
         :type n_epochs: int
+        :param validation_data: generator yielding batches to evaluate the loss
+         on at the end of each epoch, where each batch is a tuple of (inputs,
+         targets)
+        :type validation_data: generator
+        :param n_validation_steps: number of batches to evaluate on from
+         `validation_data`
+        :raises RuntimeError: if only one of `validation_data` and
+         `n_validation_steps` are passed in
         """
 
         self._assert_compiled()
+
+        invalid_inputs = (
+            (validation_data is not None and n_validation_steps is None) or
+            (n_validation_steps is not None and validation_data is None)
+        )
+        if invalid_inputs:
+            msg = (
+                '`validation_data` and `n_validation_steps` must both be '
+                'passed, or neither.'
+            )
+            raise RuntimeError(msg)
 
         if self.device:
             self.network.to(self.device)
@@ -131,6 +151,11 @@ class Model(object):
             for _ in range(n_steps_per_epoch):
                 inputs, targets = next(generator)
                 _ = self.train_on_batch(inputs, targets)
+
+            if validation_data:
+                _ = self.evaluate_generator(
+                    validation_data, n_validation_steps
+                )
 
     def test_on_batch(self, inputs, targets):
         """Evaluate the model on a single batch of samples

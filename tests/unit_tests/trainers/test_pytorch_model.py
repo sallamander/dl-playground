@@ -149,6 +149,7 @@ class TestModel(object):
         model.train_on_batch = MagicMock()
         model.device = MagicMock()
         model.fit_generator = Model.fit_generator
+        model.evalute_generator = MagicMock()
 
         generator = MagicMock()
         inputs = torch.randn((2, 64, 64, 3))
@@ -158,7 +159,8 @@ class TestModel(object):
 
         test_cases = [
             {'n_steps_per_epoch': 1, 'n_epochs': 1, 'device': 'cpu'},
-            {'n_steps_per_epoch': 2, 'n_epochs': 2},
+            {'n_steps_per_epoch': 2, 'n_epochs': 2,
+             'validation_data': generator, 'n_validation_steps': 10},
             {'n_steps_per_epoch': 223, 'n_epochs': 50, 'device': 'cpu'}
         ]
 
@@ -166,11 +168,15 @@ class TestModel(object):
             n_steps_per_epoch = test_case['n_steps_per_epoch']
             n_epochs = test_case['n_epochs']
             device = test_case.get('device')
+            validation_data = test_case.get('validation_data')
+            n_validation_steps = test_case.get('n_validation_steps')
 
             model.device = device
             model.fit_generator(
                 self=model, generator=generator,
-                n_steps_per_epoch=n_steps_per_epoch, n_epochs=n_epochs
+                n_steps_per_epoch=n_steps_per_epoch, n_epochs=n_epochs,
+                validation_data=validation_data,
+                n_validation_steps=n_validation_steps
             )
 
             assert model._assert_compiled.call_count == 1
@@ -179,10 +185,41 @@ class TestModel(object):
             model.train_on_batch.assert_called_with(inputs, targets)
             assert generator.__next__.call_count == n_expected_calls
 
+            if validation_data is not None:
+                model.evaluate_generator.assert_called_with(
+                    validation_data, n_validation_steps
+                )
+
             # reset the call counts for the next iteration
             model._assert_compiled.call_count = 0
             model.train_on_batch.call_count = 0
+            model.evaluate_generator.call_count = 0
             generator.__next__.call_count = 0
+
+    def test_fit_generator__bad_input(self):
+        """Test fit_generator method with bad inputs
+
+        `fit_generator` throws a RuntimeError if only one of `validation_data`
+        and `n_validation_steps` are passed in.
+        """
+
+        model = MagicMock()
+        model._assert_compiled = MagicMock()
+        model.fit_generator = Model.fit_generator
+
+        with pytest.raises(RuntimeError):
+            model.fit_generator(
+                self=model, generator='sentinel1',
+                n_steps_per_epoch='sentinel2', n_epochs='sentinel3',
+                validation_data='sentinel4'
+            )
+
+        with pytest.raises(RuntimeError):
+            model.fit_generator(
+                self=model, generator='sentinel1',
+                n_steps_per_epoch='sentinel2', n_epochs='sentinel3',
+                n_validation_steps='sentinel4'
+            )
 
     def test_test_on_batch(self):
         """Test test_on_batch method"""
