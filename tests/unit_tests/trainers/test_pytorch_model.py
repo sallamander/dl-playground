@@ -4,6 +4,7 @@ from itertools import product
 from unittest.mock import create_autospec, patch, MagicMock
 import pytest
 
+import numpy as np
 import torch
 
 from trainers.pytorch_model import Model
@@ -94,6 +95,47 @@ class TestModel(object):
         with pytest.raises(AttributeError):
             model.compile(self=model, optimizer='Adam', loss='BadLoss')
 
+    def test_evaluate_generator(self):
+        """Test evaluate_generator"""
+
+        model = MagicMock()
+        model.network = MagicMock()
+        model.test_on_batch = MagicMock()
+        model.test_on_batch.return_value = 0.025
+        model.device = MagicMock()
+        model.evaluate_generator = Model.evaluate_generator
+
+        def generator():
+            """Mock generator function"""
+
+            n_obs = 1
+            while True:
+                inputs = torch.randn((n_obs, 64, 64, 3))
+                targets = torch.randn((n_obs, 1))
+                n_obs += 1
+
+                yield (inputs, targets)
+
+        test_cases = [
+            {'n_steps': 10, 'device': 'cpu', 'expected_loss': 0.00454},
+            {'n_steps': 100, 'expected_loss': 0.000505}
+        ]
+
+        for test_case in test_cases:
+            n_steps = test_case['n_steps']
+            device = test_case.get('device')
+
+            model.device = device
+            loss = model.evaluate_generator(
+                self=model, generator=generator(), n_steps=n_steps
+            )
+
+            assert np.allclose(loss, test_case['expected_loss'], atol=1e-4)
+            assert model._assert_compiled.call_count == 1
+
+            # re-assign before the next iteration of the loop
+            model._assert_compiled.call_count = 0
+
     def test_fit_generator(self):
         """Test fit_generator method
 
@@ -141,6 +183,33 @@ class TestModel(object):
             model._assert_compiled.call_count = 0
             model.train_on_batch.call_count = 0
             generator.__next__.call_count = 0
+
+    def test_test_on_batch(self):
+        """Test test_on_batch method"""
+
+        model = create_autospec(Model)
+        model.device = 'cpu'
+        model.test_on_batch = Model.test_on_batch
+        model.network = MagicMock()
+        model.network.train = MagicMock()
+
+        inputs = torch.randn((2, 3), requires_grad=True)
+        targets = torch.randint(size=(2,), high=2, dtype=torch.int64)
+        outputs = torch.nn.Sigmoid()(inputs)
+
+        model.loss = MagicMock()
+        loss_value = torch.nn.CrossEntropyLoss()(outputs, targets)
+        model.loss.return_value = loss_value
+
+        loss = model.test_on_batch(
+            self=model, inputs=inputs, targets=targets
+        )
+
+        assert loss == loss_value.tolist()
+        assert model.network.call_count == 1
+        assert model._assert_compiled.call_count == 1
+        model.network.train.assert_called_with(mode=False)
+        assert model.loss.call_count == 1
 
     def test_train_on_batch(self):
         """Test train_on_batch method"""
