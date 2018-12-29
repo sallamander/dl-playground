@@ -149,6 +149,7 @@ class TestModel(object):
         model.device = 'cpu'
         model.train_on_batch = Model.train_on_batch
         model.network = MagicMock()
+        model.network.train = MagicMock()
 
         inputs = torch.randn((2, 3), requires_grad=True)
         targets = torch.randint(size=(2,), high=2, dtype=torch.int64)
@@ -166,6 +167,7 @@ class TestModel(object):
 
         assert loss == loss_value.tolist()
         assert model.network.call_count == 1
+        model.network.train.assert_called_with(mode=True)
         assert model.loss.call_count == 1
         assert model.optimizer.zero_grad.call_count == 1
         assert model.optimizer.step.call_count == 1
