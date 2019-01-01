@@ -22,17 +22,17 @@ class TestModel(object):
         """Test fit_generator_method"""
 
         dataset_config = {'height': 227, 'width': 227}
-        train_dataset = ImageNetDataSet(df_images, dataset_config)
+        dataset = ImageNetDataSet(df_images, dataset_config)
         transformations = [
             (per_image_standardization, {'sample_keys': ['image']}),
             (to_tensor, {'sample_keys': ['image']}),
             (torch.tensor, {'sample_keys': ['label'], 'dtype': torch.long})
         ]
-        train_dataset = PyTorchDataSetTransformer(
-            numpy_dataset=train_dataset, transformations=transformations
+        dataset = PyTorchDataSetTransformer(
+            numpy_dataset=dataset, transformations=transformations
         )
-        train_loader = DataLoader(
-            dataset=train_dataset, batch_size=2,
+        data_loader = DataLoader(
+            dataset=dataset, batch_size=2,
             shuffle=True, num_workers=0
         )
 
@@ -49,8 +49,9 @@ class TestModel(object):
 
         with patch.object(model, 'loss', wraps=model.loss) as patched_loss:
             model.fit_generator(
-                generator=cycle(train_loader),
-                n_steps_per_epoch=2, n_epochs=2
+                generator=cycle(data_loader),
+                n_steps_per_epoch=2, n_epochs=2,
+                validation_data=cycle(data_loader), n_validation_steps=3
             )
 
-            assert patched_loss.call_count == 4
+            assert patched_loss.call_count == 10

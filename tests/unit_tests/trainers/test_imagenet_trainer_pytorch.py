@@ -66,6 +66,24 @@ class TestImageNetTrainer(object):
             assert fit_fn.call_count == 1
             fit_fn.assert_called_with(
                 generator=imagenet_dataset, n_steps_per_epoch=1,
-                n_epochs=2
+                n_epochs=2, validation_data=None, n_validation_steps=None
+            )
+            assert mock_compile.call_count == 1
+
+            # reset call_count for next assert
+            mock_compile.call_count = 0
+
+        with patch.object(Model, 'fit_generator') as fit_fn:
+            imagenet_trainer.train(
+                self=imagenet_trainer,
+                train_dataset=imagenet_dataset, network=alexnet,
+                n_steps_per_epoch=1, validation_dataset=imagenet_dataset,
+                n_validation_steps=3
+            )
+            assert fit_fn.call_count == 1
+            fit_fn.assert_called_with(
+                generator=imagenet_dataset, n_steps_per_epoch=1,
+                n_epochs=2, validation_data=imagenet_dataset,
+                n_validation_steps=3
             )
             assert mock_compile.call_count == 1

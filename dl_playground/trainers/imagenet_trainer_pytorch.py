@@ -35,16 +35,23 @@ class ImageNetTrainer(object):
         self.n_epochs = trainer_config['n_epochs']
         self.device = trainer_config.get('device')
 
-    def train(self, network, train_dataset, n_steps_per_epoch):
+    def train(self, network, train_dataset, n_steps_per_epoch,
+              validation_dataset=None, n_validation_steps=None):
         """Train the network as specified via the __init__ parameters
 
         :param network: network object to use for training
         :type network: networks.alexnet_pytorch.AlexNet
         :param train_dataset: dataset that iterates over the training data
          indefinitely
-        :type train_data: tf.data.Dataset
+        :type train_data: torch.utils.data.DataLoader
         :param n_steps_per_epoch: number of batches to train on in one epoch
         :type n_steps_per_epoch: int
+        :param validation_dataset: optional dataset that iterates over the
+         validation data indefinitely
+        :type validation_dataset: torch.utils.data.DataLoader
+        :param n_validation_steps: number of batches to validate on after each
+         epoch
+        :type n_validation_steps: int
         """
 
         model = Model(network, self.device)
@@ -54,4 +61,6 @@ class ImageNetTrainer(object):
             generator=train_dataset,
             n_steps_per_epoch=n_steps_per_epoch,
             n_epochs=self.n_epochs,
+            validation_data=validation_dataset,
+            n_validation_steps=n_validation_steps
         )

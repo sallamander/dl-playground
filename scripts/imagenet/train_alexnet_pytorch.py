@@ -99,13 +99,15 @@ def get_trainer():
 def main():
     """Train AlexNet on ImageNet"""
 
-    train_loader, _ = get_data_loaders()
+    train_loader, val_loader = get_data_loaders()
     alexnet = get_network()
     trainer = get_trainer()
 
     trainer.train(
         network=alexnet, train_dataset=train_loader,
-        n_steps_per_epoch=len(train_loader.dataset)
+        n_steps_per_epoch=len(train_loader.dataset),
+        validation_dataset=val_loader,
+        n_validation_steps=len(val_loader.dataset)
     )
 
 
