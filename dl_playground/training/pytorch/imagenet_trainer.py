@@ -1,8 +1,8 @@
 """Trainer for training a pytorch model on ImageNet"""
 
-from trainers.pytorch_model import Model
+from training.pytorch.model import Model
 
-from utils.generic_utils import validate_config
+from utils.generic_utils import cycle, validate_config
 
 
 class ImageNetTrainer(object):
@@ -57,8 +57,11 @@ class ImageNetTrainer(object):
         model = Model(network, self.device)
         model.compile(optimizer=self.optimizer, loss=self.loss)
 
+        if validation_dataset:
+            validation_dataset = cycle(validation_dataset)
+
         model.fit_generator(
-            generator=train_dataset,
+            generator=cycle(train_dataset),
             n_steps_per_epoch=n_steps_per_epoch,
             n_epochs=self.n_epochs,
             validation_data=validation_dataset,

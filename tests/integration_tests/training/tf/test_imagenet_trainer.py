@@ -1,11 +1,11 @@
-"""Integration tests for trainers.imagenet_trainer_tf"""
+"""Integration tests for training.tf.imagenet_trainer"""
 
 import tensorflow as tf
 
 from datasets.imagenet_dataset import ImageNetDataSet
-from datasets.tf_data_loader import TFDataLoader
-from networks.alexnet_tf import AlexNet
-from trainers.imagenet_trainer_tf import ImageNetTrainer
+from networks.tf.object_classification.alexnet import AlexNet
+from training.tf.data_loader import TFDataLoader
+from training.tf.imagenet_trainer import ImageNetTrainer
 from utils.test_utils import df_images
 
 

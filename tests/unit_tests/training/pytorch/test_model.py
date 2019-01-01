@@ -1,4 +1,4 @@
-"""Unit tests for trainers.pytorch_model"""
+"""Unit tests for training.pytorch.model"""
 
 from itertools import product
 from unittest.mock import create_autospec, patch, MagicMock
@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 import torch
 
-from trainers.pytorch_model import Model
+from training.pytorch.model import Model
 
 
 class TestModel(object):

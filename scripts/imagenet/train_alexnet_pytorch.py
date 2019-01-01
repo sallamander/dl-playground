@@ -10,9 +10,9 @@ from torchvision.transforms.functional import to_tensor
 
 from datasets.imagenet_dataset import ImageNetDataSet
 from datasets.ops import per_image_standardization
-from datasets.pytorch_dataset_transformer import PyTorchDataSetTransformer
-from networks.alexnet_pytorch import AlexNet
-from trainers.imagenet_trainer_pytorch import ImageNetTrainer
+from networks.pytorch.object_classification.alexnet import AlexNet
+from training.pytorch.dataset_transformer import PyTorchDataSetTransformer
+from training.pytorch.imagenet_trainer import ImageNetTrainer
 from utils import dev_env
 
 

@@ -1,4 +1,4 @@
-"""Unit tests for networks.alexnet_tf"""
+"""Unit tests for networks.tf.object_classification.alexnet"""
 
 from unittest.mock import MagicMock
 
@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from networks.alexnet_tf import AlexNet
+from networks.tf.object_classification.alexnet import AlexNet
 
 
 class TestAlexNet(object):
@@ -43,7 +43,8 @@ class TestAlexNet(object):
 
         mock_validate_config = MagicMock()
         monkeypatch.setattr(
-            'networks.alexnet_tf.validate_config', mock_validate_config
+            'networks.tf.object_classification.alexnet.validate_config',
+            mock_validate_config
         )
 
         alexnet = AlexNet(network_config)

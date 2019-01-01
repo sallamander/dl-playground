@@ -1,11 +1,11 @@
-"""Unit tests for datasets.tf_data_loader"""
+"""Unit tests for training.tf.data_loader"""
 
 from unittest.mock import MagicMock
 
 import numpy as np
 import tensorflow as tf
 
-from datasets.tf_data_loader import TFDataLoader
+from training.tf.data_loader import TFDataLoader
 from utils.test_utils import df_images
 
 

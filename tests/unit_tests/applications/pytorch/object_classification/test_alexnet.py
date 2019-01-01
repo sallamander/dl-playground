@@ -1,4 +1,4 @@
-"""Unit tests for networks.alexnet_pytorch"""
+"""Unit tests for networks.pytorch.object_classification.alexnet"""
 
 from contextlib import ExitStack
 from unittest.mock import patch, MagicMock
@@ -6,9 +6,9 @@ from unittest.mock import patch, MagicMock
 import pytest
 import torch
 
-import networks.alexnet_pytorch
+import networks.pytorch.object_classification.alexnet as pytorch_alexnet
 
-AlexNet = networks.alexnet_pytorch.AlexNet
+AlexNet = pytorch_alexnet.AlexNet
 
 
 class TestAlexNet(object):
@@ -38,22 +38,22 @@ class TestAlexNet(object):
         layers_dict['relu'] = {
             'expected_count': 7,
             'wrapped_layer': patch.object(
-                networks.alexnet_pytorch, 'ReLU',
-                wraps=networks.alexnet_pytorch.ReLU
+                pytorch_alexnet, 'ReLU',
+                wraps=pytorch_alexnet.ReLU
             )
         }
         layers_dict['max_pooling'] = {
             'expected_count': 3,
             'wrapped_layer': patch.object(
-                networks.alexnet_pytorch, 'MaxPool2d',
-                wraps=networks.alexnet_pytorch.MaxPool2d
+                pytorch_alexnet, 'MaxPool2d',
+                wraps=pytorch_alexnet.MaxPool2d
             )
         }
         layers_dict['dropout'] = {
             'expected_count': 2,
             'wrapped_layer': patch.object(
-                networks.alexnet_pytorch, 'Dropout',
-                wraps=networks.alexnet_pytorch.Dropout
+                pytorch_alexnet, 'Dropout',
+                wraps=pytorch_alexnet.Dropout
             )
         }
 
@@ -74,11 +74,14 @@ class TestAlexNet(object):
 
         mock_validate_config = MagicMock()
         monkeypatch.setattr(
-            'networks.alexnet_pytorch.validate_config', mock_validate_config
+            ('networks.pytorch.object_classification.alexnet'
+             '.validate_config'),
+            mock_validate_config
         )
         mock_set_layers = MagicMock()
         monkeypatch.setattr(
-            'networks.alexnet_pytorch.AlexNet._set_layers',
+            ('networks.pytorch.object_classification.alexnet'
+             '.AlexNet._set_layers'),
             mock_set_layers
         )
         alexnet = AlexNet(network_config)

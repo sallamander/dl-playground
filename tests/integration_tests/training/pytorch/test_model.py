@@ -1,4 +1,4 @@
-"""Integration tests for trainers.pytorch_model"""
+"""Integration tests for training.pytorch.model"""
 
 from unittest.mock import patch
 
@@ -8,9 +8,9 @@ from torchvision.transforms.functional import to_tensor
 
 from datasets.imagenet_dataset import ImageNetDataSet
 from datasets.ops import per_image_standardization
-from datasets.pytorch_dataset_transformer import PyTorchDataSetTransformer
-from networks.alexnet_pytorch import AlexNet
-from trainers.pytorch_model import Model
+from networks.pytorch.object_classification.alexnet import AlexNet
+from training.pytorch.dataset_transformer import PyTorchDataSetTransformer
+from training.pytorch.model import Model
 from utils.generic_utils import cycle
 from utils.test_utils import df_images
 
