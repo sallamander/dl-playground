@@ -42,7 +42,7 @@ class ImageNetTrainer(object):
         :param n_steps_per_epoch: number of batches to train on in one epoch
         :type n_steps_per_epoch: int
         :param validation_dataset: optional dataset that iterates over the
-         validation data indefinitly
+         validation data indefinitely
         :type validation_dataset: tf.data.Dataset
         :param n_validation_steps: number of batches to validate on after each
          epoch

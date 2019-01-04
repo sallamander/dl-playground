@@ -1,8 +1,8 @@
-"""Unit tests for datasets.pytorch_dataset_transformer"""
+"""Unit tests for training.pytorch.dataset_transformer"""
 
 from unittest.mock import MagicMock
 
-from datasets.pytorch_dataset_transformer import PyTorchDataSetTransformer
+from training.pytorch.dataset_transformer import PyTorchDataSetTransformer
 
 
 class TestPyTorchDataSetTransformer(object):
@@ -43,7 +43,7 @@ class TestPyTorchDataSetTransformer(object):
 
         mock_apply_transformation = MagicMock()
         monkeypatch.setattr(
-            'datasets.pytorch_dataset_transformer.apply_transformation',
+            'training.pytorch.dataset_transformer.apply_transformation',
             mock_apply_transformation
         )
 

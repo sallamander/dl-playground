@@ -1,10 +1,10 @@
-"""Integration tests for datasets.tf_data_loader"""
+"""Integration tests for training.tf.data_loader"""
 
 import numpy as np
 import tensorflow as tf
 
 from datasets.imagenet_dataset import ImageNetDataSet
-from datasets.tf_data_loader import TFDataLoader
+from training.tf.data_loader import TFDataLoader
 from utils.test_utils import df_images
 
 

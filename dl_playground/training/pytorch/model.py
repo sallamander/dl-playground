@@ -151,6 +151,7 @@ class Model(object):
             for _ in range(n_steps_per_epoch):
                 inputs, targets = next(generator)
                 _ = self.train_on_batch(inputs, targets)
+                print(_)
 
             if validation_data:
                 _ = self.evaluate_generator(

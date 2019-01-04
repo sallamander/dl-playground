@@ -1,4 +1,4 @@
-"""Loader to create a tensorflow.data.Dataset for training"""
+"""Loader to create a tensorflow.data.Dataset objects for training"""
 
 import tensorflow as tf
 

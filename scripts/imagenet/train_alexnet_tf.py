@@ -7,18 +7,20 @@ import pandas as pd
 import tensorflow as tf
 
 from datasets.imagenet_dataset import ImageNetDataSet
-from datasets.tf_data_loader import TFDataLoader
-from networks.alexnet_tf import AlexNet
-from trainers.imagenet_trainer_tf import ImageNetTrainer
+from networks.tf.object_classification.alexnet import AlexNet
+from training.tf.data_loader import TFDataLoader
+from training.tf.imagenet_trainer import ImageNetTrainer
 from utils import dev_env
 
 
 DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
 FPATH_DF_TRAIN_SET = os.path.join(
-    DIRPATH_DATA, 'from_access_links', 'metadata_lists', 'df_train_set.csv'
+    DIRPATH_DATA, 'from_access_links',
+    'metadata_lists', 'df_classification_train_set.csv'
 )
 FPATH_DF_VAL_SET = os.path.join(
-    DIRPATH_DATA, 'from_access_links', 'metadata_lists', 'df_val_set.csv'
+    DIRPATH_DATA, 'from_access_links',
+    'metadata_lists', 'df_classification_val_set.csv'
 )
 
 IMAGE_HEIGHT = 227

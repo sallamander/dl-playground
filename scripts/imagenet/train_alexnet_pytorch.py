@@ -10,9 +10,9 @@ from torchvision.transforms.functional import to_tensor
 
 from datasets.imagenet_dataset import ImageNetDataSet
 from datasets.ops import per_image_standardization
-from datasets.pytorch_dataset_transformer import PyTorchDataSetTransformer
-from networks.alexnet_pytorch import AlexNet
-from trainers.imagenet_trainer_pytorch import ImageNetTrainer
+from networks.pytorch.object_classification.alexnet import AlexNet
+from training.pytorch.dataset_transformer import PyTorchDataSetTransformer
+from training.pytorch.imagenet_trainer import ImageNetTrainer
 from utils import dev_env
 
 
@@ -99,13 +99,15 @@ def get_trainer():
 def main():
     """Train AlexNet on ImageNet"""
 
-    train_loader, _ = get_data_loaders()
+    train_loader, val_loader = get_data_loaders()
     alexnet = get_network()
     trainer = get_trainer()
 
     trainer.train(
         network=alexnet, train_dataset=train_loader,
-        n_steps_per_epoch=len(train_loader.dataset)
+        n_steps_per_epoch=len(train_loader.dataset),
+        validation_dataset=val_loader,
+        n_validation_steps=len(val_loader.dataset)
     )
 
 

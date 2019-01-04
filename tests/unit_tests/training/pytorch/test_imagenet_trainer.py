@@ -1,9 +1,10 @@
-"""Unit tests for trainers.imagenet_trainer_pytorch"""
+"""Unit tests for training.pytorch.imagenet_trainer"""
 
 from unittest.mock import patch, MagicMock
 
-from trainers.pytorch_model import Model
-from trainers.imagenet_trainer_pytorch import ImageNetTrainer
+from training.pytorch.model import Model
+from training.pytorch.imagenet_trainer import ImageNetTrainer
+from utils.generic_utils import cycle
 
 
 class TestImageNetTrainer(object):
@@ -24,7 +25,7 @@ class TestImageNetTrainer(object):
             """Mock validate_config to pass"""
             pass
         monkeypatch.setattr(
-            'trainers.imagenet_trainer_pytorch.validate_config',
+            'training.pytorch.imagenet_trainer.validate_config',
             mock_validate_config
         )
 
@@ -53,7 +54,14 @@ class TestImageNetTrainer(object):
 
         mock_compile = MagicMock()
         monkeypatch.setattr(
-            'trainers.imagenet_trainer_pytorch.Model.compile', mock_compile
+            'training.pytorch.imagenet_trainer.Model.compile', mock_compile
+        )
+
+        mock_cycle = MagicMock()
+        mock_cycle_return = MagicMock()
+        mock_cycle.return_value = mock_cycle_return
+        monkeypatch.setattr(
+            'training.pytorch.imagenet_trainer.cycle', mock_cycle
         )
 
         imagenet_trainer.train = ImageNetTrainer.train
@@ -65,7 +73,25 @@ class TestImageNetTrainer(object):
             )
             assert fit_fn.call_count == 1
             fit_fn.assert_called_with(
-                generator=imagenet_dataset, n_steps_per_epoch=1,
-                n_epochs=2
+                generator=mock_cycle_return, n_steps_per_epoch=1,
+                n_epochs=2, validation_data=None, n_validation_steps=None
+            )
+            assert mock_compile.call_count == 1
+
+            # reset call_count for next assert
+            mock_compile.call_count = 0
+
+        with patch.object(Model, 'fit_generator') as fit_fn:
+            imagenet_trainer.train(
+                self=imagenet_trainer,
+                train_dataset=imagenet_dataset, network=alexnet,
+                n_steps_per_epoch=1,
+                validation_dataset=imagenet_dataset, n_validation_steps=3
+            )
+            assert fit_fn.call_count == 1
+            fit_fn.assert_called_with(
+                generator=mock_cycle_return, n_steps_per_epoch=1,
+                n_epochs=2, validation_data=mock_cycle_return,
+                n_validation_steps=3
             )
             assert mock_compile.call_count == 1

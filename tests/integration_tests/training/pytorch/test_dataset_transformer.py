@@ -1,4 +1,4 @@
-"""Integration tests for datasets.pytorch_dataset_transformer"""
+"""Integration tests for training.pytorch.dataset_transformer"""
 
 import numpy as np
 from torch import Tensor
@@ -6,7 +6,7 @@ from torchvision.transforms.functional import to_tensor
 
 from datasets.imagenet_dataset import ImageNetDataSet
 from datasets.ops import per_image_standardization
-from datasets.pytorch_dataset_transformer import PyTorchDataSetTransformer
+from training.pytorch.dataset_transformer import PyTorchDataSetTransformer
 from utils.test_utils import df_images
 
 
