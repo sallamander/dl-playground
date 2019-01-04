@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 
-@pytest.fixture
+@pytest.fixture(scope='class')
 def df_images():
     """Return a `df_images` pointing to temporarily saved images
 

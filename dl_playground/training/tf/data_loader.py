@@ -23,15 +23,14 @@ class TFDataLoader(object):
         self.numpy_dataset = numpy_dataset
         self.transformations = transformations or []
 
-    def get_infinite_iter(self, batch_size, shuffle_buffer_size=10000,
+    def get_infinite_iter(self, batch_size, shuffle=False,
                           prefetch_buffer_size=1, num_parallel_calls=1):
         """Return a tf.data.Dataset that iterates over the data indefinitely
 
         :param batch_size: size of the batches to return
         :type batch_size: int
-        :param shuffle_buffer_size: number of elements that will be buffered
-         when shuffling the dataset
-        :type shuffle_buffer_size: int
+        :param shuffle: if True, re-shuffle the data at the end of every epoch
+        :type shuffle: bool
         :param prefetch_buffer_size: number of batches to prefetch
         :type prefetch_buffer_size: int
         :param num_parallel_calls: number of threads to use when applying `map`
@@ -42,9 +41,9 @@ class TFDataLoader(object):
         """
 
         dataset = tf.data.Dataset.from_generator(
-            self.numpy_dataset.as_generator, self.numpy_dataset.sample_types
+            lambda: self.numpy_dataset.as_generator(shuffle=shuffle),
+            self.numpy_dataset.sample_types
         )
-        dataset = dataset.shuffle(shuffle_buffer_size)
         dataset = dataset.repeat()
 
         it = self.transformations

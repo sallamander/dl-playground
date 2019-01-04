@@ -98,9 +98,9 @@ def main():
     trainer.train(
         network=alexnet,
         train_dataset=train_dataset,
-        n_steps_per_epoch=len(train_loader.numpy_dataset),
+        n_steps_per_epoch=len(train_loader.numpy_dataset) // BATCH_SIZE,
         validation_dataset=validation_dataset,
-        n_validation_steps=len(validation_loader.numpy_dataset)
+        n_validation_steps=len(validation_loader.numpy_dataset) // BATCH_SIZE
     )
 
 if __name__ == '__main__':
