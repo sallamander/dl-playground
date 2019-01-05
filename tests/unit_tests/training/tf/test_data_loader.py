@@ -60,7 +60,7 @@ class TestTFDataLoader(object):
     def test_get_infinite_iter(self):
         """Test get_infinite_iter method"""
 
-        def mock_call():
+        def mock_call(shuffle=False):
             """Mock __call__ magic method"""
 
             for element in np.arange(4, dtype='float32'):

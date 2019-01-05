@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock
 import pytest
 
+import imageio
 import numpy as np
 
 from datasets.imagenet_dataset import ImageNetDataSet
@@ -104,6 +105,17 @@ class TestImageNetDataSet(object):
             assert sample['label'] == df_images.loc[idx, 'label']
             assert sample['image'].shape == (227, 227, 3)
 
+            fpath_image = df_images.loc[idx, 'fpath_image']
+            image = imageio.imread(fpath_image)
+            if image.ndim == 2:
+                sample_image = sample['image']
+                assert np.array_equal(
+                    sample_image[..., 0], sample_image[..., 1]
+                )
+                assert np.array_equal(
+                    sample_image[..., 1], sample_image[..., 2]
+                )
+
         with pytest.raises(KeyError):
             imagenet_dataset[4]
 
@@ -112,7 +124,7 @@ class TestImageNetDataSet(object):
 
         def mock_get_item(self, idx):
             """Mock __getitem__ magic method"""
-            return idx
+            return {idx: idx}
 
         def mock_len(self):
             """Mock __len__ magic method"""
@@ -125,4 +137,10 @@ class TestImageNetDataSet(object):
 
         gen = imagenet_dataset.as_generator(self=imagenet_dataset)
         dataset = [element for element in gen]
-        assert np.array_equal(range(9), dataset)
+        indices = []
+        for sample in dataset:
+            for idx, value in sample.items():
+                indices.append(idx)
+                assert value.tolist() == idx
+
+        assert set(indices) == set(range(9))

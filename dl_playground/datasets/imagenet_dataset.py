@@ -3,7 +3,7 @@
 import imageio
 import numpy as np
 from skimage.transform import resize
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 
 from utils.generic_utils import validate_config
 
@@ -57,6 +57,9 @@ class ImageNetDataSet(Dataset):
 
         fpath_image = self.df_images.loc[idx, 'fpath_image']
         image = imageio.imread(fpath_image)
+        if image.ndim == 2:
+            image = np.expand_dims(image, -1)
+            image = np.concatenate((image, image, image), axis=-1)
 
         n_channels = image.shape[-1]
         target_shape = (
@@ -81,12 +84,24 @@ class ImageNetDataSet(Dataset):
 
         return len(self.df_images)
 
-    def as_generator(self):
+    def as_generator(self, shuffle=False):
         """Return a generator that yields the entire dataset once
 
+        This is intended to act as a lightweight wrapper around the
+        torch.utils.data.DataLoader class, which allows for shuffling of the
+        data without loading it into memory. It purposely removes the added
+        batch dimension from the DataLoader such that each element yielded is
+        still a single sample, just as if it came from indexing into this
+        class, e.g. ImageNetDataSet[10].
+
+        :param shuffle: if True, shuffle the data before returning it
+        :type shuffle: bool
         :return: generator that yields the entire dataset once
         :rtype: generator
         """
 
-        for idx in range(len(self)):
-            yield self[idx]
+        for sample in DataLoader(dataset=self, shuffle=shuffle):
+            sample_batch_dim_removed = {}
+            for key, val in sample.items():
+                sample_batch_dim_removed[key] = val[0]
+            yield sample_batch_dim_removed

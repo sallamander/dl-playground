@@ -91,16 +91,16 @@ def main():
     alexnet = get_network()
     trainer = get_trainer()
 
-    train_dataset = train_loader.get_infinite_iter(BATCH_SIZE)
+    train_dataset = train_loader.get_infinite_iter(BATCH_SIZE, shuffle=True)
     validation_dataset = validation_loader.get_infinite_iter(BATCH_SIZE)
 
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
     trainer.train(
         network=alexnet,
         train_dataset=train_dataset,
-        n_steps_per_epoch=len(train_loader.numpy_dataset),
+        n_steps_per_epoch=len(train_loader.numpy_dataset) // BATCH_SIZE,
         validation_dataset=validation_dataset,
-        n_validation_steps=len(validation_loader.numpy_dataset)
+        n_validation_steps=len(validation_loader.numpy_dataset) // BATCH_SIZE
     )
 
 if __name__ == '__main__':

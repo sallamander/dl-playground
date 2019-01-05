@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 
-@pytest.fixture
+@pytest.fixture(scope='class')
 def df_images():
     """Return a `df_images` pointing to temporarily saved images
 
@@ -28,7 +28,7 @@ def df_images():
     rows = []
     for idx in range(3):
         height, width = np.random.randint(128, 600, 2)
-        num_channels = 3
+        num_channels = np.random.choice((1, 3), 1).tolist()[0]
 
         input_image = np.random.random((height, width, num_channels))
         fpath_image = os.path.join(tempdir.name, '{}.jpg'.format(idx))
