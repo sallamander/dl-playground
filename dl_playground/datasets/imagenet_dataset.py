@@ -57,6 +57,9 @@ class ImageNetDataSet(Dataset):
 
         fpath_image = self.df_images.loc[idx, 'fpath_image']
         image = imageio.imread(fpath_image)
+        if image.ndim == 2:
+            image = np.expand_dims(image, -1)
+            image = np.concatenate((image, image, image), axis=-1)
 
         n_channels = image.shape[-1]
         target_shape = (

@@ -3,6 +3,9 @@
 from unittest.mock import MagicMock
 import pytest
 
+import imageio
+import numpy as np
+
 from datasets.imagenet_dataset import ImageNetDataSet
 from utils.test_utils import df_images
 
@@ -101,6 +104,17 @@ class TestImageNetDataSet(object):
 
             assert sample['label'] == df_images.loc[idx, 'label']
             assert sample['image'].shape == (227, 227, 3)
+
+            fpath_image = df_images.loc[idx, 'fpath_image']
+            image = imageio.imread(fpath_image)
+            if image.ndim == 2:
+                sample_image = sample['image']
+                assert np.array_equal(
+                    sample_image[..., 0], sample_image[..., 1]
+                )
+                assert np.array_equal(
+                    sample_image[..., 1], sample_image[..., 2]
+                )
 
         with pytest.raises(KeyError):
             imagenet_dataset[4]
