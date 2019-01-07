@@ -42,7 +42,7 @@ class TestImageNetTrainer(object):
         tf_data_loader = TFDataLoader(imagenet_dataset)
         tf_data_loader = TFDataLoader(imagenet_dataset, transformations)
         dataset = tf_data_loader.get_infinite_iter(
-            batch_size=batch_size
+            batch_size=batch_size, shuffle=True, n_workers=4
         )
 
         imagenet_trainer.train(

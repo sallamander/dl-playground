@@ -5,6 +5,7 @@ import pytest
 
 import imageio
 import numpy as np
+import torch
 
 from datasets.imagenet_dataset import ImageNetDataSet
 from utils.test_utils import df_images
@@ -120,7 +121,15 @@ class TestImageNetDataSet(object):
             imagenet_dataset[4]
 
     def test_as_generator(self):
-        """Test `as_generator` method"""
+        """Test `as_generator` method
+
+        This tests two cases:
+        - `shuffle=False`
+        - `shuffle=True`
+
+        It only tests when `n_workers=0`, deferring the testing of
+        `n_workers=1` to integration tests.
+        """
 
         def mock_get_item(self, idx):
             """Mock __getitem__ magic method"""
@@ -135,12 +144,23 @@ class TestImageNetDataSet(object):
         imagenet_dataset.__len__ = mock_len
         imagenet_dataset.as_generator = ImageNetDataSet.as_generator
 
-        gen = imagenet_dataset.as_generator(self=imagenet_dataset)
-        dataset = [element for element in gen]
-        indices = []
-        for sample in dataset:
-            for idx, value in sample.items():
-                indices.append(idx)
-                assert value.tolist() == idx
+        # set the seed to one where we know that the shuffle won't by random
+        # chance produce the unshuffled version
+        torch.manual_seed(1)
+        for shuffle in [True, False]:
+            gen = imagenet_dataset.as_generator(
+                self=imagenet_dataset, n_workers=0, shuffle=shuffle
+            )
+            dataset = [next(gen) for _ in range(9)]
+            indices, values = [], []
+            for sample in dataset:
+                for idx, value in sample.items():
+                    indices.append(idx)
+                    values.append(value.tolist())
 
-        assert set(indices) == set(range(9))
+            if shuffle:
+                assert indices != list(range(9))
+                assert values != list(range(9))
+            else:
+                assert indices == list(range(9))
+                assert values == list(range(9))

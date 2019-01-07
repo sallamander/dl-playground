@@ -24,7 +24,7 @@ class TFDataLoader(object):
         self.transformations = transformations or []
 
     def get_infinite_iter(self, batch_size, shuffle=False,
-                          prefetch_buffer_size=1, num_parallel_calls=1):
+                          prefetch_buffer_size=1, n_workers=0):
         """Return a tf.data.Dataset that iterates over the data indefinitely
 
         :param batch_size: size of the batches to return
@@ -33,16 +33,17 @@ class TFDataLoader(object):
         :type shuffle: bool
         :param prefetch_buffer_size: number of batches to prefetch
         :type prefetch_buffer_size: int
-        :param num_parallel_calls: number of threads to use when applying `map`
-         operations to the data
-        :type num_parallel_calls: int
+        :param n_workers: number of subprocesses to use for data loading
+        :type n_workers: int
         :return: dataset that iterates over the data indefinitely
         :rtype: tensorflow.data.Dataset
         """
 
+        generator = self.numpy_dataset.as_generator(
+            shuffle=shuffle, n_workers=n_workers
+        )
         dataset = tf.data.Dataset.from_generator(
-            lambda: self.numpy_dataset.as_generator(shuffle=shuffle),
-            self.numpy_dataset.sample_types
+            lambda: generator, self.numpy_dataset.sample_types
         )
         dataset = dataset.repeat()
 
@@ -55,7 +56,7 @@ class TFDataLoader(object):
                 lambda sample: apply_transformation(
                     transformation_fn, sample,
                     sample_keys, transformation_fn_kwargs
-                ), num_parallel_calls=num_parallel_calls
+                )
             )
 
         dataset = dataset.batch(batch_size)
