@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 from training.tf.data_loader import TFDataLoader
+from utils.generic_utils import cycle
 from utils.test_utils import df_images
 
 
@@ -25,7 +26,7 @@ class TestTFDataLoader(object):
 
         with tf.device('/cpu:0'):
             dataset = tf_data_loader.get_infinite_iter(
-                self=tf_data_loader, batch_size=self.BATCH_SIZE,
+                self=tf_data_loader, batch_size=self.BATCH_SIZE, n_workers=0
             )
             iterator = dataset.make_initializable_iterator()
             next_element_op = iterator.get_next()
@@ -60,10 +61,10 @@ class TestTFDataLoader(object):
     def test_get_infinite_iter(self):
         """Test get_infinite_iter method"""
 
-        def mock_call(shuffle=False):
+        def mock_call(shuffle=False, n_workers=1):
             """Mock __call__ magic method"""
 
-            for element in np.arange(4, dtype='float32'):
+            for element in cycle(np.arange(4, dtype='float32')):
                 yield {'element': element, 'label': 1}
 
         def return_max_val(element, ceiling):

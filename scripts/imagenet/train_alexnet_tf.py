@@ -91,8 +91,12 @@ def main():
     alexnet = get_network()
     trainer = get_trainer()
 
-    train_dataset = train_loader.get_infinite_iter(BATCH_SIZE, shuffle=True)
-    validation_dataset = validation_loader.get_infinite_iter(BATCH_SIZE)
+    train_dataset = train_loader.get_infinite_iter(
+        BATCH_SIZE, shuffle=True, n_workers=4
+    )
+    validation_dataset = validation_loader.get_infinite_iter(
+        BATCH_SIZE, shuffle=False, n_workers=2
+    )
 
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
     trainer.train(

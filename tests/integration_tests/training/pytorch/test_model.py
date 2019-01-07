@@ -33,7 +33,7 @@ class TestModel(object):
         )
         data_loader = DataLoader(
             dataset=dataset, batch_size=2,
-            shuffle=True, num_workers=0
+            shuffle=True, num_workers=4
         )
 
         alexnet = AlexNet(network_config={'n_channels': 3, 'n_classes': 1000})

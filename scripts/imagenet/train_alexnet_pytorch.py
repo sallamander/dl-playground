@@ -60,11 +60,11 @@ def get_data_loaders():
 
     train_loader = DataLoader(
         dataset=train_dataset, batch_size=BATCH_SIZE,
-        shuffle=True, num_workers=0
+        shuffle=True, num_workers=4
     )
     val_loader = DataLoader(
         dataset=val_dataset, batch_size=BATCH_SIZE,
-        shuffle=True, num_workers=0
+        shuffle=False, num_workers=2
     )
 
     return train_loader, val_loader
@@ -88,6 +88,7 @@ def get_trainer():
     :rtype: trainers.imagenet_trainer_pytorch.ImageNetTrainer
     """
 
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     trainer_config = {
         'optimizer': 'Adam', 'loss': 'CrossEntropyLoss',
@@ -105,9 +106,9 @@ def main():
 
     trainer.train(
         network=alexnet, train_dataset=train_loader,
-        n_steps_per_epoch=len(train_loader.dataset),
+        n_steps_per_epoch=len(train_loader),
         validation_dataset=val_loader,
-        n_validation_steps=len(val_loader.dataset)
+        n_validation_steps=len(val_loader)
     )
 
 

@@ -5,7 +5,7 @@ import numpy as np
 from skimage.transform import resize
 from torch.utils.data import Dataset, DataLoader
 
-from utils.generic_utils import validate_config
+from utils.generic_utils import cycle, validate_config
 
 
 class ImageNetDataSet(Dataset):
@@ -84,7 +84,7 @@ class ImageNetDataSet(Dataset):
 
         return len(self.df_images)
 
-    def as_generator(self, shuffle=False):
+    def as_generator(self, shuffle=False, n_workers=0):
         """Return a generator that yields the entire dataset once
 
         This is intended to act as a lightweight wrapper around the
@@ -96,11 +96,16 @@ class ImageNetDataSet(Dataset):
 
         :param shuffle: if True, shuffle the data before returning it
         :type shuffle: bool
+        :param n_workers: number of subprocesses to use for data loading
+        :type n_workers: int
         :return: generator that yields the entire dataset once
         :rtype: generator
         """
 
-        for sample in DataLoader(dataset=self, shuffle=shuffle):
+        data_loader = DataLoader(
+            dataset=self, shuffle=shuffle, num_workers=n_workers
+        )
+        for sample in cycle(data_loader):
             sample_batch_dim_removed = {}
             for key, val in sample.items():
                 sample_batch_dim_removed[key] = val[0]
