@@ -87,7 +87,7 @@ class TestAlexNet(object):
         alexnet = AlexNet(network_config)
 
         assert alexnet.required_config_keys == {'n_channels', 'n_classes'}
-        assert id(network_config) == id(alexnet.network_config)
+        assert id(network_config) == id(alexnet.config)
         assert mock_validate_config.call_count == 1
         mock_validate_config.assert_called_with(
             network_config, AlexNet.required_config_keys
@@ -106,7 +106,7 @@ class TestAlexNet(object):
         """
 
         alexnet = MagicMock()
-        alexnet.network_config = network_config
+        alexnet.config = network_config
         alexnet._set_layers = AlexNet._set_layers
 
         layer_names = [
@@ -141,7 +141,7 @@ class TestAlexNet(object):
         """
 
         alexnet = MagicMock()
-        alexnet.network_config = network_config
+        alexnet.config = network_config
         alexnet.forward = AlexNet.forward
 
         inputs = torch.randn((1, 227, 227, 3))

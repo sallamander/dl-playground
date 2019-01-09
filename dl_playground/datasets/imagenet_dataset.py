@@ -16,21 +16,21 @@ class ImageNetDataSet(Dataset):
     sample_types = {'image': 'float32', 'label': 'uint8'}
     target_keys = ['label']
 
-    def __init__(self, df_images, dataset_config):
+    def __init__(self, df_images, config):
         """Init
 
-        `dataset_config` must contain the following keys:
+        `config` must contain the following keys:
         - int height: height to reshape the images to
         - int width: width to reshape the images to
 
-        :param dataset_config: specifies the configuration of the dataset
-        :type dataset_config: dict
+        :param config: specifies the configuration of the dataset
+        :type config: dict
         :param df_images: holds the filepath to the input image ('fpath_image')
          and the target label for the image ('label')
         :type df_images: pandas.DataFrame
         """
 
-        validate_config(dataset_config, self.required_config_keys)
+        validate_config(config, self.required_config_keys)
 
         if set(df_images.columns) < {'fpath_image', 'label'}:
             msg = (
@@ -40,7 +40,7 @@ class ImageNetDataSet(Dataset):
             raise KeyError(msg)
 
         self.df_images = df_images
-        self.config = dataset_config
+        self.config = config
         self.df_images['label'] = (
             self.df_images['label'].astype(self.sample_types['label'])
         )
