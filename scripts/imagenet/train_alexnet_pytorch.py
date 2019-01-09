@@ -2,18 +2,16 @@
 """Train AlexNet on ImageNet using pytorch"""
 
 import os
+import argparse
 
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
-from torchvision.transforms.functional import to_tensor
+import yaml
 
-from datasets.imagenet_dataset import ImageNetDataSet
-from datasets.ops import per_image_standardization
-from networks.pytorch.object_classification.alexnet import AlexNet
 from training.pytorch.dataset_transformer import PyTorchDataSetTransformer
-from training.pytorch.imagenet_trainer import ImageNetTrainer
 from utils import dev_env
+from utils.generic_utils import import_object
 
 
 DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
@@ -26,13 +24,8 @@ FPATH_DF_VAL_SET = os.path.join(
     'metadata_lists', 'df_classification_val_set.csv'
 )
 
-IMAGE_HEIGHT = 227
-IMAGE_WIDTH = 227
-BATCH_SIZE = 128
-NUM_EPOCHS = 10
 
-
-def get_data_loaders():
+def get_data_loaders(dataset_spec):
     """Return train and validation data loaders
 
     :return: loaders of the training and validation data
@@ -42,46 +35,63 @@ def get_data_loaders():
     df_train = pd.read_csv(FPATH_DF_TRAIN_SET)
     df_val = pd.read_csv(FPATH_DF_VAL_SET)
 
-    dataset_config = {'height': IMAGE_HEIGHT, 'width': IMAGE_WIDTH}
-    train_dataset = ImageNetDataSet(df_train, dataset_config)
-    val_dataset = ImageNetDataSet(df_val, dataset_config)
+    dataset_importpath = dataset_spec['importpath']
+    DataSet = import_object(dataset_importpath)
 
-    transformations = [
-        (per_image_standardization, {'sample_keys': ['image']}),
-        (to_tensor, {'sample_keys': ['image']}),
-        (torch.tensor, {'sample_keys': ['label'], 'dtype': torch.long})
-    ]
+    dataset_config = dataset_spec['init_params']['config']
+    train_dataset = DataSet(df_train, dataset_config)
+    val_dataset = DataSet(df_val, dataset_config)
+
+    transformations = dataset_spec['transformations']
+    processed_transformations = []
+    for transformation in transformations:
+        assert len(transformation) == 1
+        transformation_fn_importpath = list(transformation.keys())[0]
+        transformation_config = list(transformation.values())[0]
+
+        transformation_fn = import_object(transformation_fn_importpath)
+        processed_transformation_config = {}
+        for param, arguments in transformation_config.items():
+            value = arguments['value']
+            if arguments.get('import'):
+                value = import_object(value)
+            processed_transformation_config[param] = value
+        processed_transformations.append(
+            (transformation_fn, processed_transformation_config)
+        )
+
     train_dataset = PyTorchDataSetTransformer(
-        numpy_dataset=train_dataset, transformations=transformations
+        numpy_dataset=train_dataset, transformations=processed_transformations
     )
     val_dataset = PyTorchDataSetTransformer(
-        numpy_dataset=val_dataset, transformations=transformations
+        numpy_dataset=val_dataset, transformations=processed_transformations
     )
 
     train_loader = DataLoader(
-        dataset=train_dataset, batch_size=BATCH_SIZE,
-        shuffle=True, num_workers=4
+        dataset=train_dataset, **dataset_spec['train_loader']
     )
     val_loader = DataLoader(
-        dataset=val_dataset, batch_size=BATCH_SIZE,
-        shuffle=False, num_workers=2
+        dataset=val_dataset, **dataset_spec['val_loader']
     )
 
     return train_loader, val_loader
 
 
-def get_network():
+def get_network(network_spec):
     """Return an alexnet model to use during training
 
     :return: alexnet model
     :rtype: networks.alexnet_pytorch.AlexNet
     """
 
-    network_config = {'n_channels': 3, 'n_classes': 1000}
-    return AlexNet(network_config)
+    network_importpath = network_spec['importpath']
+    Network = import_object(network_importpath)
+
+    network_config = network_spec['init_params']['config']
+    return Network(network_config)
 
 
-def get_trainer():
+def get_trainer(trainer_spec):
     """Return a trainer to train AlexNet on ImageNet
 
     :return: trainer to train alexnet on imagenet
@@ -90,19 +100,38 @@ def get_trainer():
 
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    trainer_config = {
-        'optimizer': 'Adam', 'loss': 'CrossEntropyLoss',
-        'batch_size': BATCH_SIZE, 'n_epochs': 10, 'device': device
-    }
-    return ImageNetTrainer(trainer_config)
+
+    trainer_importpath = trainer_spec['importpath']
+    Trainer = import_object(trainer_importpath)
+
+    trainer_config = trainer_spec['init_params']['config']
+    trainer_config['device'] = device
+    return Trainer(trainer_config)
+
+
+def parse_args():
+    """Parse command line arguments"""
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--fpath_config', type=str, required=True,
+        help='Filepath to the training config.'
+    )
+
+    args = parser.parse_args()
+    return args
 
 
 def main():
     """Train AlexNet on ImageNet"""
 
-    train_loader, val_loader = get_data_loaders()
-    alexnet = get_network()
-    trainer = get_trainer()
+    args = parse_args()
+    with open(args.fpath_config) as f:
+        training_config = yaml.load(f)
+
+    train_loader, val_loader = get_data_loaders(training_config['dataset'])
+    alexnet = get_network(training_config['network'])
+    trainer = get_trainer(training_config['trainer'])
 
     trainer.train(
         network=alexnet, train_dataset=train_loader,
