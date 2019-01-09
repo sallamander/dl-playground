@@ -19,21 +19,21 @@ class AlexNet(object):
 
     required_config_keys = {'height', 'width', 'n_channels', 'n_classes'}
 
-    def __init__(self, network_config):
+    def __init__(self, config):
         """Init
 
-        `network_config` must contain the following keys:
+        `config` must contain the following keys:
         - int height: height of the input to the network
         - int width: width of the input to the network
         - int n_channels: number of channels of the input
         - int n_classes: number of classes in the output layer
 
-        :param network_config: specifies the configuration for the network
-        :type network_config: dict
+        :param config: specifies the configuration for the network
+        :type config: dict
         """
 
-        validate_config(network_config, self.required_config_keys)
-        self.network_config = network_config
+        validate_config(config, self.required_config_keys)
+        self.config = config
 
     def forward(self):
         """Return the inputs and outputs representing a forward pass of AlexNet
@@ -46,10 +46,10 @@ class AlexNet(object):
         :rtype: tuple(tensorflow.Tensor)
         """
 
-        height = self.network_config['height']
-        width = self.network_config['width']
-        n_channels = self.network_config['n_channels']
-        n_classes = self.network_config['n_classes']
+        height = self.config['height']
+        width = self.config['width']
+        n_channels = self.config['n_channels']
+        n_classes = self.config['n_classes']
 
         inputs = Input(shape=(height, width, n_channels), name='image')
 

@@ -36,7 +36,7 @@ class TestModel(object):
             shuffle=True, num_workers=4
         )
 
-        alexnet = AlexNet(network_config={'n_channels': 3, 'n_classes': 1000})
+        alexnet = AlexNet(config={'n_channels': 3, 'n_classes': 1000})
         model = Model(network=alexnet)
 
         assert not model._compiled

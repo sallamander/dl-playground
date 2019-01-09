@@ -48,7 +48,7 @@ class TestAlexNet(object):
         )
 
         alexnet = AlexNet(network_config)
-        assert alexnet.network_config == network_config
+        assert alexnet.config == network_config
         mock_validate_config.assert_called_once_with(
             network_config, AlexNet.required_config_keys
         )
@@ -64,7 +64,7 @@ class TestAlexNet(object):
 
         alexnet = MagicMock()
         alexnet.forward = AlexNet.forward
-        alexnet.network_config = network_config
+        alexnet.config = network_config
         inputs, outputs = alexnet.forward(self=alexnet)
 
         assert isinstance(inputs, tf.Tensor)

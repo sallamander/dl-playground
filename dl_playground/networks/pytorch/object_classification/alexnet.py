@@ -17,21 +17,21 @@ class AlexNet(Module):
 
     required_config_keys = {'n_channels', 'n_classes'}
 
-    def __init__(self, network_config):
+    def __init__(self, config):
         """Init
 
-        `network_config` must contain the following keys:
+        `config` must contain the following keys:
         - int n_channels: number of channels of the input
         - int n_classes: number of classes in the output layer
 
-        :param network_config: specifies the configuration for the network
-        :type network_config: dict
+        :param config: specifies the configuration for the network
+        :type config: dict
         """
 
         super().__init__()
 
-        validate_config(network_config, self.required_config_keys)
-        self.network_config = network_config
+        validate_config(config, self.required_config_keys)
+        self.config = config
         self._set_layers()
 
     def _set_layers(self):
@@ -41,8 +41,8 @@ class AlexNet(Module):
         (self.linear[1-3]) in place.
         """
 
-        n_channels = self.network_config['n_channels']
-        n_classes = self.network_config['n_classes']
+        n_channels = self.config['n_channels']
+        n_classes = self.config['n_classes']
 
         self.conv1 = Conv2d(
             in_channels=n_channels, out_channels=96,
