@@ -80,6 +80,7 @@ dependencies:
   - python-dateutil=2.7.3=py35_0
   - pytz=2018.5=py35_0
   - pywavelets=0.5.2=py35h53ec731_0
+  - pyyaml=3.13=py35h14c3975_0
   - qt=5.9.5=h7e424d6_0
   - readline=7.0=ha6073c6_4
   - scikit-image=0.14.0=py35hf484d3e_1
@@ -101,6 +102,7 @@ dependencies:
   - wheel=0.31.1=py35_0
   - wrapt=1.10.11=py35hfdafd39_0
   - xz=5.2.4=h14c3975_4
+  - yaml=0.1.7=had09818_2
   - zlib=1.2.11=ha838bed_2
   - pytorch=1.0.0=py3.5_cuda9.0.176_cudnn7.4.1_1
   - torchvision=0.2.1=py_2
