@@ -1,0 +1,41 @@
+dataset:
+    importpath: datasets.imagenet_dataset.ImageNetDataSet
+    init_params:
+        config:
+            height: 227
+            width: 227
+    transformations:
+        - tensorflow.one_hot:
+            sample_keys:
+                value:
+                    - 'label'
+            depth:
+                value: 1000
+        - tensorflow.image.per_image_standardization:
+            sample_keys:
+                value:
+                    - 'image'
+    train_loader:
+        batch_size: 128
+        shuffle: True
+        n_workers: 4
+    val_loader:
+        batch_size: 128
+        shuffle: False
+        n_workers: 2
+network:
+    importpath: networks.tf.object_classification.alexnet.AlexNet
+    init_params:
+        config:
+            height: 227
+            width: 227
+            n_channels: 3
+            n_classes: 1000
+trainer:
+    importpath: training.tf.imagenet_trainer.ImageNetTrainer
+    init_params:
+        config:
+            optimizer: 'adam'
+            loss: 'categorical_crossentropy'
+            batch_size: 128
+            n_epochs: 10

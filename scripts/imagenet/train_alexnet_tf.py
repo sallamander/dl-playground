@@ -1,16 +1,15 @@
 #! /usr/bin/env python
 """Train AlexNet on ImageNet using Tensorflow"""
 
+import argparse
 import os
 
 import pandas as pd
-import tensorflow as tf
+import yaml
 
-from datasets.imagenet_dataset import ImageNetDataSet
-from networks.tf.object_classification.alexnet import AlexNet
 from training.tf.data_loader import TFDataLoader
-from training.tf.imagenet_trainer import ImageNetTrainer
 from utils import dev_env
+from utils.generic_utils import import_object
 
 
 DIRPATH_DATA = dev_env.get('imagenet', 'dirpath_data')
@@ -28,7 +27,7 @@ IMAGE_WIDTH = 227
 BATCH_SIZE = 128
 
 
-def get_data_loaders():
+def get_data_loaders(dataset_spec):
     """Return train and validation data loaders
 
     :return: loaders of the training and validation data
@@ -38,73 +37,104 @@ def get_data_loaders():
     df_train = pd.read_csv(FPATH_DF_TRAIN_SET)
     df_val = pd.read_csv(FPATH_DF_VAL_SET)
 
-    dataset_config = {'height': IMAGE_HEIGHT, 'width': IMAGE_WIDTH}
-    train_dataset = ImageNetDataSet(df_train, dataset_config)
-    validation_dataset = ImageNetDataSet(df_val, dataset_config)
+    dataset_importpath = dataset_spec['importpath']
+    DataSet = import_object(dataset_importpath)
 
-    transformations = [
-        (tf.one_hot,
-         {'sample_keys': ['label'], 'depth': 1000}),
-        (tf.image.per_image_standardization,
-         {'sample_keys': ['image']})
-    ]
-    train_loader = TFDataLoader(train_dataset, transformations)
-    validation_loader = (
-        TFDataLoader(validation_dataset, transformations)
+    dataset_config = dataset_spec['init_params']['config']
+    train_dataset = DataSet(df_train, dataset_config)
+    validation_dataset = DataSet(df_val, dataset_config)
+
+    transformations = dataset_spec['transformations']
+    processed_transformations = []
+    for transformation in transformations:
+        assert len(transformation) == 1
+        transformation_fn_importpath = list(transformation.keys())[0]
+        transformation_config = list(transformation.values())[0]
+
+        transformation_fn = import_object(transformation_fn_importpath)
+        processed_transformation_config = {}
+        for param, arguments in transformation_config.items():
+            value = arguments['value']
+            if arguments.get('import'):
+                value = import_object(value)
+            processed_transformation_config[param] = value
+        processed_transformations.append(
+            (transformation_fn, processed_transformation_config)
+        )
+
+    train_loader = TFDataLoader(train_dataset, processed_transformations)
+    val_loader = (
+        TFDataLoader(validation_dataset, processed_transformations)
     )
 
-    return train_loader, validation_loader
+    return train_loader, val_loader
 
 
-def get_network():
+def get_network(network_spec):
     """Return an alexnet model to use during training
 
     :return: alexnet model
     :rtype: networks.alexnet.AlexNet
     """
 
-    network_config = {
-        'height': IMAGE_HEIGHT, 'width': IMAGE_WIDTH,
-        'n_channels': 3, 'n_classes': 1000
-    }
-    return AlexNet(network_config)
+    network_importpath = network_spec['importpath']
+    Network = import_object(network_importpath)
+
+    network_config = network_spec['init_params']['config']
+    return Network(network_config)
 
 
-def get_trainer():
+def get_trainer(trainer_spec):
     """Return a trainer to train AlexNet on ImageNet
 
     :return: trainer to train alexnet on imagenet
     :rtype: trainers.imagenet_trainer_tf.ImageNetTrainer
     """
 
-    trainer_config = {
-        'optimizer': 'adam', 'loss': 'categorical_crossentropy',
-        'batch_size': BATCH_SIZE, 'n_epochs': 10
-    }
-    return ImageNetTrainer(trainer_config)
+    trainer_importpath = trainer_spec['importpath']
+    Trainer = import_object(trainer_importpath)
+
+    trainer_config = trainer_spec['init_params']['config']
+    return Trainer(trainer_config)
+
+
+def parse_args():
+    """Parse command line arguments"""
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--fpath_config', type=str, required=True,
+        help='Filepath to a training config.'
+    )
+
+    args = parser.parse_args()
+    return args
 
 
 def main():
     """Train AlexNet on ImageNet"""
 
-    train_loader, validation_loader = get_data_loaders()
-    alexnet = get_network()
-    trainer = get_trainer()
+    args = parse_args()
+    with open(args.fpath_config) as f:
+        training_config = yaml.load(f)
 
-    train_dataset = train_loader.get_infinite_iter(
-        BATCH_SIZE, shuffle=True, n_workers=4
-    )
-    validation_dataset = validation_loader.get_infinite_iter(
-        BATCH_SIZE, shuffle=False, n_workers=2
-    )
+    dataset_spec = training_config['dataset']
+    train_loader, val_loader = get_data_loaders(dataset_spec)
+    alexnet = get_network(training_config['network'])
+    trainer = get_trainer(training_config['trainer'])
+
+    train_gen = train_loader.get_infinite_iter(**dataset_spec['train_loader'])
+    val_gen = val_loader.get_infinite_iter(**dataset_spec['val_loader'])
 
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    train_batch_size = dataset_spec['train_loader']['batch_size']
+    val_batch_size = dataset_spec['val_loader']['batch_size']
     trainer.train(
         network=alexnet,
-        train_dataset=train_dataset,
-        n_steps_per_epoch=len(train_loader.numpy_dataset) // BATCH_SIZE,
-        validation_dataset=validation_dataset,
-        n_validation_steps=len(validation_loader.numpy_dataset) // BATCH_SIZE
+        train_dataset=train_gen,
+        n_steps_per_epoch=len(train_loader.numpy_dataset) // train_batch_size,
+        validation_dataset=val_gen,
+        n_validation_steps=len(val_loader.numpy_dataset) // val_batch_size
     )
 
 if __name__ == '__main__':

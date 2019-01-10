@@ -115,7 +115,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--fpath_config', type=str, required=True,
-        help='Filepath to the training config.'
+        help='Filepath to a training config.'
     )
 
     args = parser.parse_args()

@@ -26,7 +26,7 @@ dataset:
         num_workers: 4
     val_loader:
         batch_size: 128
-        shuffle: True
+        shuffle: False
         num_workers: 2
 network:
     importpath: networks.pytorch.object_classification.alexnet.AlexNet
