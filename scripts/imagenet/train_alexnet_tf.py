@@ -22,14 +22,13 @@ FPATH_DF_VAL_SET = os.path.join(
     'metadata_lists', 'df_classification_val_set.csv'
 )
 
-IMAGE_HEIGHT = 227
-IMAGE_WIDTH = 227
-BATCH_SIZE = 128
-
 
 def get_data_loaders(dataset_spec):
     """Return train and validation data loaders
-
+    
+    :param dataset_spec: specifies how to build the train and validation
+     datasets
+    :type dataset_spec: dict
     :return: loaders of the training and validation data
     :rtype: tuple(datasets.tf_data_loader.TFDataLoader)
     """
@@ -73,6 +72,8 @@ def get_data_loaders(dataset_spec):
 def get_network(network_spec):
     """Return an alexnet model to use during training
 
+    :param network_spec: specifies how to build the AlexNet model
+    :type network_spec: dict
     :return: alexnet model
     :rtype: networks.alexnet.AlexNet
     """
@@ -86,7 +87,9 @@ def get_network(network_spec):
 
 def get_trainer(trainer_spec):
     """Return a trainer to train AlexNet on ImageNet
-
+    
+    :param trainer_spec: specifies how to train the AlexNet on ImageNet
+    :type trainer_spec: dict
     :return: trainer to train alexnet on imagenet
     :rtype: trainers.imagenet_trainer_tf.ImageNetTrainer
     """
@@ -99,7 +102,11 @@ def get_trainer(trainer_spec):
 
 
 def parse_args():
-    """Parse command line arguments"""
+    """Parse command line arguments
+
+    :return: namespace holding command line arguments
+    :rtype: argparse.Namespace
+    """
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
