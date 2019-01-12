@@ -218,6 +218,7 @@ class TestModel(object):
                 {'epochs': n_epochs, 'metrics': ['loss', 'val_loss'],
                  'steps': n_steps_per_epoch, 'verbose': True}
             )
+            mock_callbacks.set_model.assert_called_with(model)
             assert mock_callbacks.on_train_begin.call_count == 1
             assert mock_callbacks.on_epoch_begin.call_count == n_epochs
             assert mock_callbacks.on_batch_begin.call_count == n_batches
@@ -265,6 +266,61 @@ class TestModel(object):
                 n_steps_per_epoch='sentinel2', n_epochs='sentinel3',
                 n_validation_steps='sentinel4'
             )
+
+    def test_load_weights(self, monkeypatch):
+        """Test load_weights method
+
+        This tests two things:
+        - That `torch.load` is called as expected; it mocks this function to
+          prevent anything from actually being loaded from disk
+        - That the `Model.network.load_state_dict` method is called
+        """
+
+        model = MagicMock()
+        model.network = MagicMock()
+        load_state_dict_mock = MagicMock()
+        model.network.load_state_dict = load_state_dict_mock
+        model.load_weights = Model.load_weights
+
+        mocked_load = MagicMock()
+        mocked_load.return_value = 'return_from_torch_load'
+        monkeypatch.setattr(torch, 'load', mocked_load)
+
+        model.load_weights(
+            self=model, fpath_weights='/home/sallamander/weights.pt'
+        )
+        mocked_load.assert_called_once_with('/home/sallamander/weights.pt')
+        load_state_dict_mock.assert_called_once_with('return_from_torch_load')
+
+    def test_save_weights(self):
+        """Test save_weights method
+
+        This tests two things:
+        - That `torch.save` is called as expected; it mocks this function to
+          prevent anything from actually being saved to disk
+        - That an `AssertionError` is thrown if `save_weights` is called with
+          `overwrite=False` (which is not currently supported)
+        """
+
+        model = MagicMock()
+        model.network = MagicMock()
+        model.network.state_dict = MagicMock()
+        model.network.state_dict.return_value = {'state': 'dict'}
+        model.save_weights = Model.save_weights
+
+        with pytest.raises(AssertionError):
+            model.save_weights(
+                self=model, fpath_weights='sentinel', overwrite=False
+            )
+
+        with patch.object(torch, 'save', wraps=torch.save) as patched_save:
+            model.save_weights(
+                self=model, fpath_weights='/home/sallamander/weights.pt'
+            )
+            patched_save.assert_called_once_with(
+                {'state': 'dict'}, '/home/sallamander/weights.pt'
+            )
+            assert model.network.state_dict.call_count == 1
 
     def test_test_on_batch(self):
         """Test test_on_batch method"""
