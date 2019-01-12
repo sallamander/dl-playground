@@ -25,7 +25,7 @@ FPATH_DF_VAL_SET = os.path.join(
 
 def get_data_loaders(dataset_spec):
     """Return train and validation data loaders
-    
+
     :param dataset_spec: specifies how to build the train and validation
      datasets
     :type dataset_spec: dict
@@ -87,7 +87,7 @@ def get_network(network_spec):
 
 def get_trainer(trainer_spec):
     """Return a trainer to train AlexNet on ImageNet
-    
+
     :param trainer_spec: specifies how to train the AlexNet on ImageNet
     :type trainer_spec: dict
     :return: trainer to train alexnet on imagenet

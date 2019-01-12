@@ -4,6 +4,9 @@ Reference Implementations:
 - https://github.com/keras-team/keras/blob/master/keras/engine/training.py
 """
 
+from tensorflow.python.keras.callbacks import (
+    BaseLogger, CallbackList, History, ProgbarLogger
+)
 import torch
 
 
@@ -31,6 +34,8 @@ class Model(object):
         self.optimizer = None
         self.loss = None
 
+        self.history = History()
+
     def _assert_compiled(self):
         """Raise a value error if the model is not compiled
 
@@ -44,6 +49,25 @@ class Model(object):
             msg = ('Model must be compiled before training; please call '
                    'the `compile` method before training.')
             raise RuntimeError(msg)
+
+    def _default_callbacks(self):
+        """Return default callbacks automatically applied during training
+
+        By default, the following callbacks are automatically applied during
+        training:
+        - tensorflow.keras.callbacks.BaseLogger
+        - tensorflow.keras.callbacks.ProgbarLogger
+        - tensorflow.keras.callbacks.History (which is the `Model.history`
+          attribute set in `Model.__init__`)
+
+        :return: callbacks automatically applied to every Model
+        :rtype: list
+        """
+
+        default_callbacks = [
+            BaseLogger(), ProgbarLogger(count_mode='steps'), self.history
+        ]
+        return default_callbacks
 
     def compile(self, optimizer, loss):
         """Setup the model for training
@@ -131,6 +155,9 @@ class Model(object):
          `n_validation_steps` are passed in
         """
 
+        default_callbacks = self._default_callbacks()
+        callbacks = CallbackList(default_callbacks)
+
         self._assert_compiled()
 
         invalid_inputs = (
@@ -147,16 +174,35 @@ class Model(object):
         if self.device:
             self.network.to(self.device)
 
-        for _ in range(n_epochs):
-            for _ in range(n_steps_per_epoch):
+        callbacks.set_params({
+            'epochs': n_epochs,
+            'metrics': ['loss', 'val_loss'],
+            'steps': n_steps_per_epoch,
+            'verbose': True
+        })
+
+        callbacks.on_train_begin()
+        for idx_epoch in range(n_epochs):
+            epoch_logs = {}
+            callbacks.on_epoch_begin(idx_epoch)
+
+            for idx_batch in range(n_steps_per_epoch):
+                batch_logs = {'batch': idx_batch, 'size': 1}
+                callbacks.on_batch_begin(idx_batch, batch_logs)
+
                 inputs, targets = next(generator)
-                _ = self.train_on_batch(inputs, targets)
-                print(_)
+                loss = self.train_on_batch(inputs, targets)
+
+                batch_logs['loss'] = loss
+                callbacks.on_batch_end(idx_batch, batch_logs)
 
             if validation_data:
-                _ = self.evaluate_generator(
+                val_loss = self.evaluate_generator(
                     validation_data, n_validation_steps
                 )
+                epoch_logs['val_loss'] = val_loss
+            callbacks.on_epoch_end(idx_epoch, epoch_logs)
+        callbacks.on_train_end()
 
     def test_on_batch(self, inputs, targets):
         """Evaluate the model on a single batch of samples

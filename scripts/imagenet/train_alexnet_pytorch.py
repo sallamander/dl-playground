@@ -105,7 +105,7 @@ def get_trainer(trainer_spec):
     :rtype: trainers.imagenet_trainer_pytorch.ImageNetTrainer
     """
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     trainer_importpath = trainer_spec['importpath']

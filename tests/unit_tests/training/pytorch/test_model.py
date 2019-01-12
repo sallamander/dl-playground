@@ -5,6 +5,9 @@ from unittest.mock import create_autospec, patch, MagicMock
 import pytest
 
 import numpy as np
+from tensorflow.python.keras.callbacks import (
+    BaseLogger, CallbackList, History, ProgbarLogger
+)
 import torch
 
 from training.pytorch.model import Model
@@ -28,6 +31,8 @@ class TestModel(object):
         assert not model._compiled
         assert not model.optimizer
         assert not model.loss
+        assert model.history
+        assert isinstance(model.history, History)
 
         model = Model(network)
         assert not model.device
@@ -44,6 +49,18 @@ class TestModel(object):
 
         model._compiled = True
         model._assert_compiled(self=model)
+
+    def test_default_callbacks(self):
+        """Test _default_callbacks method"""
+
+        model = MagicMock()
+        model.history = MagicMock()
+        model._default_callbacks = Model._default_callbacks
+
+        callbacks = model._default_callbacks(self=model)
+        assert isinstance(callbacks[0], BaseLogger)
+        assert isinstance(callbacks[1], ProgbarLogger)
+        assert id(callbacks[2]) == id(model.history)
 
     def test_compile(self):
         """Test compile method
@@ -136,7 +153,7 @@ class TestModel(object):
             # re-assign before the next iteration of the loop
             model._assert_compiled.call_count = 0
 
-    def test_fit_generator(self):
+    def test_fit_generator(self, monkeypatch):
         """Test fit_generator method
 
         This tests that the correct total number of steps are taken for a given
@@ -147,9 +164,13 @@ class TestModel(object):
         model = MagicMock()
         model.network = MagicMock()
         model.train_on_batch = MagicMock()
+        model.train_on_batch.return_value = 4
         model.device = MagicMock()
         model.fit_generator = Model.fit_generator
-        model.evalute_generator = MagicMock()
+        model.evaluate_generator = MagicMock()
+        model.evaluate_generator.return_value = 2
+        model._default_callbacks = MagicMock()
+        model._default_callbacks.return_value = [1, 2, 3]
 
         generator = MagicMock()
         inputs = torch.randn((2, 64, 64, 3))
@@ -171,6 +192,13 @@ class TestModel(object):
             validation_data = test_case.get('validation_data')
             n_validation_steps = test_case.get('n_validation_steps')
 
+            mock_callback_list = MagicMock()
+            mock_callbacks = create_autospec(CallbackList)
+            mock_callback_list.return_value = mock_callbacks
+            monkeypatch.setattr(
+                'training.pytorch.model.CallbackList', mock_callback_list
+            )
+
             model.device = device
             model.fit_generator(
                 self=model, generator=generator,
@@ -180,15 +208,32 @@ class TestModel(object):
             )
 
             assert model._assert_compiled.call_count == 1
-            n_expected_calls = n_steps_per_epoch * n_epochs
-            assert model.train_on_batch.call_count == n_expected_calls
+            n_batches = n_steps_per_epoch * n_epochs
+            assert model.train_on_batch.call_count == n_batches
             model.train_on_batch.assert_called_with(inputs, targets)
-            assert generator.__next__.call_count == n_expected_calls
+            assert generator.__next__.call_count == n_batches
 
+            mock_callback_list.assert_called_with([1, 2, 3])
+            mock_callbacks.set_params.assert_called_with(
+                {'epochs': n_epochs, 'metrics': ['loss', 'val_loss'],
+                 'steps': n_steps_per_epoch, 'verbose': True}
+            )
+            assert mock_callbacks.on_train_begin.call_count == 1
+            assert mock_callbacks.on_epoch_begin.call_count == n_epochs
+            assert mock_callbacks.on_batch_begin.call_count == n_batches
+            assert mock_callbacks.on_batch_end.call_count == n_batches
+            assert mock_callbacks.on_train_end.call_count == 1
+            mock_callbacks.on_batch_end.assert_any_call(
+                0, {'batch': 0, 'size': 1, 'loss': 4}
+            )
+
+            epoch_logs = {}
             if validation_data is not None:
                 model.evaluate_generator.assert_called_with(
                     validation_data, n_validation_steps
                 )
+                epoch_logs['val_loss'] = 2
+            mock_callbacks.on_epoch_end.assert_any_call(0, epoch_logs)
 
             # reset the call counts for the next iteration
             model._assert_compiled.call_count = 0
