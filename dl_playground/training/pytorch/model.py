@@ -180,6 +180,7 @@ class Model(object):
             'steps': n_steps_per_epoch,
             'verbose': True
         })
+        callbacks.set_model(self)
 
         callbacks.on_train_begin()
         for idx_epoch in range(n_epochs):
@@ -203,6 +204,31 @@ class Model(object):
                 epoch_logs['val_loss'] = val_loss
             callbacks.on_epoch_end(idx_epoch, epoch_logs)
         callbacks.on_train_end()
+
+    def load_weights(self, fpath_weights):
+        """Loads all layer weights from the provided `fpath_weights`
+
+        :param fpath_weights: fpath_weights to load the model from
+        :type fpath_weights: str
+        """
+
+        self.network.load_state_dict(torch.load(fpath_weights))
+
+    def save_weights(self, fpath_weights, overwrite=True):
+        """Dumps all layers and weights to the provided `fpath_weights`
+
+        The weights can be loaded into a `Model` with the same topology using
+        the `Model.load_weights` method.
+
+        :param fpath_weights: fpath_weights to save the model to
+        :type fpath_weights: str
+        :param overwrite: overwrite an existing file at `fpath_weights`
+         (if present); only True is currently supported
+        :type overwrite: bool
+        """
+
+        assert overwrite, '`overwrite=False` is not supported!'
+        torch.save(self.network.state_dict(), fpath_weights)
 
     def test_on_batch(self, inputs, targets):
         """Evaluate the model on a single batch of samples
