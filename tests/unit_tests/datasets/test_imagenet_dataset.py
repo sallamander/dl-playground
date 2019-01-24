@@ -51,7 +51,7 @@ class TestImageNetDataSet(object):
         assert dataset.df_images.equals(df_images)
         assert dataset.config == dataset_config
         assert dataset.required_config_keys == {'height', 'width'}
-        mock_validate_config.called_once_with(
+        mock_validate_config.assert_called_once_with(
             dataset.config, dataset.required_config_keys
         )
 
