@@ -16,7 +16,7 @@ class ImageNetDataSet(Dataset):
     sample_types = {'image': 'float32', 'label': 'uint8'}
     target_keys = ['label']
 
-    def __init__(self, df_images, config):
+    def __init__(self, df_obs, config):
         """Init
 
         `config` must contain the following keys:
@@ -25,37 +25,37 @@ class ImageNetDataSet(Dataset):
 
         :param config: specifies the configuration of the dataset
         :type config: dict
-        :param df_images: holds the filepath to the input image ('fpath_image')
+        :param df_obs: holds the filepath to the input image ('fpath_image')
          and the target label for the image ('label')
-        :type df_images: pandas.DataFrame
+        :type df_obs: pandas.DataFrame
         """
 
         validate_config(config, self.required_config_keys)
 
-        if set(df_images.columns) < {'fpath_image', 'label'}:
+        if set(df_obs.columns) < {'fpath_image', 'label'}:
             msg = (
-                'df_images must have an \'fpath_image\' and \'label\' '
+                'df_obs must have an \'fpath_image\' and \'label\' '
                 'column, and only {} columns were given.'
-            ).format(df_images.columns)
+            ).format(df_obs.columns)
             raise KeyError(msg)
 
-        self.df_images = df_images
+        self.df_obs = df_obs
         self.config = config
-        self.df_images['label'] = (
-            self.df_images['label'].astype(self.sample_types['label'])
+        self.df_obs['label'] = (
+            self.df_obs['label'].astype(self.sample_types['label'])
         )
 
     def __getitem__(self, idx):
-        """Return the image, label pair at index `idx` from `self.df_images`
+        """Return the image, label pair at index `idx` from `self.df_obs`
 
         :return: dict with keys:
         - numpy.ndarray image: pixel data loaded from the `fpath_image` at
-          index `idx` of `self.df_images`
+          index `idx` of `self.df_obs`
         - int label: class label assigned to the returned image
         :rtype: dict
         """
 
-        fpath_image = self.df_images.loc[idx, 'fpath_image']
+        fpath_image = self.df_obs.loc[idx, 'fpath_image']
         image = imageio.imread(fpath_image)
         if image.ndim == 2:
             image = np.expand_dims(image, -1)
@@ -68,7 +68,7 @@ class ImageNetDataSet(Dataset):
         image = resize(image, output_shape=target_shape)
         image = image.astype(self.sample_types['image'])
 
-        label = np.array(self.df_images.loc[idx, 'label'])
+        label = np.array(self.df_obs.loc[idx, 'label'])
         assert label.dtype == self.sample_types['label']
 
         sample = {'image': image, 'label': label}
@@ -82,7 +82,7 @@ class ImageNetDataSet(Dataset):
         :rtype: int
         """
 
-        return len(self.df_images)
+        return len(self.df_obs)
 
     def as_generator(self, shuffle=False, n_workers=0):
         """Return a generator that yields the entire dataset once
