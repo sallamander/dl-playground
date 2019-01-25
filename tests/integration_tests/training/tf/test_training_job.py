@@ -1,8 +1,8 @@
 """Integration tests for training.pytorch.training_job"""
 
 import os
-import pytest
 import tempfile
+import pytest
 
 import tensorflow
 from tensorflow import one_hot
@@ -10,8 +10,8 @@ from tensorflow.image import per_image_standardization
 import yaml
 
 from constants import DIRPATH_DLP
-from training.tf.imagenet_trainer import ImageNetTrainer
 from networks.tf.object_classification.alexnet import AlexNet
+from training.tf.imagenet_trainer import ImageNetTrainer
 from training.tf.training_job import TFTrainingJob
 from utils.test_utils import df_images
 
@@ -106,16 +106,18 @@ class TestTFTrainingJob(object):
         """
 
         job = TFTrainingJob(config)
-        transformations = config['dataset']['transformations']
-        transformations = job._parse_transformations(transformations)
+        for set_name in ['train', 'validation']:
+            transformations_key = '{}_transformations'.format(set_name)
+            transformations = config['dataset'][transformations_key]
+            transformations = job._parse_transformations(transformations)
 
-        assert len(transformations) == 2
+            assert len(transformations) == 2
 
-        assert transformations[0][0] == one_hot
-        assert transformations[1][0] == per_image_standardization
+            assert transformations[0][0] == one_hot
+            assert transformations[1][0] == per_image_standardization
 
-        assert (
-            transformations[0][1] ==
-            {'sample_keys': ['label'], 'depth': 1000}
-        )
-        assert transformations[1][1] == {'sample_keys': ['image']}
+            assert (
+                transformations[0][1] ==
+                {'sample_keys': ['label'], 'depth': 1000}
+            )
+            assert transformations[1][1] == {'sample_keys': ['image']}

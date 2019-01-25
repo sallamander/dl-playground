@@ -6,7 +6,23 @@ dataset:
         config:
             height: 227
             width: 227
-    transformations:
+    train_transformations:
+        - datasets.ops.per_image_standardization:
+            sample_keys:
+                value:
+                    - 'image'
+        - torchvision.transforms.functional.to_tensor:
+            sample_keys:
+                value: 
+                    - 'image'
+        - torch.tensor:
+            sample_keys:
+                value: 
+                    - 'label'
+            dtype:
+                import: true
+                value: 'torch.long'
+    validation_transformations:
         - datasets.ops.per_image_standardization:
             sample_keys:
                 value:

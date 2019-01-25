@@ -1,8 +1,8 @@
 """Integration tests for training.pytorch.training_job"""
 
 import os
-import pytest
 import tempfile
+import pytest
 
 import torch
 from torch.utils.data import DataLoader
@@ -11,8 +11,8 @@ import yaml
 
 from constants import DIRPATH_DLP
 from datasets.ops import per_image_standardization
-from training.pytorch.imagenet_trainer import ImageNetTrainer
 from networks.pytorch.object_classification.alexnet import AlexNet
+from training.pytorch.imagenet_trainer import ImageNetTrainer
 from training.pytorch.training_job import PyTorchTrainingJob
 from utils.test_utils import df_images
 
@@ -108,18 +108,20 @@ class TestPyTorchTrainingJob(object):
         """
 
         job = PyTorchTrainingJob(config)
-        transformations = config['dataset']['transformations']
-        transformations = job._parse_transformations(transformations)
+        for set_name in ['train', 'validation']:
+            transformations_key = '{}_transformations'.format(set_name)
+            transformations = config['dataset'][transformations_key]
+            transformations = job._parse_transformations(transformations)
 
-        assert len(transformations) == 3
+            assert len(transformations) == 3
 
-        assert transformations[0][0] == per_image_standardization
-        assert transformations[1][0] == to_tensor
-        assert transformations[2][0] == torch.tensor
+            assert transformations[0][0] == per_image_standardization
+            assert transformations[1][0] == to_tensor
+            assert transformations[2][0] == torch.tensor
 
-        assert transformations[0][1] == {'sample_keys': ['image']}
-        assert transformations[1][1] == {'sample_keys': ['image']}
-        assert (
-            transformations[2][1] ==
-            {'sample_keys': ['label'], 'dtype': torch.int64}
-        )
+            assert transformations[0][1] == {'sample_keys': ['image']}
+            assert transformations[1][1] == {'sample_keys': ['image']}
+            assert (
+                transformations[2][1] ==
+                {'sample_keys': ['label'], 'dtype': torch.int64}
+            )

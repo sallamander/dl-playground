@@ -6,7 +6,18 @@ dataset:
         config:
             height: 227
             width: 227
-    transformations:
+    train_transformations:
+        - tensorflow.one_hot:
+            sample_keys:
+                value:
+                    - 'label'
+            depth:
+                value: 1000
+        - tensorflow.image.per_image_standardization:
+            sample_keys:
+                value:
+                    - 'image'
+    validation_transformations:
         - tensorflow.one_hot:
             sample_keys:
                 value:

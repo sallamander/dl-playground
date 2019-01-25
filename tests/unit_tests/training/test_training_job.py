@@ -1,6 +1,6 @@
 """Unit tests for training.training_job"""
 
-from unittest.mock import call, MagicMock
+from unittest.mock import call, create_autospec, MagicMock
 import pytest
 
 from training.training_job import TrainingJob
@@ -159,3 +159,24 @@ class TestTrainingJob(object):
             ('import_object_return',
              {'sample_keys': ['image'], 'dtype': 'import_object_return'})
         ]
+
+    def test_run(self):
+        """Test run method"""
+
+        training_job = create_autospec(TrainingJob)
+        training_job._instantiate_dataset.return_value = ('mock_dataset', 10)
+        training_job.run = TrainingJob.run
+
+        training_job.run(self=training_job)
+        training_job._instantiate_network.assert_called_once_with()
+        training_job._instantiate_trainer.assert_called_once_with()
+        training_job._instantiate_dataset.assert_has_calls([
+            call(set_name='train'), call(set_name='validation')
+        ])
+
+        trainer = training_job._instantiate_trainer()
+        trainer.train.assert_called_once_with(
+            network=training_job._instantiate_network(),
+            train_dataset='mock_dataset', n_steps_per_epoch=10,
+            validation_dataset='mock_dataset', n_validation_steps=10
+        )
