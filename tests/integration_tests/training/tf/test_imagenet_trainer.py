@@ -1,5 +1,7 @@
 """Integration tests for training.tf.imagenet_trainer"""
 
+import tempfile
+
 import tensorflow as tf
 
 from datasets.imagenet_dataset import ImageNetDataSet
@@ -36,7 +38,10 @@ class TestImageNetTrainer(object):
         ]
 
         alexnet = AlexNet(network_config)
-        imagenet_trainer = ImageNetTrainer(trainer_config)
+        tempdir = tempfile.mkdtemp()
+        imagenet_trainer = ImageNetTrainer(
+            trainer_config, dirpath_save=tempdir
+        )
 
         imagenet_dataset = ImageNetDataSet(df_images, dataset_config)
         tf_data_loader = TFDataLoader(imagenet_dataset)

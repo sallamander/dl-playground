@@ -10,7 +10,7 @@ class ImageNetTrainer(object):
 
     required_config_keys = {'batch_size', 'loss', 'n_epochs', 'optimizer'}
 
-    def __init__(self, config):
+    def __init__(self, config, dirpath_save):
         """Init
 
         config must contain the following keys:
@@ -25,6 +25,9 @@ class ImageNetTrainer(object):
 
         :param config: specifies the configuration of the trainer
         :type config: dict
+        :param dirpath_save: directory path to save the model to during
+         training
+        :type dirpath_save: str
         """
 
         validate_config(config, self.required_config_keys)
@@ -34,6 +37,8 @@ class ImageNetTrainer(object):
         self.batch_size = config['batch_size']
         self.n_epochs = config['n_epochs']
         self.device = config.get('device')
+
+        self.dirpath_save = dirpath_save
 
     def train(self, network, train_dataset, n_steps_per_epoch,
               validation_dataset=None, n_validation_steps=None):
