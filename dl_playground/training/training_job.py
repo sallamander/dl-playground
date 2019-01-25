@@ -1,5 +1,10 @@
 """Class for running a specified training job"""
 
+import os
+import time
+
+import yaml
+
 from utils.generic_utils import import_object, validate_config
 
 
@@ -20,12 +25,28 @@ class TrainingJob(object):
           to train with, as well as how to load the data from the datasets; see
           the `_instantiate_dataset` method in child classes for details
 
+        It can contain the following additional keys:
+        - str 'job_name': optional name given to the job; the timestamp of when
+          the job started will be appended to the job_name to uniquely identify
+          the directory name the job will be saved to
+        - str 'dirpath_jobs': optional directory path to save job directory in,
+          resulting in the job being saved to 'dirpath_jobs/dirname_job';
+          defaults to `os.environ['HOME']/training_jobs`
+
+        See the `_parse_dirpath_job` method for details on where the results of
+        the training job will be stored.
+
         :param config: config file specifying a training job to run
         :type config: dict
         """
 
         validate_config(config, self.required_config_keys)
         self.config = config
+        self.dirpath_job = self._parse_dirpath_job()
+
+        fpath_config = os.path.join(self.dirpath_job, 'config.yml')
+        with open(fpath_config, 'w') as f:
+            yaml.dump(self.config, f, default_flow_style=False)
 
     def _instantiate_dataset(self, set_name):
         """Return a dataset object to be used as an iterator during training
@@ -78,7 +99,37 @@ class TrainingJob(object):
 
         trainer_importpath = trainer_spec['importpath']
         Trainer = import_object(trainer_importpath)
-        return Trainer(**trainer_spec['init_params'])
+        trainer = Trainer(
+            **trainer_spec['init_params'], dirpath_save=self.dirpath_job
+        )
+        return trainer
+
+    def _parse_dirpath_job(self):
+        """Return the directory path used to save the job
+
+        Anything saved during training (model weights, history CSVs, config
+        YMLs, etc.) will be saved in the directory path returned by this
+        method.
+
+        :return: directory path to save the job outputs in
+        :rtype: str
+        """
+
+        default_dirpath_jobs = os.path.join(
+            os.environ['HOME'], 'training_jobs'
+        )
+        dirpath_jobs = self.config.get('dirpath_jobs', default_dirpath_jobs)
+
+        job_timestamp = time.strftime('%Y-%m-%d_%H%M%S', time.gmtime())
+        dirname_job = self.config.get('job_name')
+        if dirname_job:
+            dirname_job = '{}_{}'.format(dirname_job, job_timestamp)
+        else:
+            dirname_job = job_timestamp
+
+        dirpath_job = os.path.join(dirpath_jobs, dirname_job)
+        os.makedirs(dirpath_job, exist_ok=True)
+        return dirpath_job
 
     def _parse_transformations(self, transformations):
         """Parse the provided transformations into the expected format

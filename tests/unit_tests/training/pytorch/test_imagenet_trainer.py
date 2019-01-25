@@ -4,7 +4,6 @@ from unittest.mock import patch, MagicMock
 
 from training.pytorch.model import Model
 from training.pytorch.imagenet_trainer import ImageNetTrainer
-from utils.generic_utils import cycle
 
 
 class TestImageNetTrainer(object):
@@ -33,8 +32,10 @@ class TestImageNetTrainer(object):
             'optimizer': 'Adam', 'loss': 'CrossEntropyLoss',
             'batch_size': self.BATCH_SIZE, 'n_epochs': 2, 'device': 'cpu'
         }
-        imagenet_trainer = ImageNetTrainer(trainer_config)
+        dirpath_save = MagicMock()
+        imagenet_trainer = ImageNetTrainer(trainer_config, dirpath_save)
 
+        assert imagenet_trainer.dirpath_save == dirpath_save
         assert imagenet_trainer.optimizer == 'Adam'
         assert imagenet_trainer.loss == 'CrossEntropyLoss'
         assert imagenet_trainer.batch_size == self.BATCH_SIZE

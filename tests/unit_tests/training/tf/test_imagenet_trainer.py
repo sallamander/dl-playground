@@ -55,8 +55,10 @@ class TestImageNetTrainer(object):
             'optimizer': 'adam', 'loss': 'categorical_crossentropy',
             'batch_size': self.BATCH_SIZE, 'n_epochs': 2
         }
-        imagenet_trainer = ImageNetTrainer(trainer_config)
+        dirpath_save = MagicMock()
+        imagenet_trainer = ImageNetTrainer(trainer_config, dirpath_save)
 
+        assert imagenet_trainer.dirpath_save == dirpath_save
         assert imagenet_trainer.optimizer == 'adam'
         assert imagenet_trainer.loss == 'categorical_crossentropy'
         assert imagenet_trainer.batch_size == self.BATCH_SIZE
