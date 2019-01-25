@@ -52,6 +52,6 @@ class PyTorchTrainingJob(TrainingJob):
         dataset = PyTorchDataSetTransformer(dataset, transformations)
         loading_params = dataset_spec['{}_loading_params'.format(set_name)]
         dataset_gen = DataLoader(dataset, **loading_params)
-        n_batches = len(dataset_gen)
+        n_batches = len(dataset) // loading_params['batch_size']
 
         return dataset_gen, n_batches

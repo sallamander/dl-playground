@@ -10,25 +10,25 @@ class ImageNetTrainer(object):
 
     required_config_keys = {'batch_size', 'loss', 'n_epochs', 'optimizer'}
 
-    def __init__(self, trainer_config):
+    def __init__(self, config):
         """Init
 
-        trainer_config must contain the following keys:
+        config must contain the following keys:
         - str optimizer: optimizer to use when training the network
         - str loss: loss function to use when training the network
         - int batch_size: batch size to use during training
         - int n_epochs: number of epochs to train for
 
-        :param trainer_config: specifies the configuration of the trainer
-        :type trainer_config: dict
+        :param config: specifies the configuration of the trainer
+        :type config: dict
         """
 
-        validate_config(trainer_config, self.required_config_keys)
+        validate_config(config, self.required_config_keys)
 
-        self.optimizer = trainer_config['optimizer']
-        self.loss = trainer_config['loss']
-        self.batch_size = trainer_config['batch_size']
-        self.n_epochs = trainer_config['n_epochs']
+        self.optimizer = config['optimizer']
+        self.loss = config['loss']
+        self.batch_size = config['batch_size']
+        self.n_epochs = config['n_epochs']
 
     def train(self, network, train_dataset, n_steps_per_epoch,
               validation_dataset=None, n_validation_steps=None):

@@ -48,7 +48,7 @@ class TestImageNetDataSet(object):
 
         # === test all attributes are set correctly === #
         dataset = ImageNetDataSet(df_images, dataset_config)
-        assert dataset.df_images.equals(df_images)
+        assert dataset.df_obs.equals(df_images)
         assert dataset.config == dataset_config
         assert dataset.required_config_keys == {'height', 'width'}
         mock_validate_config.assert_called_once_with(
@@ -74,7 +74,7 @@ class TestImageNetDataSet(object):
         """
 
         imagenet_dataset = MagicMock()
-        imagenet_dataset.df_images = df_images
+        imagenet_dataset.df_obs = df_images
         imagenet_dataset.__len__ = ImageNetDataSet.__len__
 
         assert len(imagenet_dataset) == 3
@@ -92,7 +92,7 @@ class TestImageNetDataSet(object):
         df_images['label'] = df_images['label'].astype(sample_types['label'])
 
         imagenet_dataset = MagicMock()
-        imagenet_dataset.df_images = df_images
+        imagenet_dataset.df_obs = df_images
         imagenet_dataset.config = dataset_config
         imagenet_dataset.sample_types = sample_types
         imagenet_dataset.__getitem__ = ImageNetDataSet.__getitem__

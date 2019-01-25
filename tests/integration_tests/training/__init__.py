@@ -1,1 +1,1 @@
-"""Integration tests for trainers"""
+"""Integration tests for training"""

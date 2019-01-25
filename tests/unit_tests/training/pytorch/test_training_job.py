@@ -67,7 +67,10 @@ class TestPyTorchTrainingJob(object):
         )
 
         mock_transformer = MagicMock()
-        mock_transformer.return_value = 'return_from_mock_transformer'
+        mock_transformer_return = MagicMock()
+        mock_transformer_return.__len__ = MagicMock()
+        mock_transformer_return.__len__.return_value = 10
+        mock_transformer.return_value = mock_transformer_return
         monkeypatch.setattr(
             'training.pytorch.training_job.PyTorchDataSetTransformer',
             mock_transformer
@@ -75,8 +78,6 @@ class TestPyTorchTrainingJob(object):
 
         mock_loader = MagicMock()
         mock_loader_return = MagicMock()
-        mock_loader_return.__len__ = MagicMock()
-        mock_loader_return.__len__.return_value = 10
         mock_loader.return_value = mock_loader_return
         monkeypatch.setattr(
             'training.pytorch.training_job.DataLoader', mock_loader
@@ -87,8 +88,8 @@ class TestPyTorchTrainingJob(object):
         )
 
         assert dataset_gen == mock_loader_return
-        assert n_batches == 10
         if set_name == 'train':
+            assert n_batches == 5
             mock_read_csv.assert_called_once_with('fpath/df/train')
             training_job._parse_transformations.assert_called_once_with(
                 {'key3': 'value3', 'key4': 'value4'}
@@ -97,15 +98,16 @@ class TestPyTorchTrainingJob(object):
                 'return_from_dataset_init', 'return_from_parse_transformations'
             )
             mock_loader.assert_called_once_with(
-                'return_from_mock_transformer', batch_size=2
+                mock_transformer_return, batch_size=2
             )
         else:
+            assert n_batches == 2
             mock_read_csv.assert_called_once_with('fpath/df/validation')
             mock_transformer.assert_called_once_with(
                 'return_from_dataset_init', []
             )
             mock_loader.assert_called_once_with(
-                'return_from_mock_transformer', batch_size=4
+                mock_transformer_return, batch_size=4
             )
 
         mock_import_object.assert_called_once_with('path/to/import')
