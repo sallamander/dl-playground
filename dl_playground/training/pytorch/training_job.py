@@ -43,11 +43,9 @@ class PyTorchTrainingJob(TrainingJob):
         DataSet = import_object(dataset_importpath)
 
         dataset = DataSet(df_obs=df_obs, **dataset_spec['init_params'])
-        if set_name == 'train':
-            transformations = dataset_spec['transformations']
-            transformations = self._parse_transformations(transformations)
-        else:
-            transformations = []
+        transformations_key = '{}_transformations'.format(set_name)
+        transformations = dataset_spec[transformations_key]
+        transformations = self._parse_transformations(transformations)
 
         dataset = PyTorchDataSetTransformer(dataset, transformations)
         loading_params = dataset_spec['{}_loading_params'.format(set_name)]

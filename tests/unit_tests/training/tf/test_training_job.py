@@ -29,7 +29,8 @@ class TestTFTrainingJob(object):
             'fpath_df_validation': 'fpath/df/validation',
             'importpath': 'path/to/import',
             'init_params': {'key1': 'value1', 'key2': 'value2'},
-            'transformations': {'key3': 'value3', 'key4': 'value4'},
+            'train_transformations': {'key3': 'value3', 'key4': 'value4'},
+            'validation_transformations': {'key5': 'value5', 'key6': 'value6'},
             'train_loading_params': {'batch_size': 2},
             'validation_loading_params': {'batch_size': 4}
         }}
@@ -54,6 +55,11 @@ class TestTFTrainingJob(object):
         :param monkeypatch: monkeypatch object
         :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
         """
+
+        training_job._parse_transformations = MagicMock()
+        training_job._parse_transformations.return_value = (
+            'return_from_parse_transformations'
+        )
 
         mock_read_csv = MagicMock()
         mock_read_csv.return_value = 'return_from_read_csv'
@@ -100,8 +106,11 @@ class TestTFTrainingJob(object):
         else:
             assert n_batches == 2
             mock_read_csv.assert_called_once_with('fpath/df/validation')
+            training_job._parse_transformations.assert_called_once_with(
+                {'key5': 'value5', 'key6': 'value6'}
+            )
             MockTFDataLoader.assert_called_once_with(
-                'return_from_dataset_init', []
+                'return_from_dataset_init', 'return_from_parse_transformations'
             )
             mock_loader.get_infinite_iter.assert_called_once_with(batch_size=4)
 
@@ -153,10 +162,6 @@ class TestTFTrainingJob(object):
 
         training_job = MagicMock()
         training_job.config = self._get_mock_config()
-        training_job._parse_transformations = MagicMock()
-        training_job._parse_transformations.return_value = (
-            'return_from_parse_transformations'
-        )
         training_job._instantiate_dataset = TFTrainingJob._instantiate_dataset
 
         for set_name in ('train', 'validation'):

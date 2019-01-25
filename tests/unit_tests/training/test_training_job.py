@@ -161,7 +161,7 @@ class TestTrainingJob(object):
         ]
 
     def test_run(self):
-        """Test train method"""
+        """Test run method"""
 
         training_job = create_autospec(TrainingJob)
         training_job._instantiate_dataset.return_value = ('mock_dataset', 10)
