@@ -30,10 +30,12 @@ class TestImageNetTrainer(object):
 
         trainer_config = {
             'optimizer': 'Adam', 'loss': 'CrossEntropyLoss',
-            'batch_size': self.BATCH_SIZE, 'n_epochs': 2, 'device': 'cpu'
+            'batch_size': self.BATCH_SIZE, 'n_epochs': 2
         }
         dirpath_save = MagicMock()
-        imagenet_trainer = ImageNetTrainer(trainer_config, dirpath_save)
+        imagenet_trainer = ImageNetTrainer(
+            trainer_config, dirpath_save, device='cpu'
+        )
 
         assert imagenet_trainer.dirpath_save == dirpath_save
         assert imagenet_trainer.optimizer == 'Adam'

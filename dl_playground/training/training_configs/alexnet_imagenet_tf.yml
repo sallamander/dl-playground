@@ -1,6 +1,8 @@
+job_importpath: training.tf.training_job.TFTrainingJob
+gpu_id: 0
 dataset:
     fpath_df_train: /data/imagenet/from_access_links/metadata_lists/df_classification_train_set.csv
-    fpath_df_validation: /data/imagenet/from_access_links/metadata_lists/df_classification_validation_set.csv
+    fpath_df_validation: /data/imagenet/from_access_links/metadata_lists/df_classification_val_set.csv
     importpath: datasets.imagenet_dataset.ImageNetDataSet
     init_params:
         config:

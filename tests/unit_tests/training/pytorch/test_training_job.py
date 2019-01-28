@@ -1,8 +1,10 @@
 """Unit tests for training.pytorch.training_job"""
 
+import os
 from unittest.mock import MagicMock
 import pytest
 
+import torch
 import pandas as pd
 
 from training.pytorch.training_job import PyTorchTrainingJob
@@ -10,6 +12,65 @@ from training.pytorch.training_job import PyTorchTrainingJob
 
 class TestPyTorchTrainingJob(object):
     """Tests for PyTorchTrainingJob"""
+
+    def test_init(self, monkeypatch):
+        """Test __init__ method
+
+        This method mocks `torch.cuda.is_available` to test that a
+        `RuntimeError` is raised appropriately (and that the test doesn't bork
+        when run in an environment where no GPU is available).
+
+        This tests three things:
+
+        1. If `PyTorchTrainingJob.gpu_id` is None, nothing happens with regards
+           to setting the device.
+        2. If `PyTorchTrainingJob.gpu_id` is not None and there is a GPU, the
+           device is appropriately set.
+        3. If `PyTorchTrainingJob.gpu_id` is not None but there is no GPU
+           device available (`torch.cuda.is_available=False`), a RuntimeError
+           is raised.
+        """
+
+        def mock_super_init(self, config):
+            """Set the gpu_id
+
+            The only thing this mock_init needs to do to test the
+            `PyTorchTrainingJob.__init__` is set the `gpu_id` (if specified in
+            the `config`) and `config`.
+            """
+
+            self.config = config
+            self.gpu_id = self.config.get('gpu_id', None)
+            if self.gpu_id is not None:
+                os.environ['CUDA_VISIBLE_DEVICES'] = str(self.gpu_id)
+
+        monkeypatch.setattr(
+            'training.training_job.TrainingJob.__init__',
+            mock_super_init
+        )
+        mock_cuda_is_available = MagicMock()
+        mock_cuda_is_available.return_value = True
+        monkeypatch.setattr('torch.cuda.is_available', mock_cuda_is_available)
+
+        mock_configs = [
+            {'trainer': {'init_params': {}}},
+            {'trainer': {'init_params': {}}, 'gpu_id': 1}
+        ]
+
+        for mock_config in mock_configs:
+            PyTorchTrainingJob(mock_config)
+
+            if 'gpu_id' in mock_config:
+                assert (
+                    mock_config['trainer']['init_params']['device'] ==
+                    torch.device('cuda:0')
+                )
+            else:
+                assert not mock_config['trainer']['init_params']
+
+        mock_cuda_is_available.return_value = False
+        with pytest.raises(RuntimeError):
+            PyTorchTrainingJob(mock_configs[1])
 
     def _get_mock_config(self):
         """Return a mock config to use for a PyTorchTrainingJob

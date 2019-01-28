@@ -39,23 +39,31 @@ class TestTrainingJob(object):
             mock_parse_dirpath_job
         )
 
+        mock_configs = [{'gpu_id': 1}, {}]
         expected_fpath_config = os.path.join(dirpath_job, 'config.yml')
-        try:
+
+        for mock_config in mock_configs:
             assert not os.path.exists(expected_fpath_config)
-            mock_config = MagicMock()
             training_job = TrainingJob(mock_config)
             assert os.path.exists(expected_fpath_config)
-        finally:
-            shutil.rmtree(dirpath_job)
+            os.remove(expected_fpath_config)
 
-        assert id(training_job.config) == id(mock_config)
-        assert (
-            training_job.required_config_keys ==
-            {'network', 'trainer', 'dataset'}
-        )
-        mock_validate_config.assert_called_once_with(
-            mock_config, training_job.required_config_keys
-        )
+            assert id(training_job.config) == id(mock_config)
+            assert (
+                training_job.required_config_keys ==
+                {'network', 'trainer', 'dataset'}
+            )
+            mock_validate_config.assert_called_once_with(
+                mock_config, training_job.required_config_keys
+            )
+            mock_validate_config.reset_mock()
+
+            if mock_config:
+                assert training_job.gpu_id == 1
+                assert os.environ['CUDA_VISIBLE_DEVICES'] == '1'
+            else:
+                assert training_job.gpu_id is None
+        shutil.rmtree(dirpath_job)
 
     def test_instantiate_network(self, monkeypatch):
         """Test _instantiate_network method

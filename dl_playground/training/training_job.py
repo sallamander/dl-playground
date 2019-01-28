@@ -32,6 +32,8 @@ class TrainingJob(object):
         - str 'dirpath_jobs': optional directory path to save job directory in,
           resulting in the job being saved to 'dirpath_jobs/dirname_job';
           defaults to `os.environ['HOME']/training_jobs`
+        - int gpu_id: GPU to run the job on; defaults to None, which means the
+          job runs on the CPU
 
         See the `_parse_dirpath_job` method for details on where the results of
         the training job will be stored.
@@ -43,6 +45,10 @@ class TrainingJob(object):
         validate_config(config, self.required_config_keys)
         self.config = config
         self.dirpath_job = self._parse_dirpath_job()
+
+        self.gpu_id = self.config.get('gpu_id', None)
+        if self.gpu_id is not None:
+            os.environ['CUDA_VISIBLE_DEVICES'] = str(self.gpu_id)
 
         fpath_config = os.path.join(self.dirpath_job, 'config.yml')
         with open(fpath_config, 'w') as f:
