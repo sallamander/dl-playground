@@ -98,7 +98,7 @@ class TestPyTorchTrainingJob(object):
         assert trainer.loss == 'CrossEntropyLoss'
         assert trainer.batch_size == 128
         assert trainer.n_epochs == 10
-        assert trainer.device is None
+        assert trainer.device == torch.device('cuda:0')
 
     def test_parse_transformations(self, config):
         """Test _parse_transformations method

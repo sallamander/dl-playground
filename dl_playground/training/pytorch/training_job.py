@@ -1,6 +1,7 @@
 """Class for running a specified pytorch training job"""
 
 import pandas as pd
+import torch
 from torch.utils.data import DataLoader
 
 from training.pytorch.dataset_transformer import PyTorchDataSetTransformer
@@ -10,6 +11,28 @@ from utils.generic_utils import import_object
 
 class PyTorchTrainingJob(TrainingJob):
     """Runs a training job as specified via a config"""
+
+    def __init__(self, config):
+        """Init
+
+        The `config` key is passed through to the `super().__init__()`; see
+        that method for details.
+
+        This method is over-ridden to update the `trainer` key of the config
+        with the device to use, if specified in the `config` itself.
+        """
+
+        super().__init__(config)
+
+        if self.gpu_id is not None:
+            if not torch.cuda.is_available():
+                msg = (
+                    'gpu_id {} was specified, but '
+                    '`torch.cuda.is_available=False.'
+                ).format(self.gpu_id)
+                raise RuntimeError(msg)
+            device = torch.device('cuda:0')
+            self.config['trainer']['init_params']['device'] = device
 
     def _instantiate_dataset(self, set_name):
         """Return a dataset object to be used as an iterator during training

@@ -10,7 +10,7 @@ class ImageNetTrainer(object):
 
     required_config_keys = {'batch_size', 'loss', 'n_epochs', 'optimizer'}
 
-    def __init__(self, config, dirpath_save):
+    def __init__(self, config, dirpath_save, device=None):
         """Init
 
         config must contain the following keys:
@@ -19,15 +19,13 @@ class ImageNetTrainer(object):
         - int batch_size: batch size to use during training
         - int n_epochs: number of epochs to train for
 
-        config can addtionally optionally contain the following keys:
-        - str device: device to train the model on, e.g. 'cuda:0'; defaults to
-          'cpu'
-
         :param config: specifies the configuration of the trainer
         :type config: dict
         :param dirpath_save: directory path to save the model to during
          training
         :type dirpath_save: str
+        :param device: specifies a GPU to use for training
+        :type device: str or torch.device
         """
 
         validate_config(config, self.required_config_keys)
@@ -36,7 +34,7 @@ class ImageNetTrainer(object):
         self.loss = config['loss']
         self.batch_size = config['batch_size']
         self.n_epochs = config['n_epochs']
-        self.device = config.get('device')
+        self.device = device
 
         self.dirpath_save = dirpath_save
 
