@@ -33,9 +33,11 @@ class TestModel(object):
         assert not model.loss
         assert model.history
         assert isinstance(model.history, History)
+        assert not model.stop_training
 
         model = Model(network)
         assert not model.device
+        assert not model.stop_training
 
     def test_assert_compiled(self):
         """Test _assert_compiled method"""
@@ -162,6 +164,7 @@ class TestModel(object):
         """
 
         model = MagicMock()
+        model.stop_training = False
         model.network = MagicMock()
         model.train_on_batch = MagicMock()
         model.train_on_batch.return_value = 4
@@ -182,10 +185,15 @@ class TestModel(object):
             {'n_steps_per_epoch': 1, 'n_epochs': 1, 'device': 'cpu'},
             {'n_steps_per_epoch': 2, 'n_epochs': 2,
              'validation_data': generator, 'n_validation_steps': 10},
+            {'n_steps_per_epoch': 2, 'n_epochs': 2,
+             'validation_data': generator, 'n_validation_steps': 10,
+             'early_stopping': True},
             {'n_steps_per_epoch': 223, 'n_epochs': 50, 'device': 'cpu'}
         ]
 
         for test_case in test_cases:
+            early_stopping = test_case.get('early_stopping', False)
+
             n_steps_per_epoch = test_case['n_steps_per_epoch']
             n_epochs = test_case['n_epochs']
             device = test_case.get('device')
@@ -206,8 +214,22 @@ class TestModel(object):
                 validation_data=validation_data,
                 n_validation_steps=n_validation_steps
             )
+            if early_stopping:
+                model.stop_training = True
+                model.fit_generator(
+                    self=model, generator=generator,
+                    n_steps_per_epoch=n_steps_per_epoch, n_epochs=n_epochs,
+                    validation_data=validation_data,
+                    n_validation_steps=n_validation_steps
+                )
+                assert model._assert_compiled.call_count == 2
+                assert mock_callbacks.on_train_begin.call_count == 2
+                assert mock_callbacks.on_train_end.call_count == 2
+            else:
+                assert model._assert_compiled.call_count == 1
+                assert mock_callbacks.on_train_begin.call_count == 1
+                assert mock_callbacks.on_train_end.call_count == 1
 
-            assert model._assert_compiled.call_count == 1
             n_batches = n_steps_per_epoch * n_epochs
             assert model.train_on_batch.call_count == n_batches
             model.train_on_batch.assert_called_with(inputs, targets)
@@ -219,11 +241,9 @@ class TestModel(object):
                  'steps': n_steps_per_epoch, 'verbose': True}
             )
             mock_callbacks.set_model.assert_called_with(model)
-            assert mock_callbacks.on_train_begin.call_count == 1
             assert mock_callbacks.on_epoch_begin.call_count == n_epochs
             assert mock_callbacks.on_batch_begin.call_count == n_batches
             assert mock_callbacks.on_batch_end.call_count == n_batches
-            assert mock_callbacks.on_train_end.call_count == 1
             mock_callbacks.on_batch_end.assert_any_call(
                 0, {'batch': 0, 'size': 1, 'loss': 4}
             )
@@ -240,6 +260,7 @@ class TestModel(object):
             model._assert_compiled.call_count = 0
             model.train_on_batch.call_count = 0
             model.evaluate_generator.call_count = 0
+            model.stop_training = False
             generator.__next__.call_count = 0
 
     def test_fit_generator__bad_input(self):
