@@ -35,6 +35,7 @@ class Model(object):
         self.loss = None
 
         self.history = History()
+        self.stop_training = False
 
     def _assert_compiled(self):
         """Raise a value error if the model is not compiled
@@ -184,6 +185,9 @@ class Model(object):
 
         callbacks.on_train_begin()
         for idx_epoch in range(n_epochs):
+            if self.stop_training:
+                break
+
             epoch_logs = {}
             callbacks.on_epoch_begin(idx_epoch)
 
@@ -196,6 +200,9 @@ class Model(object):
 
                 batch_logs['loss'] = loss
                 callbacks.on_batch_end(idx_batch, batch_logs)
+
+                if self.stop_training:
+                    break
 
             if validation_data:
                 val_loss = self.evaluate_generator(
