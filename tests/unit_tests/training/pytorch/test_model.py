@@ -34,10 +34,11 @@ class TestModel(object):
         assert model.history
         assert isinstance(model.history, History)
         assert not model.stop_training
+        assert not model.metric_names
+        assert not model.metric_fns
 
         model = Model(network)
         assert not model.device
-        assert not model.stop_training
 
     def test_assert_compiled(self):
         """Test _assert_compiled method"""
@@ -80,6 +81,8 @@ class TestModel(object):
         model.loss = None
         model._compiled = False
         model.compile = Model.compile
+        model.metric_names = []
+        model.metric_fns = []
 
         network = MagicMock()
         parameters_fn = MagicMock()
@@ -92,21 +95,31 @@ class TestModel(object):
         valid_optimizers = ['Adam', 'RMSprop']
         valid_losses = ['BCELoss', 'CrossEntropyLoss', 'L1Loss']
 
+        mock_metric = MagicMock()
+        mock_metric.name = 'mock_metric'
+        metrics = [mock_metric]
+
         for optimizer, loss in product(valid_optimizers, valid_losses):
             assert not model.optimizer
             assert not model.loss
             assert not model._compiled
 
-            model.compile(self=model, optimizer=optimizer, loss=loss)
+            model.compile(
+                self=model, optimizer=optimizer, loss=loss, metrics=metrics
+            )
 
             assert model.optimizer
             assert model.loss
             assert model._compiled
+            assert model.metric_names == ['mock_metric']
+            assert model.metric_fns == [mock_metric]
 
             # reset for next iteration
             model.optimizer = None
             model.loss = None
             model._compiled = False
+            model.metric_names = []
+            model.metric_fns = []
 
         with pytest.raises(AttributeError):
             model.compile(self=model, optimizer='BadOptimizer', loss='BCELoss')
@@ -120,7 +133,7 @@ class TestModel(object):
         model = MagicMock()
         model.network = MagicMock()
         model.test_on_batch = MagicMock()
-        model.test_on_batch.return_value = 0.025
+        model.test_on_batch.return_value = (0.025, 0.015)
         model.device = MagicMock()
         model.evaluate_generator = Model.evaluate_generator
 
@@ -136,8 +149,10 @@ class TestModel(object):
                 yield (inputs, targets)
 
         test_cases = [
-            {'n_steps': 10, 'device': 'cpu', 'expected_loss': 0.00454},
-            {'n_steps': 100, 'expected_loss': 0.000505}
+            {'n_steps': 10, 'device': 'cpu',
+             'expected_loss': 0.00454, 'expected_metric_value': 0.002727},
+            {'n_steps': 100, 'expected_loss': 0.000505,
+             'expected_metric_value': 0.000297}
         ]
 
         for test_case in test_cases:
@@ -145,11 +160,17 @@ class TestModel(object):
             device = test_case.get('device')
 
             model.device = device
-            loss = model.evaluate_generator(
+            val_outputs = model.evaluate_generator(
                 self=model, generator=generator(), n_steps=n_steps
             )
 
-            assert np.allclose(loss, test_case['expected_loss'], atol=1e-4)
+            assert np.allclose(
+                val_outputs[0], test_case['expected_loss'], atol=1e-4
+            )
+            assert np.allclose(
+                val_outputs[1], test_case['expected_metric_value'],
+                atol=1e-4
+            )
             assert model._assert_compiled.call_count == 1
 
             # re-assign before the next iteration of the loop
@@ -167,13 +188,14 @@ class TestModel(object):
         model.stop_training = False
         model.network = MagicMock()
         model.train_on_batch = MagicMock()
-        model.train_on_batch.return_value = 4
+        model.train_on_batch.return_value = (4, 5)
         model.device = MagicMock()
         model.fit_generator = Model.fit_generator
         model.evaluate_generator = MagicMock()
-        model.evaluate_generator.return_value = 2
+        model.evaluate_generator.return_value = (2, 3)
         model._default_callbacks = MagicMock()
         model._default_callbacks.return_value = [1, 2, 3]
+        model.metric_names = ['mock_metric']
 
         generator = MagicMock()
         inputs = torch.randn((2, 64, 64, 3))
@@ -237,7 +259,9 @@ class TestModel(object):
 
             mock_callback_list.assert_called_with([1, 2, 3])
             mock_callbacks.set_params.assert_called_with(
-                {'epochs': n_epochs, 'metrics': ['loss', 'val_loss'],
+                {'epochs': n_epochs,
+                 'metrics':
+                     ['loss', 'val_loss', 'mock_metric', 'val_mock_metric'],
                  'steps': n_steps_per_epoch, 'verbose': True}
             )
             mock_callbacks.set_model.assert_called_with(model)
@@ -245,7 +269,7 @@ class TestModel(object):
             assert mock_callbacks.on_batch_begin.call_count == n_batches
             assert mock_callbacks.on_batch_end.call_count == n_batches
             mock_callbacks.on_batch_end.assert_any_call(
-                0, {'batch': 0, 'size': 1, 'loss': 4}
+                0, {'batch': 0, 'size': 1, 'loss': 4, 'mock_metric': 5}
             )
 
             epoch_logs = {}
@@ -254,6 +278,7 @@ class TestModel(object):
                     validation_data, n_validation_steps
                 )
                 epoch_logs['val_loss'] = 2
+                epoch_logs['val_mock_metric'] = 3
             mock_callbacks.on_epoch_end.assert_any_call(0, epoch_logs)
 
             # reset the call counts for the next iteration
@@ -352,6 +377,10 @@ class TestModel(object):
         model.network = MagicMock()
         model.network.train = MagicMock()
 
+        mock_metric = MagicMock()
+        mock_metric.return_value = 4
+        model.metric_fns = [mock_metric]
+
         inputs = torch.randn((2, 3), requires_grad=True)
         targets = torch.randint(size=(2,), high=2, dtype=torch.int64)
         outputs = torch.nn.Sigmoid()(inputs)
@@ -360,11 +389,14 @@ class TestModel(object):
         loss_value = torch.nn.CrossEntropyLoss()(outputs, targets)
         model.loss.return_value = loss_value
 
-        loss = model.test_on_batch(
+        test_outputs = model.test_on_batch(
             self=model, inputs=inputs, targets=targets
         )
 
-        assert loss == loss_value.tolist()
+        assert test_outputs[0] == loss_value.tolist()
+        assert test_outputs[1] == 4
+
+        assert mock_metric.call_count == 1
         assert model.network.call_count == 1
         assert model._assert_compiled.call_count == 1
         model.network.train.assert_called_with(mode=False)
@@ -379,6 +411,10 @@ class TestModel(object):
         model.network = MagicMock()
         model.network.train = MagicMock()
 
+        mock_metric = MagicMock()
+        mock_metric.return_value = 4
+        model.metric_fns = [mock_metric]
+
         inputs = torch.randn((2, 3), requires_grad=True)
         targets = torch.randint(size=(2,), high=2, dtype=torch.int64)
         outputs = torch.nn.Sigmoid()(inputs)
@@ -389,11 +425,14 @@ class TestModel(object):
         model.optimizer = create_autospec(torch.optim.Adam)
 
         with patch.object(loss_value, 'backward') as patched_backward:
-            loss = model.train_on_batch(
+            train_outputs = model.train_on_batch(
                 self=model, inputs=inputs, targets=targets
             )
 
-        assert loss == loss_value.tolist()
+        assert train_outputs[0] == loss_value.tolist()
+        assert train_outputs[1] == 4
+
+        assert mock_metric.call_count == 1
         assert model.network.call_count == 1
         model.network.train.assert_called_with(mode=True)
         assert model.loss.call_count == 1

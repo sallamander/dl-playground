@@ -33,6 +33,8 @@ class Model(object):
         # these are set in the `compile` method
         self.optimizer = None
         self.loss = None
+        self.metric_names = []
+        self.metric_fns = []
 
         self.history = History()
         self.stop_training = False
@@ -70,7 +72,7 @@ class Model(object):
         ]
         return default_callbacks
 
-    def compile(self, optimizer, loss):
+    def compile(self, optimizer, loss, metrics=None):
         """Setup the model for training
 
         This sets `self.optimizer` and `self.loss` in place.
@@ -81,6 +83,9 @@ class Model(object):
         :param loss: class name of the loss to use when training, one of those
          from `torch.nn` (e.g. `CrossEntropyLoss`)
         :type loss: str
+        :param metrics: metrics to be evaluated by the model during training
+         and testing
+        :type metrics: list[object]
         :raises AttributeError: if an invalid optimizer or loss function is
          specified
         """
@@ -105,6 +110,14 @@ class Model(object):
             raise AttributeError(msg.format(loss))
         self.loss = Loss()
 
+        metrics = [] if not metrics else metrics
+        for metric in metrics:
+            metric_name = (
+                metric.name if hasattr(metric, 'name') else metric.__name__
+            )
+            self.metric_names.append(metric_name)
+            self.metric_fns.append(metric)
+
         self._compiled = True
 
     def evaluate_generator(self, generator, n_steps):
@@ -115,8 +128,10 @@ class Model(object):
         :type generator: generator
         :param n_steps: number of batches to evaluate on
         :type n_steps: int
-        :return: scalar test loss
-        :rtype: float
+        :return: average metric values calculated between the outputs of the
+         forward pass run on the inputs from the generator and the targets
+         produced from the generator
+        :rtype: tuple(float)
         """
 
         self._assert_compiled()
@@ -124,16 +139,23 @@ class Model(object):
         if self.device:
             self.network.to(self.device)
 
-        total_loss = 0
+        validation_output_totals = [
+            0 for _ in range(len(self.metric_fns) + 2)
+        ]
         n_obs = 0
         for _ in range(n_steps):
             inputs, targets = next(generator)
             n_obs += inputs.shape[0]
 
-            loss = self.test_on_batch(inputs, targets)
-            total_loss += loss
+            test_outputs = self.test_on_batch(inputs, targets)
+            for idx_output, test_output in enumerate(test_outputs):
+                validation_output_totals[idx_output] += test_output
 
-        return total_loss / n_obs
+        validation_outputs = [
+            validation_output_total / n_obs
+            for validation_output_total in validation_output_totals
+        ]
+        return validation_outputs
 
     def fit_generator(self, generator, n_steps_per_epoch, n_epochs=1,
                       validation_data=None, n_validation_steps=None):
@@ -175,9 +197,14 @@ class Model(object):
         if self.device:
             self.network.to(self.device)
 
+        metrics = ['loss', 'val_loss']
+        for metric_name in self.metric_names:
+            metrics.append(metric_name)
+            metrics.append('val_{}'.format(metric_name))
+
         callbacks.set_params({
             'epochs': n_epochs,
-            'metrics': ['loss', 'val_loss'],
+            'metrics': metrics,
             'steps': n_steps_per_epoch,
             'verbose': True
         })
@@ -196,19 +223,27 @@ class Model(object):
                 callbacks.on_batch_begin(idx_batch, batch_logs)
 
                 inputs, targets = next(generator)
-                loss = self.train_on_batch(inputs, targets)
+                train_outputs = self.train_on_batch(inputs, targets)
 
-                batch_logs['loss'] = loss
+                batch_logs['loss'] = train_outputs[0]
+                it = zip(self.metric_names, train_outputs[1:])
+                for metric_name, train_output in it:
+                    batch_logs[metric_name] = train_output
                 callbacks.on_batch_end(idx_batch, batch_logs)
 
                 if self.stop_training:
                     break
 
             if validation_data:
-                val_loss = self.evaluate_generator(
+                val_outputs = self.evaluate_generator(
                     validation_data, n_validation_steps
                 )
-                epoch_logs['val_loss'] = val_loss
+
+                epoch_logs['val_loss'] = val_outputs[0]
+                it = zip(self.metric_names, val_outputs[1:])
+                for metric_name, val_output in it:
+                    metric_name = 'val_{}'.format(metric_name)
+                    epoch_logs[metric_name] = val_output
             callbacks.on_epoch_end(idx_epoch, epoch_logs)
         callbacks.on_train_end()
 
@@ -244,8 +279,9 @@ class Model(object):
         :type inputs: torch.Tensor
         :param targets: targets to compare model predictions to
         :type targets: torch.Tensor
-        :return: scalar test loss
-        :rtype: float
+        :return: metrics calculated between the outputs of the forward pass and
+         the targets
+        :rtype: tuple(float)
         """
 
         self._assert_compiled()
@@ -258,7 +294,11 @@ class Model(object):
         outputs = self.network(inputs)
         loss = self.loss(outputs, targets)
 
-        return loss.tolist()
+        test_outputs = [loss.tolist()]
+        for metric_fn in self.metric_fns:
+            test_outputs.append(metric_fn(targets, outputs))
+
+        return test_outputs
 
     def train_on_batch(self, inputs, targets):
         """Run a single forward / backward pass on a single batch of data
@@ -267,8 +307,9 @@ class Model(object):
         :type inputs: torch.Tensor
         :param targets: targets to use in the forward / backward pass
         :type targets: torch.Tensor
-        :return: scalar training loss
-        :rtype: float
+        :return: metrics calculated between the outputs of the forward pass and
+         the targets
+        :rtype: tuple(float)
         """
 
         self._assert_compiled()
@@ -281,8 +322,12 @@ class Model(object):
         outputs = self.network(inputs)
         loss = self.loss(outputs, targets)
 
+        train_outputs = [loss.tolist()]
+        for metric_fn in self.metric_fns:
+            train_outputs.append(metric_fn(targets, outputs))
+
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
-        return loss.tolist()
+        return train_outputs
