@@ -77,7 +77,8 @@ class TestImageNetTrainer(object):
             assert fit_fn.call_count == 1
             fit_fn.assert_called_with(
                 generator=mock_cycle_return, n_steps_per_epoch=1,
-                n_epochs=2, validation_data=None, n_validation_steps=None
+                n_epochs=2, validation_data=None, n_validation_steps=None,
+                callbacks=None
             )
             assert mock_compile.call_count == 1
 
@@ -95,6 +96,6 @@ class TestImageNetTrainer(object):
             fit_fn.assert_called_with(
                 generator=mock_cycle_return, n_steps_per_epoch=1,
                 n_epochs=2, validation_data=mock_cycle_return,
-                n_validation_steps=3
+                n_validation_steps=3, callbacks=None
             )
             assert mock_compile.call_count == 1

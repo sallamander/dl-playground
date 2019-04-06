@@ -1,5 +1,6 @@
 """Class for running a specified training job"""
 
+import inspect
 import os
 import time
 
@@ -110,6 +111,43 @@ class TrainingJob(object):
         )
         return trainer
 
+    def _parse_callbacks(self):
+        """Return the callback objects used during training
+
+        This relies on the `trainer::callbacks` section of `self.config`. This
+        section contains a list of callbacks, where each callback is specified
+        as a dictionary or a string. If a dictionary, they key is expected to
+        be the importpath to the callback, and the value a dictionary of
+        __init__ params; if a str only, it is expected to be the importpath to
+        the callback.
+
+        :return: callback objects used during training
+        :rtype: list[object]
+        """
+
+        callback_specs = self.config['trainer'].get('callbacks', [])
+
+        callbacks = []
+        for callback_spec in callback_specs:
+            if isinstance(callback_spec, dict):
+                assert len(callback_spec) == 1
+                callback_importpath = list(callback_spec.keys())[0]
+                callback_params = list(callback_spec.values())[0]
+            else:
+                callback_importpath = callback_spec
+                callback_params = {}
+
+            if 'CSVLogger' in callback_importpath:
+                callback_params['filename'] = os.path.join(
+                    self.dirpath_job, 'history.csv'
+                )
+
+            Callback = import_object(callback_importpath)
+            callback = Callback(**callback_params)
+            callbacks.append(callback)
+
+        return callbacks
+
     def _parse_dirpath_job(self):
         """Return the directory path used to save the job
 
@@ -136,6 +174,39 @@ class TrainingJob(object):
         dirpath_job = os.path.join(dirpath_jobs, dirname_job)
         os.makedirs(dirpath_job, exist_ok=True)
         return dirpath_job
+
+    def _parse_metrics(self):
+        """Return the metric objects used during training
+
+        This relies on the `trainer::metrics` section of `self.config`. This
+        section contains a list of metrics, where each metric is specified as a
+        dictionary or a string. If a dictionary, they key is expected to be the
+        importpath to the metric, and the value a dictionary of __init__
+        params; if a str only, it is expected to be the importpath to the
+        metric.
+
+        :return: metric objects used during training
+        :rtype: list[object]
+        """
+
+        metric_specs = self.config['trainer'].get('metrics', [])
+
+        metrics = []
+        for metric_spec in metric_specs:
+            if isinstance(metric_spec, dict):
+                assert len(metric_spec) == 1
+                metric_importpath = list(metric_spec.keys())[0]
+                metric_params = list(metric_spec.values())[0]
+            else:
+                metric_importpath = metric_spec
+                metric_params = {}
+
+            metric_fn = import_object(metric_importpath)
+            if inspect.isclass(metric_fn):
+                metric_fn = metric_fn(**metric_params)
+            metrics.append(metric_fn)
+
+        return metrics
 
     def _parse_transformations(self, transformations):
         """Parse the provided transformations into the expected format
@@ -192,10 +263,14 @@ class TrainingJob(object):
             self._instantiate_dataset(set_name='validation')
         )
 
+        callbacks = self._parse_callbacks()
+        metrics = self._parse_metrics()
         trainer.train(
             network=network,
             train_dataset=train_dataset,
             n_steps_per_epoch=n_steps_per_epoch,
             validation_dataset=validation_dataset,
-            n_validation_steps=n_validation_steps
+            n_validation_steps=n_validation_steps,
+            metrics=metrics,
+            callbacks=callbacks
         )

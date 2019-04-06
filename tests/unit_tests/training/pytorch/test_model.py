@@ -194,7 +194,6 @@ class TestModel(object):
         model.evaluate_generator = MagicMock()
         model.evaluate_generator.return_value = (2, 3)
         model._default_callbacks = MagicMock()
-        model._default_callbacks.return_value = [1, 2, 3]
         model.metric_names = ['mock_metric']
 
         generator = MagicMock()
@@ -214,6 +213,7 @@ class TestModel(object):
         ]
 
         for test_case in test_cases:
+            model._default_callbacks.return_value = [1, 2, 3]
             early_stopping = test_case.get('early_stopping', False)
 
             n_steps_per_epoch = test_case['n_steps_per_epoch']
@@ -234,7 +234,8 @@ class TestModel(object):
                 self=model, generator=generator,
                 n_steps_per_epoch=n_steps_per_epoch, n_epochs=n_epochs,
                 validation_data=validation_data,
-                n_validation_steps=n_validation_steps
+                n_validation_steps=n_validation_steps,
+                callbacks=[4, 5]
             )
             if early_stopping:
                 model.stop_training = True
@@ -257,7 +258,7 @@ class TestModel(object):
             model.train_on_batch.assert_called_with(inputs, targets)
             assert generator.__next__.call_count == n_batches
 
-            mock_callback_list.assert_called_with([1, 2, 3])
+            mock_callback_list.assert_called_with([1, 2, 3, 4, 5])
             mock_callbacks.set_params.assert_called_with(
                 {'epochs': n_epochs,
                  'metrics':
