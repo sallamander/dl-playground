@@ -158,7 +158,8 @@ class Model(object):
         return validation_outputs
 
     def fit_generator(self, generator, n_steps_per_epoch, n_epochs=1,
-                      validation_data=None, n_validation_steps=None):
+                      validation_data=None, n_validation_steps=None,
+                      callbacks=None):
         """Train the network on batches of data generated from `generator`
 
         :param generator: a generator yielding batches indefinitely, where each
@@ -174,11 +175,15 @@ class Model(object):
         :type validation_data: generator
         :param n_validation_steps: number of batches to evaluate on from
          `validation_data`
+        :param callbacks: callbacks to be used during training
+        :type callbacks: list[object]
         :raises RuntimeError: if only one of `validation_data` and
          `n_validation_steps` are passed in
         """
 
         default_callbacks = self._default_callbacks()
+        if callbacks:
+            default_callbacks.extend(callbacks)
         callbacks = CallbackList(default_callbacks)
 
         self._assert_compiled()

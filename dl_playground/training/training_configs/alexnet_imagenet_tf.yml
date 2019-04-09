@@ -54,3 +54,7 @@ trainer:
             loss: 'categorical_crossentropy'
             batch_size: 128
             n_epochs: 10
+    callbacks:
+        - tensorflow.keras.callbacks.CSVLogger
+    metrics:
+        - tensorflow.keras.metrics.categorical_accuracy

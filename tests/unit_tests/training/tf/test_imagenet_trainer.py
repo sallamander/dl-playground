@@ -86,7 +86,7 @@ class TestImageNetTrainer(object):
             fit_fn.assert_called_with(
                 x=imagenet_dataset, steps_per_epoch=1,
                 epochs=2, verbose=True, validation_data=None,
-                validation_steps=None
+                validation_steps=None, callbacks=None
             )
 
         with patch.object(Model, 'fit') as fit_fn:
@@ -99,5 +99,5 @@ class TestImageNetTrainer(object):
             fit_fn.assert_called_with(
                 x=imagenet_dataset, steps_per_epoch=45,
                 epochs=2, verbose=True, validation_data=imagenet_dataset,
-                validation_steps=2
+                validation_steps=2, callbacks=None
             )

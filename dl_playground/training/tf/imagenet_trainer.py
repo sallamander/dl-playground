@@ -36,7 +36,8 @@ class ImageNetTrainer(object):
         self.dirpath_save = dirpath_save
 
     def train(self, network, train_dataset, n_steps_per_epoch,
-              validation_dataset=None, n_validation_steps=None):
+              validation_dataset=None, n_validation_steps=None, metrics=None,
+              callbacks=None):
         """Train the network as specified via the __init__ parameters
 
         :param network: network object to use for training
@@ -52,11 +53,18 @@ class ImageNetTrainer(object):
         :param n_validation_steps: number of batches to validate on after each
          epoch
         :type n_validation_steps: int
+        :param metrics: metrics to be evaluated by the model during training
+         and testing
+        :type metrics: list[object]
+        :param callbacks: callbacks to be used during training
+        :type callbacks: list[object]
         """
 
         inputs, outputs = network.forward()
         model = Model(inputs=inputs, outputs=outputs)
-        model.compile(optimizer=self.optimizer, loss=self.loss)
+        model.compile(
+            optimizer=self.optimizer, loss=self.loss, metrics=metrics
+        )
 
         model.fit(
             x=train_dataset,
@@ -64,5 +72,6 @@ class ImageNetTrainer(object):
             epochs=self.n_epochs,
             verbose=True,
             validation_data=validation_dataset,
-            validation_steps=n_validation_steps
+            validation_steps=n_validation_steps,
+            callbacks=callbacks
         )

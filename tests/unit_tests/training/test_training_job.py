@@ -6,6 +6,8 @@ import shutil
 import tempfile
 import pytest
 
+import tensorflow
+
 from training.training_job import TrainingJob
 
 
@@ -138,6 +140,51 @@ class TestTrainingJob(object):
             dirpath_save='dirpath_job'
         )
 
+    def test_parse_callbacks(self, monkeypatch):
+        """Test _parse_callbacks
+
+        This tests that the callbacks are parsed correctly from the config when
+        there is a list of callbacks that are a mix of dictionaries and
+        strings.
+
+        :param monkeypatch: monkeypatch object
+        :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
+        """
+
+        mock_config = {
+            'trainer': {
+                'callbacks': [
+                    'importpath1', {'importpath2': {
+                        'param1': 'value1', 'param2': 'value2'
+                    }}
+                ]
+            }
+        }
+
+        training_job = MagicMock()
+        training_job._parse_callbacks = TrainingJob._parse_callbacks
+        training_job.config = mock_config
+
+        mock_import_object = MagicMock()
+        mock_callback = MagicMock()
+        mock_callback.return_value = 'instantiated_callback'
+        mock_import_object.return_value = mock_callback
+        monkeypatch.setattr(
+            'training.training_job.import_object', mock_import_object
+        )
+
+        callbacks = training_job._parse_callbacks(self=training_job)
+
+        assert mock_import_object.call_count == 2
+        mock_import_object.assert_any_call('importpath1')
+        mock_import_object.assert_any_call('importpath2')
+
+        assert mock_callback.call_count == 2
+        mock_callback.assert_any_call()
+        mock_callback.assert_any_call(param1='value1', param2='value2')
+
+        assert callbacks == ['instantiated_callback', 'instantiated_callback']
+
     def test_parse_dirpath_job(self, monkeypatch):
         """Test _parse_dirpath_job
 
@@ -212,6 +259,50 @@ class TestTrainingJob(object):
                 shutil.rmtree(tempdir2, ignore_errors=True)
                 shutil.rmtree(tempdir3, ignore_errors=True)
 
+    def test_parse_metrics(self, monkeypatch):
+        """Test _parse_metrics
+
+        This tests that the metrics are parsed correctly from the config when
+        there are no metrics or a list of metrics that are a mix of
+        dictionaries and strings.
+
+        Note this doesn't fully test the case where the metric specified is a
+        class; that is left to integration tests.
+
+        :param monkeypatch: monkeypatch object
+        :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
+        """
+
+        mock_config = {
+            'trainer': {
+                'metrics': [
+                    'importpath1', {'importpath2': {
+                        'param1': 'value1', 'param2': 'value2'
+                    }}
+                ]
+            }
+        }
+
+        training_job = MagicMock()
+        training_job._parse_metrics = TrainingJob._parse_metrics
+        training_job.config = mock_config
+
+        mock_import_object = MagicMock()
+        mock_metric = MagicMock()
+        mock_import_object.return_value = mock_metric
+        monkeypatch.setattr(
+            'training.training_job.import_object', mock_import_object
+        )
+
+        metrics = training_job._parse_metrics(self=training_job)
+
+        assert mock_import_object.call_count == 2
+        mock_import_object.assert_any_call('importpath1')
+        mock_import_object.assert_any_call('importpath2')
+
+        assert mock_metric.call_count == 0
+        assert metrics == [mock_metric, mock_metric]
+
     def test_parse_transformations(self, monkeypatch):
         """Test _parse_transformations method
 
@@ -269,6 +360,8 @@ class TestTrainingJob(object):
 
         training_job = create_autospec(TrainingJob)
         training_job._instantiate_dataset.return_value = ('mock_dataset', 10)
+        training_job._parse_callbacks.return_value = ['callbacks_list']
+        training_job._parse_metrics.return_value = ['metrics_list']
         training_job.run = TrainingJob.run
 
         training_job.run(self=training_job)
@@ -277,10 +370,13 @@ class TestTrainingJob(object):
         training_job._instantiate_dataset.assert_has_calls([
             call(set_name='train'), call(set_name='validation')
         ])
+        training_job._parse_metrics.assert_called_once_with()
+        training_job._parse_callbacks.assert_called_once_with()
 
         trainer = training_job._instantiate_trainer()
         trainer.train.assert_called_once_with(
             network=training_job._instantiate_network(),
             train_dataset='mock_dataset', n_steps_per_epoch=10,
-            validation_dataset='mock_dataset', n_validation_steps=10
+            validation_dataset='mock_dataset', n_validation_steps=10,
+            metrics=['metrics_list'], callbacks=['callbacks_list']
         )
