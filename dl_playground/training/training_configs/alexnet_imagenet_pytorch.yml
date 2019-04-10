@@ -62,3 +62,5 @@ trainer:
             loss: 'CrossEntropyLoss'
             batch_size: 128
             n_epochs: 10
+    metrics:
+        - training.pytorch.classification_metrics.TopKCategoricalAccuracy
