@@ -42,8 +42,13 @@ class TFDataLoader(object):
         generator = self.numpy_dataset.as_generator(
             shuffle=shuffle, n_workers=n_workers
         )
+        output_shapes = {
+            name: tf.TensorShape(shape)
+            for name, shape in self.numpy_dataset.output_shapes.items()
+        }
         dataset = tf.data.Dataset.from_generator(
-            lambda: generator, self.numpy_dataset.sample_types
+            lambda: generator, self.numpy_dataset.sample_types,
+            output_shapes
         )
         dataset = dataset.repeat()
 

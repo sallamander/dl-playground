@@ -30,7 +30,7 @@ def main():
 
     args = parse_args()
     with open(args.fpath_config) as f:
-        training_config = yaml.load(f)
+        training_config = yaml.load(f, Loader=yaml.FullLoader)
 
     TrainingJob = import_object(training_config['job_importpath'])
     training_job = TrainingJob(training_config)

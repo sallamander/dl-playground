@@ -47,7 +47,7 @@ class TestPyTorchTrainingJob(object):
             'alexnet_imagenet_pytorch.yml'
         )
         with open(fpath_config, 'r') as f:
-            job_config = yaml.load(f)
+            job_config = yaml.load(f, Loader=yaml.FullLoader)
         job_config['dataset']['fpath_df_train'] = fpath_df_images
         job_config['dataset']['train_loading_params']['batch_size'] = 2
         job_config['dataset']['fpath_df_validation'] = fpath_df_images

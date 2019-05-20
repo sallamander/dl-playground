@@ -85,6 +85,7 @@ class TestTFDataLoader(object):
         numpy_dataset.sample_types = {'element': 'float32', 'label': 'int16'}
         numpy_dataset.input_keys = ['element']
         numpy_dataset.target_keys = ['label']
+        numpy_dataset.output_shapes = {'element': (), 'label': ()}
 
         tf_data_loader = MagicMock()
         tf_data_loader.numpy_dataset = numpy_dataset

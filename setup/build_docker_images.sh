@@ -5,12 +5,13 @@
 # Dockerfile files in this directory.
 
 function usage {
-    echo "Usage: build_docker_image.sh  [--conda_version version] [--docker_user username]"
+    echo "Usage: build_docker_image.sh  [--branch branch] [--conda_version version] [--docker_user username]"
     echo "                              [--fpath_custom_dockerfile fpath] [--gpu_build] "
     echo "                              [--rebuild_image (base|final|custom)]"
     echo ""
+    echo "   --branch                            Branch to use when building, defaults to master."
     echo "   --conda_version                     Conda version for the Docker images - defaults "
-    echo "                                       to 4.5.11, which is compatible with the repository "
+    echo "                                       to 4.6.14, which is compatible with the repository "
     echo "                                       YMLs."
     echo ""
     echo "    --docker_user                      Username for the Docker images. "
@@ -37,6 +38,10 @@ function usage {
 while [ ! $# -eq 0 ]
 do 
     case "$1" in
+            --branch)
+                BRANCH=$2
+                shift 2
+                ;;
             --conda_version)
                 CONDA_VERSION=$2
                 shift 2
@@ -64,14 +69,19 @@ do
     esac
 done
 
+if [ -z "$BRANCH" ]; then
+    echo "--branch not specified, using the default of master."
+    BRANCH=master
+fi
+
 if [ -z "$DOCKER_USER" ]; then
     echo "--docker_user flag must be specified!"
     exit 1
 fi
 
 if [ -z "$CONDA_VERSION" ]; then
-    echo "--conda_version not specified, using the default of 4.5.11."
-    CONDA_VERSION=4.5.11
+    echo "--conda_version not specified, using the default of 4.6.14."
+    CONDA_VERSION=4.6.14
 fi
 
 if [ ! -z "$REBUILD_IMAGE" ]; then
@@ -117,10 +127,10 @@ if [ ! -z "$REBUILD_IMAGE" ]; then
     fi
 fi
 
-BASE_IMAGE="ubuntu:16.04"
+BASE_IMAGE="ubuntu:18.04"
 FNAME_ENVIRONMENT_YML="environment_cpu.yml"
 if [[ ! -z "$GPU_BUILD" ]]; then
-    BASE_IMAGE="nvidia/cuda:9.0-cudnn7-runtime-ubuntu16.04"
+    BASE_IMAGE="nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04"
     FNAME_ENVIRONMENT_YML="environment_gpu.yml"
 fi
 
@@ -133,6 +143,7 @@ docker build --build-arg user=$DOCKER_USER \
              -t dl-playground/base --file ./Dockerfile.base ./
 
 docker build --build-arg user=$DOCKER_USER \
+             --build-arg branch=$BRANCH \
              --build-arg conda_version=$CONDA_VERSION \
              --build-arg fname_environment_yml=$FNAME_ENVIRONMENT_YML \
              -t dl-playground/final --file ./Dockerfile ./
