@@ -1,4 +1,4 @@
-ARG base_image=ubuntu:16.04
+ARG base_image=ubuntu:18.04
 FROM ${base_image}
 LABEL maintainer="Sean Sall <ssall@alumni.nd.edu>"
 
@@ -26,7 +26,7 @@ RUN mkdir -p $CONDA_DIRPATH && \
     wget https://repo.continuum.io/miniconda/Miniconda3-${conda_version}-Linux-x86_64.sh && \
     chmod u+x Miniconda3-${conda_version}-Linux-x86_64.sh && \
     ./Miniconda3-${conda_version}-Linux-x86_64.sh -b -f -p $CONDA_DIRPATH && \
-    conda install python=3.5.5 && \
+    conda install python=3.7.3 && \
     rm Miniconda3-${conda_version}-Linux-x86_64.sh
 
 RUN useradd -m -s /bin/bash -N -u $USER_UID $user && \

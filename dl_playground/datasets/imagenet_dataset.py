@@ -110,3 +110,20 @@ class ImageNetDataSet(Dataset):
             for key, val in sample.items():
                 sample_batch_dim_removed[key] = val[0]
             yield sample_batch_dim_removed
+
+    @property
+    def output_shapes(self):
+        """Return the shapes of the outputs returned
+
+        :return: dict holding the tuples of the shapes for the values returned
+         when iterating over the dataset
+        :rtype: dict
+        """
+
+        height = self.config['height']
+        width = self.config['width']
+
+        image_shape = (height, width, 3)
+        label_shape = ()
+
+        return {'image': image_shape, 'label': label_shape}
