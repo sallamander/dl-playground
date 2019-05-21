@@ -35,10 +35,10 @@ class AlexNet(Module):
         self._set_layers()
 
     def _set_layers(self):
-        """Set the networks layers used in the forward pass
+        """Set the network's layers used in the forward pass
 
         This sets 5 convolutional layers (self.conv[1-5]) and 3 linear layers
-        (self.linear[1-3]) in place.
+        (self.linear[1-3]) in-place.
         """
 
         n_channels = self.config['n_channels']
