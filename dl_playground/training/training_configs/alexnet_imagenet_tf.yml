@@ -31,11 +31,11 @@ dataset:
                 value:
                     - 'image'
     train_loading_params:
-        batch_size: 128
+        batch_size: 32
         shuffle: True
         n_workers: 4
     validation_loading_params:
-        batch_size: 128
+        batch_size: 32
         shuffle: False
         n_workers: 2
 network:
@@ -52,7 +52,7 @@ trainer:
         config:
             optimizer: 'adam'
             loss: 'categorical_crossentropy'
-            batch_size: 128
+            batch_size: 32
             n_epochs: 10
     callbacks:
         - tensorflow.keras.callbacks.CSVLogger

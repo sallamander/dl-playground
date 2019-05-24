@@ -96,7 +96,7 @@ class TestPyTorchTrainingJob(object):
         assert isinstance(trainer, ImageNetTrainer)
         assert trainer.optimizer == 'Adam'
         assert trainer.loss == 'CrossEntropyLoss'
-        assert trainer.batch_size == 128
+        assert trainer.batch_size == 32
         assert trainer.n_epochs == 10
         assert trainer.device == torch.device('cuda:0')
 

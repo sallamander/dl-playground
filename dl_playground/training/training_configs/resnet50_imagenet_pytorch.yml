@@ -49,11 +49,13 @@ dataset:
         shuffle: False
         num_workers: 2
 network:
-    importpath: networks.pytorch.object_classification.alexnet.AlexNet
+    importpath: networks.pytorch.object_classification.resnet.ResNet
     init_params:
         config:
             n_channels: 3
             n_classes: 1000
+            n_initial_channels: 64
+            n_blocks_per_stage: [3, 4, 6, 3]
 trainer:
     importpath: training.pytorch.imagenet_trainer.ImageNetTrainer
     init_params:
