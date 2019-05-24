@@ -37,7 +37,7 @@ class ImageNetTrainer(object):
 
     def train(self, network, train_dataset, n_steps_per_epoch,
               validation_dataset=None, n_validation_steps=None, metrics=None,
-              callbacks=None):
+              callbacks=None, initial_epoch=0):
         """Train the network as specified via the __init__ parameters
 
         :param network: network object to use for training
@@ -58,7 +58,19 @@ class ImageNetTrainer(object):
         :type metrics: list[object]
         :param callbacks: callbacks to be used during training
         :type callbacks: list[object]
+        :param initial_epoch: epoch at which to start training
+        :type initial_epoch: int
         """
+
+        if initial_epoch >= self.n_epochs:
+            msg = (
+                'More epochs have already been trained for the training job '
+                'in {} than are specified by the config\'s '
+                'trainer::n_epochs key. If you wish to train for more '
+                'epochs, please update this key.'
+            ).format(self.dirpath_save)
+            print(msg)
+            return
 
         inputs, outputs = network.forward()
         model = Model(inputs=inputs, outputs=outputs)

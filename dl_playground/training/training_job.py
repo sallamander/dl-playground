@@ -4,9 +4,12 @@ import inspect
 import os
 import time
 
+import pandas as pd
 import yaml
 
 from utils.generic_utils import import_object, validate_config
+
+# TODO: Write a unit test for the new `resume` method
 
 
 class TrainingJob(object):
@@ -14,46 +17,13 @@ class TrainingJob(object):
 
     required_config_keys = {'network', 'trainer', 'dataset'}
 
-    def __init__(self, config):
-        """Init
+    def __init__(self):
+        """Init"""
 
-        The `config` must contain the following keys:
-        - dict network: specifies the network class to train as well as how to
-          build it; see the `_instantiate_network` method for details
-        - dict trainer: specifies the trainer class to train with; see the
-          `_instantiate_trainer` method for details
-        - dict dataset: specifies the training and validation dataset classes
-          to train with, as well as how to load the data from the datasets; see
-          the `_instantiate_dataset` method in child classes for details
-
-        It can contain the following additional keys:
-        - str 'job_name': optional name given to the job; the timestamp of when
-          the job started will be appended to the job_name to uniquely identify
-          the directory name the job will be saved to
-        - str 'dirpath_jobs': optional directory path to save job directory in,
-          resulting in the job being saved to 'dirpath_jobs/dirname_job';
-          defaults to `os.environ['HOME']/training_jobs`
-        - int gpu_id: GPU to run the job on; defaults to None, which means the
-          job runs on the CPU
-
-        See the `_parse_dirpath_job` method for details on where the results of
-        the training job will be stored.
-
-        :param config: config file specifying a training job to run
-        :type config: dict
-        """
-
-        validate_config(config, self.required_config_keys)
-        self.config = config
-        self.dirpath_job = self._parse_dirpath_job()
-
-        self.gpu_id = self.config.get('gpu_id', None)
-        if self.gpu_id is not None:
-            os.environ['CUDA_VISIBLE_DEVICES'] = str(self.gpu_id)
-
-        fpath_config = os.path.join(self.dirpath_job, 'config.yml')
-        with open(fpath_config, 'w') as f:
-            yaml.dump(self.config, f, default_flow_style=False)
+        # these are set when the `resume` or `run` method is called
+        self.config = None
+        self.dirpath_job = None
+        self.gpu_id = None
 
     def _instantiate_dataset(self, set_name):
         """Return a dataset object to be used as an iterator during training
@@ -138,16 +108,22 @@ class TrainingJob(object):
                 callback_params = {}
 
             if 'CSVLogger' in callback_importpath:
+                filename = callback_params.get('filename', 'history.csv')
                 callback_params['filename'] = os.path.join(
-                    self.dirpath_job, 'history.csv'
+                    self.dirpath_job, filename
                 )
             elif 'TensorBoard' in callback_importpath:
                 callback_params['log_dir'] = os.path.join(
                     self.dirpath_job, 'tensorboard'
                 )
             elif 'ModelCheckpoint' in callback_importpath:
+                default_filename = (
+                    'weights.pt' if 'PyTorch' in str(type(self)) else
+                    'weights.h5'
+                )
+                filename = callback_params.get('filename', default_filename)
                 callback_params['filepath'] = os.path.join(
-                    self.dirpath_job, 'weights'
+                    self.dirpath_job, filename
                 )
                 callback_params['save_weights_only'] = True
 
@@ -260,8 +236,16 @@ class TrainingJob(object):
 
         return processed_transformations
 
-    def run(self):
-        """Run training as specified via `self.config`"""
+    def _run(self, initial_epoch):
+        """Run training from `initial_epoch` as specified via `self.config`
+
+        :param initial_epoch: epoch at which to start training
+        :type initial_epoch: int
+        """
+
+        self.gpu_id = self.config.get('gpu_id', None)
+        if self.gpu_id is not None:
+            os.environ['CUDA_VISIBLE_DEVICES'] = str(self.gpu_id)
 
         network = self._instantiate_network()
         trainer = self._instantiate_trainer()
@@ -272,6 +256,8 @@ class TrainingJob(object):
             self._instantiate_dataset(set_name='validation')
         )
 
+        n_steps_per_epoch = 10
+        n_validation_steps = 10
         callbacks = self._parse_callbacks()
         metrics = self._parse_metrics()
         trainer.train(
@@ -281,5 +267,82 @@ class TrainingJob(object):
             validation_dataset=validation_dataset,
             n_validation_steps=n_validation_steps,
             metrics=metrics,
-            callbacks=callbacks
+            callbacks=callbacks,
+            initial_epoch=initial_epoch
         )
+
+    def resume(self, dirpath_job):
+        """Resume training from the provided job directory
+
+        Training will resume from the most recent epoch completed. If no full
+        epochs of training were completed, this method will start with initial
+        epoch 0. Further, if training was interrupted before a config file was
+        saved, such that there is no config in `dirpath_job`, this method will
+        raise a RuntimeError.
+
+        :param dirpath_job: directory path of a previously started training job
+        :type dirpath_job: str
+        :raises: RuntimeError, when there is no 'config.yml' in `dirpath_job`
+        """
+
+        self.dirpath_job = dirpath_job
+        fpath_config = os.path.join(dirpath_job, 'config.yml')
+        try:
+            with open(fpath_config) as f:
+                self.config = yaml.load(f, Loader=yaml.FullLoader)
+        except FileNotFoundError:
+            msg = (
+                'When using the `resume` method the `dirpath_job` must '
+                'contain a config.yml, and {} does not contain one.'
+            ).format(self.dirpath_job)
+            raise FileNotFoundError(msg)
+
+        validate_config(self.config, self.required_config_keys)
+
+        fpath_history = os.path.join(self.dirpath_job, 'history.csv')
+        try:
+            df_history = pd.read_csv(fpath_history)
+            initial_epoch = len(df_history)
+        except FileNotFoundError:
+            initial_epoch = 0
+
+        self._run(initial_epoch)
+
+    def run(self, config):
+        """Run training as specified via config
+
+        The `config` must contain the following keys:
+        - dict network: specifies the network class to train as well as how to
+          build it; see the `_instantiate_network` method for details
+        - dict trainer: specifies the trainer class to train with; see the
+          `_instantiate_trainer` method for details
+        - dict dataset: specifies the training and validation dataset classes
+          to train with, as well as how to load the data from the datasets; see
+          the `_instantiate_dataset` method in child classes for details
+
+        It can contain the following additional keys:
+        - str 'job_name': optional name given to the job; the timestamp of when
+          the job started will be appended to the job_name to uniquely identify
+          the directory name the job will be saved to
+        - str 'dirpath_jobs': optional directory path to save job directory in,
+          resulting in the job being saved to 'dirpath_jobs/dirname_job';
+          defaults to `os.environ['HOME']/training_jobs`
+        - int gpu_id: GPU to run the job on; defaults to None, which means the
+          job runs on the CPU
+
+        See the `_parse_dirpath_job` method for details on where the results of
+        the training job will be stored.
+
+        :param config: config file specifying a training job to run
+        :type config: dict
+        """
+
+        validate_config(config, self.required_config_keys)
+        self.config = config
+        self.dirpath_job = self._parse_dirpath_job()
+
+        fpath_config = os.path.join(self.dirpath_job, 'config.yml')
+        with open(fpath_config, 'w') as f:
+            yaml.dump(self.config, f, default_flow_style=False)
+
+        self._run(initial_epoch=0)

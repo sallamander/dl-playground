@@ -62,7 +62,8 @@ class TestPyTorchTrainingJob(object):
         :type config: dict
         """
 
-        job = PyTorchTrainingJob(config)
+        job = PyTorchTrainingJob()
+        job.config = config
         dataset, n_batches = job._instantiate_dataset(set_name='train')
         assert n_batches == 1
         assert isinstance(dataset, DataLoader)
@@ -78,7 +79,8 @@ class TestPyTorchTrainingJob(object):
         :type config: dict
         """
 
-        job = PyTorchTrainingJob(config)
+        job = PyTorchTrainingJob()
+        job.config = config
         network = job._instantiate_network()
         assert isinstance(network, AlexNet)
         assert network.config['n_channels'] == 3
@@ -91,7 +93,9 @@ class TestPyTorchTrainingJob(object):
         :type config: dict
         """
 
-        job = PyTorchTrainingJob(config)
+        job = PyTorchTrainingJob()
+        job.config = config
+        job.gpu_id = config['gpu_id']
         trainer = job._instantiate_trainer()
         assert isinstance(trainer, ImageNetTrainer)
         assert trainer.optimizer == 'Adam'
@@ -107,7 +111,8 @@ class TestPyTorchTrainingJob(object):
         :type config: dict
         """
 
-        job = PyTorchTrainingJob(config)
+        job = PyTorchTrainingJob()
+        job.config = config
         for set_name in ['train', 'validation']:
             transformations_key = '{}_transformations'.format(set_name)
             transformations = config['dataset'][transformations_key]

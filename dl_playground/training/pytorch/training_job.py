@@ -12,17 +12,16 @@ from utils.generic_utils import import_object
 class PyTorchTrainingJob(TrainingJob):
     """Runs a training job as specified via a config"""
 
-    def __init__(self, config):
-        """Init
+    def _instantiate_trainer(self):
+        """Return the trainer object that runs training
 
-        The `config` key is passed through to the `super().__init__()`; see
-        that method for details.
+        This overrides the `super()._instantiate_trainer` in order to check
+        that the specified `gpu_id` is available, and to ensure that it is
+        specified correctly in the 'trainer' section of `self.config`.
 
-        This method is over-ridden to update the `trainer` key of the config
-        with the device to use, if specified in the `config` itself.
+        :return: trainer to run training
+        :rtype: object
         """
-
-        super().__init__(config)
 
         if self.gpu_id is not None:
             if not torch.cuda.is_available():
@@ -33,6 +32,9 @@ class PyTorchTrainingJob(TrainingJob):
                 raise RuntimeError(msg)
             device = torch.device('cuda:0')
             self.config['trainer']['init_params']['device'] = device
+
+        trainer = super()._instantiate_trainer()
+        return trainer
 
     def _instantiate_dataset(self, set_name):
         """Return a dataset object to be used as an iterator during training

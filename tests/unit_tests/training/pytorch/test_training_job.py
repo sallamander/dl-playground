@@ -13,8 +13,8 @@ from training.pytorch.training_job import PyTorchTrainingJob
 class TestPyTorchTrainingJob(object):
     """Tests for PyTorchTrainingJob"""
 
-    def test_init(self, monkeypatch):
-        """Test __init__ method
+    def test_instantiate_trainer(self, monkeypatch):
+        """Test _instantiate_trainer method
 
         This method mocks `torch.cuda.is_available` to test that a
         `RuntimeError` is raised appropriately (and that the test doesn't bork
@@ -31,22 +31,14 @@ class TestPyTorchTrainingJob(object):
            is raised.
         """
 
-        def mock_super_init(self, config):
-            """Set the gpu_id
+        def mock_super_instantiate_trainer(self):
+            """Return a mock trainer"""
 
-            The only thing this mock_init needs to do to test the
-            `PyTorchTrainingJob.__init__` is set the `gpu_id` (if specified in
-            the `config`) and `config`.
-            """
-
-            self.config = config
-            self.gpu_id = self.config.get('gpu_id', None)
-            if self.gpu_id is not None:
-                os.environ['CUDA_VISIBLE_DEVICES'] = str(self.gpu_id)
+            return 'mock_trainer'
 
         monkeypatch.setattr(
-            'training.training_job.TrainingJob.__init__',
-            mock_super_init
+            'training.training_job.TrainingJob._instantiate_trainer',
+            mock_super_instantiate_trainer
         )
         mock_cuda_is_available = MagicMock()
         mock_cuda_is_available.return_value = True
@@ -58,7 +50,14 @@ class TestPyTorchTrainingJob(object):
         ]
 
         for mock_config in mock_configs:
-            PyTorchTrainingJob(mock_config)
+            training_job = MagicMock(spec=PyTorchTrainingJob)
+            training_job.gpu_id = mock_config.get('gpu_id')
+            training_job.config = mock_config
+            training_job._instantiate_trainer = (
+                PyTorchTrainingJob._instantiate_trainer
+            )
+            trainer = training_job._instantiate_trainer(self=training_job)
+            assert trainer == 'mock_trainer'
 
             if 'gpu_id' in mock_config:
                 assert (
@@ -70,7 +69,13 @@ class TestPyTorchTrainingJob(object):
 
         mock_cuda_is_available.return_value = False
         with pytest.raises(RuntimeError):
-            PyTorchTrainingJob(mock_configs[1])
+            training_job = MagicMock()
+            training_job.gpu_id = mock_config.get('gpu_id')
+            training_job.config = mock_config
+            training_job._instantiate_trainer = (
+                PyTorchTrainingJob._instantiate_trainer
+            )
+            training_job._instantiate_trainer(self=training_job)
 
     def _get_mock_config(self):
         """Return a mock config to use for a PyTorchTrainingJob

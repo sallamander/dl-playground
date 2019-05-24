@@ -1,4 +1,4 @@
-name: dl-playground
+name: dl-playground2
 channels:
   - pytorch
   - defaults

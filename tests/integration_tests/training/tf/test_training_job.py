@@ -61,7 +61,8 @@ class TestTFTrainingJob(object):
         :type config: dict
         """
 
-        job = TFTrainingJob(config)
+        job = TFTrainingJob()
+        job.config = config
         dataset, n_batches = job._instantiate_dataset(set_name='train')
         assert n_batches == 1
         assert isinstance(dataset, tensorflow.data.Dataset)
@@ -77,7 +78,8 @@ class TestTFTrainingJob(object):
         :type config: dict
         """
 
-        job = TFTrainingJob(config)
+        job = TFTrainingJob()
+        job.config = config
         network = job._instantiate_network()
         assert isinstance(network, AlexNet)
         assert network.config['n_channels'] == 3
@@ -90,7 +92,8 @@ class TestTFTrainingJob(object):
         :type config: dict
         """
 
-        job = TFTrainingJob(config)
+        job = TFTrainingJob()
+        job.config = config
         trainer = job._instantiate_trainer()
         assert isinstance(trainer, ImageNetTrainer)
         assert trainer.optimizer == 'adam'
@@ -105,7 +108,8 @@ class TestTFTrainingJob(object):
         :type config: dict
         """
 
-        job = TFTrainingJob(config)
+        job = TFTrainingJob()
+        job.config = config
         for set_name in ['train', 'validation']:
             transformations_key = '{}_transformations'.format(set_name)
             transformations = config['dataset'][transformations_key]

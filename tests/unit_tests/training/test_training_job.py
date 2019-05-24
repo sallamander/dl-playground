@@ -14,58 +14,17 @@ from training.training_job import TrainingJob
 class TestTrainingJob(object):
     """Tests for TrainingJob"""
 
-    def test_init(self, monkeypatch):
+    def test_init(self):
         """Test __init__ method
 
-        This test tests two things:
-        - All attributes are set correctly in the __init__
-        - The `validate_config` function is called from the init with the
-          expected arguments
-
-        :param monkeypatch: monkeypatch object
-        :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
+        This test tests that all attributes are set correctly in the __init__.
         """
 
-        mock_validate_config = MagicMock()
-        monkeypatch.setattr(
-            'training.training_job.validate_config', mock_validate_config
-        )
+        training_job = TrainingJob()
 
-        mock_parse_dirpath_job = MagicMock()
-        # use `mkdtemp` to ensure that only the calling user has read / write
-        # permissions
-        dirpath_job = tempfile.mkdtemp()
-        mock_parse_dirpath_job.return_value = dirpath_job
-        monkeypatch.setattr(
-            'training.training_job.TrainingJob._parse_dirpath_job',
-            mock_parse_dirpath_job
-        )
-
-        mock_configs = [{'gpu_id': 1}, {}]
-        expected_fpath_config = os.path.join(dirpath_job, 'config.yml')
-
-        for mock_config in mock_configs:
-            assert not os.path.exists(expected_fpath_config)
-            training_job = TrainingJob(mock_config)
-            assert os.path.exists(expected_fpath_config)
-            os.remove(expected_fpath_config)
-
-            assert id(training_job.config) == id(mock_config)
-            assert (
-                training_job.required_config_keys ==
-                {'network', 'trainer', 'dataset'}
-            )
-            mock_validate_config.assert_called_once_with(
-                mock_config, training_job.required_config_keys
-            )
-            mock_validate_config.reset_mock()
-
-            if mock_config:
-                assert training_job.gpu_id == 1
-                assert os.environ['CUDA_VISIBLE_DEVICES'] == '1'
-            else:
-                assert training_job.gpu_id is None
-        shutil.rmtree(dirpath_job)
+        assert training_job.config is None
+        assert training_job.dirpath_job is None
+        assert training_job.gpu_id is None
 
     def test_instantiate_network(self, monkeypatch):
         """Test _instantiate_network method
@@ -355,16 +314,17 @@ class TestTrainingJob(object):
              {'sample_keys': ['image'], 'dtype': 'import_object_return'})
         ]
 
-    def test_run(self):
-        """Test run method"""
+    def test_run__private(self):
+        """Test private _run method"""
 
         training_job = create_autospec(TrainingJob)
+        training_job.config = {'gpu_id': 1}
         training_job._instantiate_dataset.return_value = ('mock_dataset', 10)
         training_job._parse_callbacks.return_value = ['callbacks_list']
         training_job._parse_metrics.return_value = ['metrics_list']
-        training_job.run = TrainingJob.run
+        training_job._run = TrainingJob._run
 
-        training_job.run(self=training_job)
+        training_job._run(self=training_job, initial_epoch=2)
         training_job._instantiate_network.assert_called_once_with()
         training_job._instantiate_trainer.assert_called_once_with()
         training_job._instantiate_dataset.assert_has_calls([
@@ -374,9 +334,55 @@ class TestTrainingJob(object):
         training_job._parse_callbacks.assert_called_once_with()
 
         trainer = training_job._instantiate_trainer()
+        assert training_job.gpu_id == 1
         trainer.train.assert_called_once_with(
             network=training_job._instantiate_network(),
             train_dataset='mock_dataset', n_steps_per_epoch=10,
             validation_dataset='mock_dataset', n_validation_steps=10,
-            metrics=['metrics_list'], callbacks=['callbacks_list']
+            metrics=['metrics_list'], callbacks=['callbacks_list'],
+            initial_epoch=2
         )
+
+    def test_run__public(self, monkeypatch):
+        """Test public _run method
+
+        :param monkeypatch: monkeypatch object
+        :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
+        """
+
+        mock_validate_config = MagicMock()
+        monkeypatch.setattr(
+            'training.training_job.validate_config', mock_validate_config
+        )
+
+        mock_parse_dirpath_job = MagicMock()
+        # use `mkdtemp` to ensure that only the calling user has read / write
+        # permissions
+        dirpath_job = tempfile.mkdtemp()
+        mock_parse_dirpath_job.return_value = dirpath_job
+        mock_run_private = MagicMock()
+
+        mock_configs = [{'gpu_id': 1}, {}]
+        expected_fpath_config = os.path.join(dirpath_job, 'config.yml')
+
+        for mock_config in mock_configs:
+            assert not os.path.exists(expected_fpath_config)
+            training_job = MagicMock()
+            training_job._parse_dirpath_job = mock_parse_dirpath_job
+            training_job._run = mock_run_private
+            training_job.run = TrainingJob.run
+            training_job.run(self=training_job, config=mock_config)
+            assert os.path.exists(expected_fpath_config)
+            os.remove(expected_fpath_config)
+
+            assert id(training_job.config) == id(mock_config)
+            mock_validate_config.assert_called_once_with(
+                mock_config, training_job.required_config_keys
+            )
+            mock_validate_config.reset_mock()
+            assert mock_parse_dirpath_job.call_count == 1
+            mock_parse_dirpath_job.reset_mock()
+            assert mock_run_private.call_count == 1
+            mock_run_private.reset_mock()
+
+        shutil.rmtree(dirpath_job)

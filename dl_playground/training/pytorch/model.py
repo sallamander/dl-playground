@@ -163,7 +163,7 @@ class Model(object):
 
     def fit_generator(self, generator, n_steps_per_epoch, n_epochs=1,
                       validation_data=None, n_validation_steps=None,
-                      callbacks=None):
+                      callbacks=None, initial_epoch=0):
         """Train the network on batches of data generated from `generator`
 
         :param generator: a generator yielding batches indefinitely, where each
@@ -181,6 +181,8 @@ class Model(object):
          `validation_data`
         :param callbacks: callbacks to be used during training
         :type callbacks: list[object]
+        :param initial_epoch: epoch at which to start training
+        :type initial_epoch: int
         :raises RuntimeError: if only one of `validation_data` and
          `n_validation_steps` are passed in
         """
@@ -220,7 +222,7 @@ class Model(object):
         callbacks.set_model(self)
 
         callbacks.on_train_begin()
-        for idx_epoch in range(n_epochs):
+        for idx_epoch in range(initial_epoch, n_epochs):
             if self.stop_training:
                 break
 
@@ -295,7 +297,7 @@ class Model(object):
 
         self._assert_compiled()
 
-        self.network.train(mode=False)
+        self.network.eval(mode=True)
         if self.device:
             inputs = inputs.to(self.device)
             targets = targets.to(self.device)

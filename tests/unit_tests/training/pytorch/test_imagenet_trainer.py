@@ -45,7 +45,11 @@ class TestImageNetTrainer(object):
         assert imagenet_trainer.device == 'cpu'
 
     def test_train(self, monkeypatch):
-        """Test train method"""
+        """Test train method
+
+        :param monkeypatch: monkeypatch object
+        :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
+        """
 
         alexnet = MagicMock()
         imagenet_dataset = MagicMock()
@@ -78,7 +82,7 @@ class TestImageNetTrainer(object):
             fit_fn.assert_called_with(
                 generator=mock_cycle_return, n_steps_per_epoch=1,
                 n_epochs=2, validation_data=None, n_validation_steps=None,
-                callbacks=None
+                callbacks=None, initial_epoch=0
             )
             assert mock_compile.call_count == 1
 
@@ -96,6 +100,61 @@ class TestImageNetTrainer(object):
             fit_fn.assert_called_with(
                 generator=mock_cycle_return, n_steps_per_epoch=1,
                 n_epochs=2, validation_data=mock_cycle_return,
-                n_validation_steps=3, callbacks=None
+                n_validation_steps=3, callbacks=None, initial_epoch=0
             )
             assert mock_compile.call_count == 1
+
+    def test_train__invalid_initial_epoch(self, monkeypatch):
+        """Test train method when initial_epoch is >= n_epochs
+
+        In this case, the method should simply print a message and return
+        without actually training.
+
+        :param monkeypatch: monkeypatch object
+        :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
+        """
+
+        alexnet = MagicMock()
+        imagenet_dataset = MagicMock()
+
+        imagenet_trainer = MagicMock()
+        imagenet_trainer.n_epochs = 2
+        imagenet_trainer.optimizer = 'Adam'
+        imagenet_trainer.loss = 'CrossEntropyLoss'
+
+        mock_compile = MagicMock()
+        monkeypatch.setattr(
+            'training.pytorch.imagenet_trainer.Model.compile', mock_compile
+        )
+
+        mock_cycle = MagicMock()
+        mock_cycle_return = MagicMock()
+        mock_cycle.return_value = mock_cycle_return
+        monkeypatch.setattr(
+            'training.pytorch.imagenet_trainer.cycle', mock_cycle
+        )
+
+        initial_epochs = [2, 4, 8, 10]
+
+        imagenet_trainer.train = ImageNetTrainer.train
+        with patch.object(Model, 'fit_generator') as fit_fn:
+            for initial_epoch in initial_epochs:
+                imagenet_trainer.train(
+                    self=imagenet_trainer,
+                    train_dataset=imagenet_dataset, network=alexnet,
+                    n_steps_per_epoch=1, initial_epoch=initial_epoch
+                )
+                assert fit_fn.call_count == 0
+                assert mock_compile.call_count == 0
+
+        with patch.object(Model, 'fit_generator') as fit_fn:
+            for initial_epoch in initial_epochs:
+                imagenet_trainer.train(
+                    self=imagenet_trainer,
+                    train_dataset=imagenet_dataset, network=alexnet,
+                    n_steps_per_epoch=1,
+                    validation_dataset=imagenet_dataset, n_validation_steps=3,
+                    initial_epoch=initial_epoch
+                )
+                assert fit_fn.call_count == 0
+                assert mock_compile.call_count == 0

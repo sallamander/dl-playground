@@ -101,3 +101,40 @@ class TestImageNetTrainer(object):
                 epochs=2, verbose=True, validation_data=imagenet_dataset,
                 validation_steps=2, callbacks=None
             )
+
+    def test_train__invalid_initial_epoch(self):
+        """Test train method when initial_epoch is >= n_epochs
+
+        In this case, the method should simply print a message and return
+        without actually training.
+        """
+
+        alexnet = self.get_alexnet()
+        imagenet_dataset = MagicMock()
+
+        imagenet_trainer = MagicMock()
+        imagenet_trainer.n_epochs = 2
+        imagenet_trainer.optimizer = 'adam'
+        imagenet_trainer.loss = 'categorical_crossentropy'
+
+        initial_epochs = [2, 4, 8, 10]
+
+        imagenet_trainer.train = ImageNetTrainer.train
+        with patch.object(Model, 'fit') as fit_fn:
+            for initial_epoch in initial_epochs:
+                imagenet_trainer.train(
+                    self=imagenet_trainer,
+                    train_dataset=imagenet_dataset, network=alexnet,
+                    n_steps_per_epoch=1, initial_epoch=initial_epoch
+                )
+                assert fit_fn.call_count == 0
+
+        with patch.object(Model, 'fit') as fit_fn:
+            for initial_epoch in initial_epochs:
+                imagenet_trainer.train(
+                    self=imagenet_trainer, train_dataset=imagenet_dataset,
+                    network=alexnet, validation_dataset=imagenet_dataset,
+                    n_steps_per_epoch=45, n_validation_steps=2,
+                    initial_epoch=initial_epoch
+                )
+                assert fit_fn.call_count == 0
