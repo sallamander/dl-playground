@@ -2,6 +2,8 @@
 
 from unittest.mock import MagicMock
 
+from torch.nn import Conv2d
+
 import networks.pytorch.object_classification.resnet as pytorch_resnet
 
 BottleneckBlock = pytorch_resnet.BottleneckBlock
@@ -108,6 +110,7 @@ class TestBottleneckBlock(object):
                 assert bn.num_features == test_case[test_case_name]
 
             assert block.relu is not None
+            assert len(list(block.parameters())) == 9
 
     def test_forward(self, monkeypatch):
         """Test forward method
@@ -192,6 +195,7 @@ class TestProjectionShortcut(object):
                 assert bn.num_features == test_case[test_case_name]
 
             assert block.relu is not None
+            assert len(list(block.parameters())) == 12
 
     def test_forward(self, monkeypatch):
         """Test forward method
@@ -211,6 +215,46 @@ class TestProjectionShortcut(object):
 class TestResNet(object):
     """Tests for ResNet"""
 
+    def test_init(self, monkeypatch):
+        """Test __init__ method
+
+        :param monkeypatch: monkeypatch object
+        :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
+        """
+
+        network_config = {
+            'n_channels': 3,
+            'n_classes': 1000,
+            'n_initial_channels': 64,
+            'n_blocks_per_stage': [3, 4, 6, 3]
+        }
+
+        mock_validate_config = MagicMock()
+        monkeypatch.setattr(
+            ('networks.pytorch.object_classification.resnet'
+             '.validate_config'),
+            mock_validate_config
+        )
+        mock_set_layers = MagicMock()
+        monkeypatch.setattr(
+            ('networks.pytorch.object_classification.resnet'
+             '.ResNet._set_layers'),
+            mock_set_layers
+        )
+
+        resnet = ResNet(network_config)
+
+        assert resnet.required_config_keys == {
+            'n_channels', 'n_classes', 'n_initial_channels',
+            'n_blocks_per_stage'
+        }
+        assert id(network_config) == id(resnet.config)
+        assert mock_validate_config.call_count == 1
+        mock_validate_config.assert_called_with(
+            network_config, ResNet.required_config_keys
+        )
+        assert mock_set_layers.call_count == 1
+
     def test_set_layers(self, monkeypatch):
         """Test _set_layers
 
@@ -219,6 +263,9 @@ class TestResNet(object):
           attributes on the object
         - The `torch.nn` operations used in the ResNet._set_layers are set as
           expected (e.g. with the right number of filters and such)
+
+        :param monkeypatch: monkeypatch object
+        :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
         """
 
         test_cases = [
@@ -245,6 +292,10 @@ class TestResNet(object):
 
         mock_projection_shorcut = MagicMock()
         mock_bottleneck_block = MagicMock()
+        # the return values of these need to be instantiated torch.nn.Module
+        # subclass objects
+        mock_projection_shorcut.return_value = Conv2d(2, 4, (1, 1))
+        mock_bottleneck_block.return_value = Conv2d(2, 4, (1, 1))
         monkeypatch.setattr(
             ('networks.pytorch.object_classification.resnet'
              '.ProjectionShortcut'),

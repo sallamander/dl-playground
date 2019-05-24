@@ -22,7 +22,7 @@ implementation is extremely close).
 
 import torch
 from torch.nn import (
-    AvgPool2d, BatchNorm2d, Conv2d, Linear, MaxPool2d, Module, ReLU
+    AvgPool2d, BatchNorm2d, Conv2d, Linear, MaxPool2d, Module, ModuleList, ReLU
 )
 
 from utils.generic_utils import validate_config
@@ -175,7 +175,7 @@ class ProjectionShortcut(Module):
         return layer
 
 
-class ResNet(object):
+class ResNet(Module):
     """ResNet network"""
 
     required_config_keys = {
@@ -231,10 +231,10 @@ class ResNet(object):
         self.relu = ReLU()
         self.max_pooling = MaxPool2d(kernel_size=(3, 3), stride=(2, 2))
 
-        self.residual_stages = []
+        self.residual_stages = ModuleList()
         n_out_channels = n_initial_channels
         for idx_stage, n_blocks in enumerate(n_blocks_per_stage):
-            stage_blocks = []
+            stage_blocks = ModuleList()
 
             # Each residual block ends with a conv using 4x the number of
             # n_out_channels, which requires us to adjust n_in_channels to

@@ -95,7 +95,7 @@ class TestTFTrainingJob(object):
         assert isinstance(trainer, ImageNetTrainer)
         assert trainer.optimizer == 'adam'
         assert trainer.loss == 'categorical_crossentropy'
-        assert trainer.batch_size == 128
+        assert trainer.batch_size == 32
         assert trainer.n_epochs == 10
 
     def test_parse_transformations(self, config):
