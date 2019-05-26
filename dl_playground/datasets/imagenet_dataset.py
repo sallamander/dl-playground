@@ -48,6 +48,11 @@ class ImageNetDataSet(Dataset):
     def __getitem__(self, idx):
         """Return the image, label pair at index `idx` from `self.df_obs`
 
+        Occasionally (< 1e-4% of the time), one of the loaded images has either
+        2 channels or 4 channels. If the former, the image is simply stacked
+        three times to create a 3 channel input, and if the latter, the first
+        three channels of the four are taken.
+
         :return: dict with keys:
         - numpy.ndarray image: pixel data loaded from the `fpath_image` at
           index `idx` of `self.df_obs`
@@ -62,6 +67,9 @@ class ImageNetDataSet(Dataset):
             image = np.concatenate((image, image, image), axis=-1)
 
         n_channels = image.shape[-1]
+        if n_channels == 4:
+            n_channels = 3
+            image = image[:, :, :3]
         target_shape = (
             self.config['height'], self.config['width'], n_channels
         )

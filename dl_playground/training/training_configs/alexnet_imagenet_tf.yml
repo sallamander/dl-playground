@@ -56,5 +56,6 @@ trainer:
             n_epochs: 10
     callbacks:
         - tensorflow.keras.callbacks.CSVLogger
+        - tensorflow.keras.callbacks.TensorBoard
     metrics:
         - tensorflow.keras.metrics.categorical_accuracy

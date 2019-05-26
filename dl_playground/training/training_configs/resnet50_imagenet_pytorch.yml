@@ -43,11 +43,11 @@ dataset:
     train_loading_params:
         batch_size: 32
         shuffle: True
-        num_workers: 4
+        num_workers: 16
     validation_loading_params:
         batch_size: 32
         shuffle: False
-        num_workers: 2
+        num_workers: 16
 network:
     importpath: networks.pytorch.object_classification.resnet.ResNet
     init_params:
@@ -58,6 +58,12 @@ network:
             n_blocks_per_stage: [3, 4, 6, 3]
 trainer:
     importpath: training.pytorch.imagenet_trainer.ImageNetTrainer
+    callbacks: 
+        - training.pytorch.callbacks.TensorBoard
+        - tensorflow.keras.callbacks.CSVLogger
+        - tensorflow.keras.callbacks.ModelCheckpoint:
+                monitor: val_loss
+                save_best_only: True
     init_params:
         config:
             optimizer: 'Adam'

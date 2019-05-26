@@ -132,27 +132,39 @@ class TestModel(object):
 
         model = MagicMock()
         model.network = MagicMock()
-        model.test_on_batch = MagicMock()
-        model.test_on_batch.return_value = (0.025, 0.015)
+        model.metric_fns = ['sentinel_metric']
         model.device = MagicMock()
         model.evaluate_generator = Model.evaluate_generator
+
+        def test_on_batch(inputs, targets):
+            """Mock test_on_batch
+
+            `inputs` will consist of an array with a single value, which will
+            be used to build the output of `test_on_batch`.
+            """
+
+            unique_values = torch.unique(inputs)
+            assert len(unique_values) == 1
+            input_value = unique_values[0].tolist()
+            return (input_value, input_value * 2)
+        model.test_on_batch = test_on_batch
 
         def generator():
             """Mock generator function"""
 
             n_obs = 1
             while True:
-                inputs = torch.randn((n_obs, 64, 64, 3))
-                targets = torch.randn((n_obs, 1))
+                inputs = torch.ones((n_obs, 64, 64, 3)) * n_obs
+                targets = torch.ones((n_obs, 1)) * n_obs
                 n_obs += 1
 
                 yield (inputs, targets)
 
         test_cases = [
             {'n_steps': 10, 'device': 'cpu',
-             'expected_loss': 0.00454, 'expected_metric_value': 0.002727},
-            {'n_steps': 100, 'expected_loss': 0.000505,
-             'expected_metric_value': 0.000297}
+             'expected_loss': 7, 'expected_metric_value': 14},
+            {'n_steps': 58, 'expected_loss': 39,
+             'expected_metric_value': 78}
         ]
 
         for test_case in test_cases:
