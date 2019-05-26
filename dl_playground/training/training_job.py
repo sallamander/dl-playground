@@ -141,6 +141,15 @@ class TrainingJob(object):
                 callback_params['filename'] = os.path.join(
                     self.dirpath_job, 'history.csv'
                 )
+            elif 'TensorBoard' in callback_importpath:
+                callback_params['log_dir'] = os.path.join(
+                    self.dirpath_job, 'tensorboard'
+                )
+            elif 'ModelCheckpoint' in callback_importpath:
+                callback_params['filepath'] = os.path.join(
+                    self.dirpath_job, 'weights'
+                )
+                callback_params['save_weights_only'] = True
 
             Callback = import_object(callback_importpath)
             callback = Callback(**callback_params)

@@ -116,6 +116,9 @@ class TestImageNetDataSet(object):
                 assert np.array_equal(
                     sample_image[..., 1], sample_image[..., 2]
                 )
+            elif image.shape[-1] == 4:
+                sample_image = sample['image']
+                assert sample_image.shape[-1] == 3
 
         with pytest.raises(KeyError):
             imagenet_dataset[4]

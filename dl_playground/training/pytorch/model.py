@@ -4,6 +4,8 @@ Reference Implementations:
 - https://github.com/keras-team/keras/blob/master/keras/engine/training.py
 """
 
+import numpy as np
+
 from tensorflow.python.keras.callbacks import (
     BaseLogger, CallbackList, History, ProgbarLogger
 )
@@ -139,22 +141,24 @@ class Model(object):
         if self.device:
             self.network.to(self.device)
 
-        validation_output_totals = [
-            0 for _ in range(len(self.metric_fns) + 2)
-        ]
-        n_obs = 0
+        metric_values_per_batch = []
+        batch_sizes = []
         for _ in range(n_steps):
             inputs, targets = next(generator)
-            n_obs += inputs.shape[0]
+            n_obs = inputs.shape[0]
+            batch_sizes.append(n_obs)
 
             test_outputs = self.test_on_batch(inputs, targets)
-            for idx_output, test_output in enumerate(test_outputs):
-                validation_output_totals[idx_output] += test_output
+            metric_values_per_batch.append(test_outputs)
 
-        validation_outputs = [
-            validation_output_total / n_obs
-            for validation_output_total in validation_output_totals
-        ]
+        validation_outputs = []
+        for idx_value in range(len(test_outputs)):
+            validation_outputs.append(
+                np.average([
+                    metric_values[idx_value]
+                    for metric_values in metric_values_per_batch
+                ], weights=batch_sizes)
+            )
         return validation_outputs
 
     def fit_generator(self, generator, n_steps_per_epoch, n_epochs=1,
