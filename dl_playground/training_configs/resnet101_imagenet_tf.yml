@@ -43,13 +43,17 @@ dataset:
         shuffle: False
         n_workers: 2
 network:
-    importpath: networks.tf.object_classification.alexnet.AlexNet
+    importpath: networks.tf.object_classification.resnet.ResNet
     init_params:
         config:
             height: 227
             width: 227
             n_channels: 3
-            n_classes: 1000
+            n_classes: 63
+            n_initial_filters: 64
+            n_blocks_per_stage: [3, 4, 23, 3]
+            version: preactivation
+            n_groups: 1
 trainer:
     importpath: trainet.training.tf.trainer.Trainer
     init_params:

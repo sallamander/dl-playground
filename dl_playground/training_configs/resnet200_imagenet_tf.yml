@@ -35,28 +35,32 @@ dataset:
             sample_keys:
                 'image': 'image'
     train_loading_params:
-        batch_size: 32
+        batch_size: 16
         shuffle: True
         n_workers: 4
     validation_loading_params:
-        batch_size: 32
+        batch_size: 16
         shuffle: False
         n_workers: 2
 network:
-    importpath: networks.tf.object_classification.alexnet.AlexNet
+    importpath: networks.tf.object_classification.resnet.ResNet
     init_params:
         config:
             height: 227
             width: 227
             n_channels: 3
-            n_classes: 1000
+            n_classes: 63
+            n_initial_filters: 64
+            n_blocks_per_stage: [3, 24, 36, 3]
+            version: preactivation
+            n_groups: 1
 trainer:
     importpath: trainet.training.tf.trainer.Trainer
     init_params:
         config:
             optimizer: 'tensorflow.keras.optimizers.Adam'
             loss: 'categorical_crossentropy'
-            batch_size: 32
+            batch_size: 16
             n_epochs: 10
     callbacks:
         - tensorflow.keras.callbacks.CSVLogger
