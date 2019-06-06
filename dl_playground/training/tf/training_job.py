@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from datasets.augmented_dataset import AugmentedDataset
 from training.training_job import TrainingJob
 from training.tf.data_loader import TFDataLoader
 from utils.generic_utils import import_object
@@ -45,10 +46,13 @@ class TFTrainingJob(TrainingJob):
         transformations_key = '{}_transformations'.format(set_name)
         transformations = dataset_spec[transformations_key]
         transformations = self._parse_transformations(transformations)
-
-        loader = TFDataLoader(dataset, transformations)
+        dataset = AugmentedDataset(dataset, transformations)
+    
+        loader = TFDataLoader(dataset)
         loading_params = dataset_spec['{}_loading_params'.format(set_name)]
         dataset_gen = loader.get_infinite_iter(**loading_params)
-        n_batches = len(loader.numpy_dataset) // loading_params['batch_size']
+        n_batches = (
+            len(loader.augmented_dataset) // loading_params['batch_size']
+        )
 
         return dataset_gen, n_batches

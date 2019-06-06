@@ -4,10 +4,39 @@ import os
 from unittest.mock import MagicMock
 import pytest
 
-import torch
+import numpy as np
 import pandas as pd
+import torch
 
-from training.pytorch.training_job import PyTorchTrainingJob
+from training.pytorch.training_job import format_batch, PyTorchTrainingJob
+
+
+def test_format_batch():
+    """Test format batch"""
+
+    height, width = np.random.randint(128, 600, 2)
+    batch_size = np.random.randint(2, 4)
+    num_channels = 3
+    image = torch.from_numpy(
+        np.random.random((height, width, num_channels))
+    )
+    label = torch.from_numpy(
+        np.random.randint(0, 1000, 1)
+    )
+
+    batch = [
+        {'image': image, 'label': label} for _ in range(batch_size)
+    ]
+    formatted_batch = format_batch(
+        batch, input_keys=['image'], target_keys=['label']
+    )
+    assert len(formatted_batch) == 2
+    assert np.array_equal(
+        formatted_batch[0], torch.stack([image] * batch_size)
+    )
+    assert np.array_equal(
+        formatted_batch[1], torch.stack([label] * batch_size)
+    )
 
 
 class TestPyTorchTrainingJob(object):
@@ -133,14 +162,14 @@ class TestPyTorchTrainingJob(object):
             'training.pytorch.training_job.import_object', mock_import_object
         )
 
-        mock_transformer = MagicMock()
-        mock_transformer_return = MagicMock()
-        mock_transformer_return.__len__ = MagicMock()
-        mock_transformer_return.__len__.return_value = 10
-        mock_transformer.return_value = mock_transformer_return
+        mock_augmented_dataset = MagicMock()
+        mock_augmented_dataset_return = MagicMock()
+        mock_augmented_dataset_return.__len__ = MagicMock()
+        mock_augmented_dataset_return.__len__.return_value = 10
+        mock_augmented_dataset.return_value = mock_augmented_dataset_return
         monkeypatch.setattr(
-            'training.pytorch.training_job.PyTorchDataSetTransformer',
-            mock_transformer
+            'training.pytorch.training_job.AugmentedDataset',
+            mock_augmented_dataset
         )
 
         mock_loader = MagicMock()
@@ -161,11 +190,8 @@ class TestPyTorchTrainingJob(object):
             training_job._parse_transformations.assert_called_once_with(
                 {'key3': 'value3', 'key4': 'value4'}
             )
-            mock_transformer.assert_called_once_with(
+            mock_augmented_dataset.assert_called_once_with(
                 'return_from_dataset_init', 'return_from_parse_transformations'
-            )
-            mock_loader.assert_called_once_with(
-                mock_transformer_return, batch_size=2
             )
         else:
             assert n_batches == 2
@@ -173,11 +199,8 @@ class TestPyTorchTrainingJob(object):
             training_job._parse_transformations.assert_called_once_with(
                 {'key5': 'value5', 'key6': 'value6'}
             )
-            mock_transformer.assert_called_once_with(
+            mock_augmented_dataset.assert_called_once_with(
                 'return_from_dataset_init', 'return_from_parse_transformations'
-            )
-            mock_loader.assert_called_once_with(
-                mock_transformer_return, batch_size=4
             )
 
         mock_import_object.assert_called_once_with('path/to/import')

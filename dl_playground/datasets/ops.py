@@ -1,4 +1,4 @@
-"""Tensorflow operations for tf.Dataset objects"""
+"""Dataset ops"""
 
 import numpy as np
 
@@ -29,35 +29,6 @@ def apply_transformation(transformation_fn, sample, sample_keys,
         )
 
     return sample
-
-
-##############
-# tensorflow #
-##############
-
-
-def format_batch(batch, input_keys, target_keys):
-    """Format the batch from a single dictionary into a tuple of dictionaries
-
-    :param batch: batch of inputs and targets
-    :type batch: dict[tensorflow.Tensor]
-    :param input_keys: names of the keys in `batch` that are inputs to a model
-    :type input_keys: list[str]
-    :param target_keys: names of the keys in `batch` that are targets for a
-     model
-    :type target_keys: list[str]
-    :return: 2-element tuple holding the inputs and targets
-    :rtype: tuple(dict)
-    """
-
-    inputs = {input_key: batch[input_key] for input_key in input_keys}
-    targets = {target_key: batch[target_key] for target_key in target_keys}
-    return (inputs, targets)
-
-
-###########
-# pytorch #
-###########
 
 
 def per_image_standardization(image):

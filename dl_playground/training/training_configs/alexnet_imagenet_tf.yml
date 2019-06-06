@@ -3,30 +3,30 @@ gpu_id: 0
 dataset:
     fpath_df_train: /data/imagenet/from_access_links/metadata_lists/df_classification_train_set.csv
     fpath_df_validation: /data/imagenet/from_access_links/metadata_lists/df_classification_val_set.csv
-    importpath: datasets.imagenet_dataset.ImageNetDataSet
+    importpath: datasets.imagenet_dataset.ImageNetDataset
     init_params:
         config:
             height: 227
             width: 227
     train_transformations:
-        - tensorflow.one_hot:
+        - tensorflow.python.keras.utils.to_categorical:
             sample_keys:
                 value:
                     - 'label'
-            depth:
+            num_classes:
                 value: 1000
-        - tensorflow.image.per_image_standardization:
+        - datasets.ops.per_image_standardization:
             sample_keys:
                 value:
                     - 'image'
     validation_transformations:
-        - tensorflow.one_hot:
+        - tensorflow.python.keras.utils.to_categorical:
             sample_keys:
                 value:
                     - 'label'
-            depth:
+            num_classes:
                 value: 1000
-        - tensorflow.image.per_image_standardization:
+        - datasets.ops.per_image_standardization:
             sample_keys:
                 value:
                     - 'image'

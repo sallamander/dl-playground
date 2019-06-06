@@ -3,8 +3,11 @@
 import tempfile
 
 import tensorflow as tf
+from tensorflow.python.keras.utils import to_categorical
 
-from datasets.imagenet_dataset import ImageNetDataSet
+from datasets.augmented_dataset import AugmentedDataset
+from datasets.imagenet_dataset import ImageNetDataset
+from datasets.ops import per_image_standardization
 from networks.tf.object_classification.alexnet import AlexNet
 from training.tf.data_loader import TFDataLoader
 from training.tf.imagenet_trainer import ImageNetTrainer
@@ -31,9 +34,9 @@ class TestImageNetTrainer(object):
         }
         dataset_config = {'height': height, 'width': width}
         transformations = [
-            (tf.one_hot,
-             {'sample_keys': ['label'], 'depth': 1000}),
-            (tf.image.per_image_standardization,
+            (to_categorical,
+             {'sample_keys': ['label'], 'num_classes': 1000}),
+            (per_image_standardization,
              {'sample_keys': ['image']}),
         ]
 
@@ -43,9 +46,9 @@ class TestImageNetTrainer(object):
             trainer_config, dirpath_save=tempdir
         )
 
-        imagenet_dataset = ImageNetDataSet(df_images, dataset_config)
-        tf_data_loader = TFDataLoader(imagenet_dataset)
-        tf_data_loader = TFDataLoader(imagenet_dataset, transformations)
+        imagenet_dataset = ImageNetDataset(df_images, dataset_config)
+        augmented_dataset = AugmentedDataset(imagenet_dataset, transformations)
+        tf_data_loader = TFDataLoader(augmented_dataset)
         dataset = tf_data_loader.get_infinite_iter(
             batch_size=batch_size, shuffle=True, n_workers=4
         )

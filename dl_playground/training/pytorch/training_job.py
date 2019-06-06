@@ -4,9 +4,39 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
-from training.pytorch.dataset_transformer import PyTorchDataSetTransformer
+from datasets.augmented_dataset import AugmentedDataset
 from training.training_job import TrainingJob
 from utils.generic_utils import import_object
+
+
+def format_batch(batch, input_keys, target_keys):
+    """Format the batch from a list of dictionaries to a tuple of tensors
+
+    :param batch: batch of inputs and targets
+	:type batch: list[dict]
+    :param input_keys: names of the keys in the elements of `batch` that are
+     inputs to a model
+	:type input_keys: list[str]
+    :param target_keys: names of the keys in `batch` that are targets for a
+     model
+	:type target_keys: list[str]
+    :return: 2-element tuple holding the inputs and targets
+    :rtype: tuple(torch.Tensor)
+    """
+
+    assert len(input_keys) == 1, 'More than one input_key is not supported.'
+    assert len(target_keys ) == 1, 'More than one target_key is not supported.'
+
+    inputs = []
+    targets = []
+    for element in batch:
+        inputs.append(element[input_keys[0]])
+        targets.append(element[target_keys[0]])
+
+    inputs = torch.stack(inputs)
+    targets = torch.stack(targets)
+
+    return inputs, targets
 
 
 class PyTorchTrainingJob(TrainingJob):
@@ -70,9 +100,15 @@ class PyTorchTrainingJob(TrainingJob):
         transformations = dataset_spec[transformations_key]
         transformations = self._parse_transformations(transformations)
 
-        dataset = PyTorchDataSetTransformer(dataset, transformations)
+        dataset = AugmentedDataset(dataset, transformations)
         loading_params = dataset_spec['{}_loading_params'.format(set_name)]
-        dataset_gen = DataLoader(dataset, **loading_params)
+
+        collate_fn = (
+            lambda batch: format_batch(
+                batch, dataset.input_keys, dataset.target_keys
+            )
+        )
+        dataset_gen = DataLoader(dataset, collate_fn=collate_fn, **loading_params)
         n_batches = len(dataset) // loading_params['batch_size']
 
         return dataset_gen, n_batches

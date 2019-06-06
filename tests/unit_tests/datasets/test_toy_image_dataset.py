@@ -254,7 +254,8 @@ class TestToyImageDataSet(object):
         }
 
         mock_dataset.__getitem__ = ToyImageDataSet.__getitem__
-        image, label = mock_dataset[2]
+        sample = mock_dataset[2]
+        image, label = sample['image'], sample['label']
 
         assert image.shape == (64, 64, 3)
         assert image[0, 1, 0] == 1

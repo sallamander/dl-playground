@@ -5,11 +5,11 @@ import tempfile
 import pytest
 
 import tensorflow
-from tensorflow import one_hot
-from tensorflow.image import per_image_standardization
+from tensorflow.python.keras.utils import to_categorical
 import yaml
 
 from constants import DIRPATH_DLP
+from datasets.ops import per_image_standardization
 from networks.tf.object_classification.alexnet import AlexNet
 from training.tf.imagenet_trainer import ImageNetTrainer
 from training.tf.training_job import TFTrainingJob
@@ -113,11 +113,11 @@ class TestTFTrainingJob(object):
 
             assert len(transformations) == 2
 
-            assert transformations[0][0] == one_hot
+            assert transformations[0][0] == to_categorical
             assert transformations[1][0] == per_image_standardization
 
             assert (
                 transformations[0][1] ==
-                {'sample_keys': ['label'], 'depth': 1000}
+                {'sample_keys': ['label'], 'num_classes': 1000}
             )
             assert transformations[1][1] == {'sample_keys': ['image']}

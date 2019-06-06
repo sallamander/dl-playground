@@ -5,8 +5,8 @@ import operator
 
 import numpy as np
 import skimage.draw
-from torch.utils.data import Dataset
 
+from datasets.base_dataset import NumPyDataset
 from utils.generic_utils import validate_config
 
 OBJECT_COLORS = {
@@ -225,7 +225,7 @@ def generate_triangle_coordinates(image_shape, centerpoint, size_bin):
     return triangle_coordinates
 
 
-class ToyImageDataSet(Dataset):
+class ToyImageDataSet(NumPyDataset):
     """ToyImageDataSet
 
     This dataset is intended to be used as a means to verify new network
@@ -326,6 +326,7 @@ class ToyImageDataSet(Dataset):
         random_array = np.expand_dims(random_array, axis=-1)
         zeros = np.zeros_like(random_array)
         image = np.concatenate([random_array, zeros, zeros], axis=-1)
+        image = image.astype(np.float32)
 
         idx_object_spec = np.random.choice(len(self.object_spec_options))
         object_color, object_shape, object_size = (
@@ -339,8 +340,8 @@ class ToyImageDataSet(Dataset):
             image[object_slices[0], object_slices[1], idx_channel] = (
                 channel_value
             )
-
-        return (image, idx_object_spec)
+        
+        return {'image': image, 'label': idx_object_spec}
 
     def __len__(self):
         """Return the size of the dataset
@@ -392,3 +393,65 @@ class ToyImageDataSet(Dataset):
             np.minimum(object_coordinates[1], image_shape[1] - 1)
         )
         return object_coordinates
+    
+    @property
+    def input_keys(self):
+        """Return the sample keys that denote a learning algorithm's inputs
+
+        These keys should be contained in the dictionary returned from
+        __getitem__, and correspond to the keys that will be the inputs to a
+        neural network.
+
+        :return: input key names
+        :rtype: set{str}
+        """
+        return ['image']
+
+    @property
+    def required_config_keys(self):
+        """Return the keys required to be in the config passed to the __init__
+
+        :return: required configuration keys
+        :rtype: set{str}
+        """
+        return {'height', 'width', 'n_classes'}
+
+    @property
+    def sample_shapes(self):
+        """Return the shapes of the outputs returned
+
+        :return: dict holding the tuples of the shapes for the values returned
+         when iterating over the dataset
+        :rtype: dict{str: tuple}
+        """
+
+        height = self.config['height']
+        width = self.config['width']
+
+        image_shape = (height, width, 3)
+        label_shape = (self.config['n_classes'], )
+
+        return {'image': image_shape, 'label': label_shape}
+
+    @property
+    def sample_types(self):
+        """Return data types of the sample elements returned from __getitem__
+
+        :return: element data types for each element in a sample returned from 
+         __getitem__
+        :rtype: dict{str: str}
+        """
+        return {'image': 'float32', 'label': 'uint8'}
+
+    @property
+    def target_keys(self):
+        """Return the sample keys that denote a learning algorithm's targets
+
+        These should be contained in the dictionary returned from __getitem__,
+        and correspond to the keys that will be the targets to a neural
+        network.
+
+        :return: target key names
+        :rtype: list[str]
+        """
+        return ['label']
