@@ -63,4 +63,4 @@ trainer:
             batch_size: 32
             n_epochs: 10
     metrics:
-        - training.pytorch.classification_metrics.TopKCategoricalAccuracy
+        - ktorch.metrics.TopKCategoricalAccuracy
