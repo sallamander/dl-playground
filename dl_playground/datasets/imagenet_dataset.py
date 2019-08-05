@@ -46,7 +46,7 @@ class ImageNetDataset(NumPyDataset):
         2 channels or 4 channels. If the former, the image is simply stacked
         three times to create a 3 channel input, and if the latter, the first
         three channels of the four are taken.
-        
+
         :param idx: index into self.df_obs of the observation to return
         :type idx: int
         :return: dict with keys:
@@ -99,7 +99,7 @@ class ImageNetDataset(NumPyDataset):
         :rtype: set{str}
         """
         return ['image']
-    
+
     @property
     def required_config_keys(self):
         """Return the keys required to be in the config passed to the __init__
@@ -126,7 +126,6 @@ class ImageNetDataset(NumPyDataset):
 
         return {'image': image_shape, 'label': label_shape}
 
-
     @property
     def sample_types(self):
         """Return data types of the sample elements returned from __getitem__
@@ -136,7 +135,7 @@ class ImageNetDataset(NumPyDataset):
         :rtype: dict{str: str}
         """
         return {'image': 'float32', 'label': 'uint8'}
-    
+
     @property
     def target_keys(self):
         """Return the sample keys that denote a learning algorithm's targets

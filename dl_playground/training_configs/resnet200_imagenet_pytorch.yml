@@ -5,7 +5,7 @@ dataset:
     n_validation_steps_per_epoch: 1000
     fpath_df_train: /data/imagenet/from_access_links/metadata_lists/df_classification_train_set.csv
     fpath_df_validation: /data/imagenet/from_access_links/metadata_lists/df_classification_val_set.csv
-    importpath: datasets.imagenet_dataset.ImageNetDataset
+    importpath: datasets.imagenet_dataset.ImageNetDataSet
     init_params: 
         config:
             height: 227
@@ -51,11 +51,13 @@ dataset:
         shuffle: False
         num_workers: 2
 network:
-    importpath: networks.pytorch.object_classification.alexnet.AlexNet
+    importpath: networks.pytorch.object_classification.resnet.ResNet
     init_params:
         config:
             n_channels: 3
             n_classes: 1000
+            n_initial_channels: 64
+            n_blocks_per_stage: [3, 24, 36, 3]
 trainer:
     importpath: trainet.training.pytorch.trainer.Trainer
     callbacks:

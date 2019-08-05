@@ -32,10 +32,10 @@ class AlexNet(Module):
 
         validate_config(config, self.required_config_keys)
         self.config = config
-        self._set_layers()
+        self._initialize_layers()
 
-    def _set_layers(self):
-        """Set the network's layers used in the forward pass
+    def _initialize_layers(self):
+        """Initialize the network's layers used in the forward pass
 
         This sets 5 convolutional layers (self.conv[1-5]) and 3 linear layers
         (self.linear[1-3]) in-place.
@@ -73,7 +73,7 @@ class AlexNet(Module):
         """Return the output of a forward pass of AlexNet
 
         :param inputs: batch of input images, of shape
-         (batch_size, height, width, n_channels)
+         (batch_size, n_channels, height, width)
         :type inputs: torch.Tensor
         :return: outputs of an AlexNet model, of shape
          (batch_size, n_classes)

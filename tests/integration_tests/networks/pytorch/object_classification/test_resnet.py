@@ -36,6 +36,7 @@ class TestResNet(object):
             n_expected_objects = test_case.pop('n_expected_objects')
             test_case['n_channels'] = 3
             test_case['n_classes'] = 1000
+            test_case['version'] = 'original'
 
             resnet = ResNet(test_case)
             assert len(list(resnet.parameters())) == n_expected_objects

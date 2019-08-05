@@ -1,6 +1,8 @@
-job_importpath: training.pytorch.training_job.PyTorchTrainingJob
+job_importpath: trainet.training.pytorch.training_job.TrainingJob
 gpu_id: 1
 dataset:
+    n_train_steps_per_epoch: 1000
+    n_validation_steps_per_epoch: 1000
     fpath_df_train: /data/imagenet/from_access_links/metadata_lists/df_classification_train_set.csv
     fpath_df_validation: /data/imagenet/from_access_links/metadata_lists/df_classification_val_set.csv
     importpath: datasets.imagenet_dataset.ImageNetDataSet
@@ -9,7 +11,7 @@ dataset:
             height: 227
             width: 227
     train_transformations:
-        - datasets.ops.per_image_standardization:
+        - trainet.datasets.ops.per_image_standardization:
             sample_keys:
                 value:
                     - 'image'
@@ -25,7 +27,7 @@ dataset:
                 import: true
                 value: 'torch.long'
     validation_transformations:
-        - datasets.ops.per_image_standardization:
+        - trainet.datasets.ops.per_image_standardization:
             sample_keys:
                 value:
                     - 'image'
@@ -57,7 +59,13 @@ network:
             n_initial_channels: 64
             n_blocks_per_stage: [3, 4, 23, 3]
 trainer:
-    importpath: training.pytorch.imagenet_trainer.ImageNetTrainer
+    importpath: trainet.training.pytorch.trainer.Trainer
+    callbacks:
+        - ktorch.callbacks.TensorBoard
+        - tensorflow.keras.callbacks.CSVLogger
+        - tensorflow.keras.callbacks.ModelCheckpoint:
+                monitor: val_loss
+                save_best_only: True
     init_params:
         config:
             optimizer: 'Adam'
@@ -66,3 +74,4 @@ trainer:
             n_epochs: 10
     metrics:
         - ktorch.metrics.TopKCategoricalAccuracy
+        - ktorch.metrics.categorical_accuracy

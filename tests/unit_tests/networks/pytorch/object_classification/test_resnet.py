@@ -6,8 +6,8 @@ from torch.nn import Conv2d
 
 import networks.pytorch.object_classification.resnet as pytorch_resnet
 
-BottleneckBlock = pytorch_resnet.BottleneckBlock
-ProjectionShortcut = pytorch_resnet.ProjectionShortcut
+BottleneckBlockV1 = pytorch_resnet.BottleneckBlockV1
+ProjectionShortcutV1 = pytorch_resnet.ProjectionShortcutV1
 ResNet = pytorch_resnet.ResNet
 
 
@@ -52,16 +52,16 @@ def check_forward(object_class, attribute_call_counts, monkeypatch):
     assert mock_add.call_count == 1
 
 
-class TestBottleneckBlock(object):
-    """Tests for BottleneckBlock"""
+class TestBottleneckBlockV1(object):
+    """Tests for BottleneckBlockV1"""
 
     def test_init(self):
         """Test __init__
 
         This tests a couple of things:
-        - The `torch.nn` operations used in the BottleneckBlock are set as
+        - The `torch.nn` operations used in the BottleneckBlockV1 are set as
           attributes on the object
-        - The `torch.nn` operations used in the BottleneckBlock are set as
+        - The `torch.nn` operations used in the BottleneckBlockV1 are set as
           expected (e.g. with the right number of filters and such)
         """
 
@@ -93,7 +93,7 @@ class TestBottleneckBlock(object):
         ]
 
         for test_case in test_cases:
-            block = BottleneckBlock(
+            block = BottleneckBlockV1(
                 n_in_channels=test_case['n_in_channels'],
                 n_out_channels=test_case['n_out_channels']
             )
@@ -123,19 +123,19 @@ class TestBottleneckBlock(object):
             'conv1': 1, 'bn1': 1, 'relu': 3,
             'conv2': 1, 'bn2': 1, 'conv3': 1, 'bn3': 1
         }
-        check_forward(BottleneckBlock, attribute_call_counts, monkeypatch)
+        check_forward(BottleneckBlockV1, attribute_call_counts, monkeypatch)
 
 
-class TestProjectionShortcut(object):
-    """Tests for ProjectionShortcut"""
+class TestProjectionShortcutV1(object):
+    """Tests for ProjectionShortcutV1"""
 
     def test_init(self):
         """Test __init__
 
         This tests a couple of things:
-        - The `torch.nn` operations used in the ProjectionShortcut are set as
+        - The `torch.nn` operations used in the ProjectionShortcutV1 are set as
           attributes on the object
-        - The `torch.nn` operations used in the ProjectionShortcut are set as
+        - The `torch.nn` operations used in the ProjectionShortcutV1 are set as
           expected (e.g. with the right number of filters and such)
         """
 
@@ -177,7 +177,7 @@ class TestProjectionShortcut(object):
         ]
 
         for test_case in test_cases:
-            block = ProjectionShortcut(
+            block = ProjectionShortcutV1(
                 n_in_channels=test_case['n_in_channels'],
                 n_out_channels=test_case['n_out_channels'],
                 stride=test_case['stride']
@@ -209,7 +209,7 @@ class TestProjectionShortcut(object):
             'conv2': 1, 'bn2': 1, 'conv3': 1, 'bn3': 1,
             'projection_conv': 1, 'projection_bn': 1
         }
-        check_forward(ProjectionShortcut, attribute_call_counts, monkeypatch)
+        check_forward(ProjectionShortcutV1, attribute_call_counts, monkeypatch)
 
 
 class TestResNet(object):
@@ -225,8 +225,10 @@ class TestResNet(object):
         network_config = {
             'n_channels': 3,
             'n_classes': 1000,
+            'n_channels': 3,
             'n_initial_channels': 64,
-            'n_blocks_per_stage': [3, 4, 6, 3]
+            'n_blocks_per_stage': [3, 4, 6, 3],
+            'version': 'original'
         }
 
         mock_validate_config = MagicMock()
@@ -235,34 +237,34 @@ class TestResNet(object):
              '.validate_config'),
             mock_validate_config
         )
-        mock_set_layers = MagicMock()
+        mock_initialize_layers = MagicMock()
         monkeypatch.setattr(
             ('networks.pytorch.object_classification.resnet'
-             '.ResNet._set_layers'),
-            mock_set_layers
+             '.ResNet._initialize_layers'),
+            mock_initialize_layers
         )
 
         resnet = ResNet(network_config)
 
         assert resnet.required_config_keys == {
             'n_channels', 'n_classes', 'n_initial_channels',
-            'n_blocks_per_stage'
+            'n_blocks_per_stage', 'version'
         }
         assert id(network_config) == id(resnet.config)
         assert mock_validate_config.call_count == 1
         mock_validate_config.assert_called_with(
             network_config, ResNet.required_config_keys
         )
-        assert mock_set_layers.call_count == 1
+        assert mock_initialize_layers.call_count == 1
 
-    def test_set_layers(self, monkeypatch):
-        """Test _set_layers
+    def test_initialize_layers(self, monkeypatch):
+        """Test _initialize_layers
 
         This tests a couple of things:
-        - The `torch.nn` operations used in the ResNet._set_layers are set as
-          attributes on the object
-        - The `torch.nn` operations used in the ResNet._set_layers are set as
-          expected (e.g. with the right number of filters and such)
+        - The `torch.nn` operations used in the ResNet._initialize_layers are
+          set as attributes on the object
+        - The `torch.nn` operations used in the ResNet._initialize_layers are
+          set as expected (e.g. with the right number of filters and such)
 
         :param monkeypatch: monkeypatch object
         :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
@@ -275,14 +277,16 @@ class TestResNet(object):
              'conv_padding': (3, 3), 'conv_bias': True,
              'bn_num_features': 4, 'max_pooling_kernel_size': (3, 3),
              'max_pooling_stride': (2, 2), 'n_projection_shortcut_calls': 2,
-             'n_bottleneck_block_calls': 3, 'linear_in_features': 32},
+             'n_bottleneck_block_calls': 3, 'linear_in_features': 32,
+             'n_channels': 3},
             {'n_initial_channels': 64, 'n_blocks_per_stage': [3, 4, 6, 3],
              'conv_in_channels': 3, 'conv_out_channels': 64,
              'conv_kernel_size': (7, 7), 'conv_stride': (2, 2),
              'conv_padding': (3, 3), 'conv_bias': True,
              'bn_num_features': 64, 'max_pooling_kernel_size': (3, 3),
              'max_pooling_stride': (2, 2), 'n_projection_shortcut_calls': 4,
-             'n_bottleneck_block_calls': 12, 'linear_in_features': 2048}
+             'n_bottleneck_block_calls': 12, 'linear_in_features': 2048,
+             'n_channels': 3}
         ]
 
         conv_attributes = [
@@ -290,20 +294,20 @@ class TestResNet(object):
             'padding'
         ]
 
-        mock_projection_shorcut = MagicMock()
+        mock_projection_shortcut = MagicMock()
         mock_bottleneck_block = MagicMock()
         # the return values of these need to be instantiated torch.nn.Module
         # subclass objects
-        mock_projection_shorcut.return_value = Conv2d(2, 4, (1, 1))
+        mock_projection_shortcut.return_value = Conv2d(2, 4, (1, 1))
         mock_bottleneck_block.return_value = Conv2d(2, 4, (1, 1))
         monkeypatch.setattr(
             ('networks.pytorch.object_classification.resnet'
-             '.ProjectionShortcut'),
-            mock_projection_shorcut
+             '.ProjectionShortcutV1'),
+            mock_projection_shortcut
         )
         monkeypatch.setattr(
             ('networks.pytorch.object_classification.resnet'
-             '.BottleneckBlock'),
+             '.BottleneckBlockV1'),
             mock_bottleneck_block
         )
 
@@ -311,10 +315,12 @@ class TestResNet(object):
             resnet = MagicMock()
             resnet.config = {
                 'n_initial_channels': test_case['n_initial_channels'],
-                'n_blocks_per_stage': test_case['n_blocks_per_stage']
+                'n_blocks_per_stage': test_case['n_blocks_per_stage'],
+                'n_channels': 3, 'n_classes': 1000, 'version': 'original'
             }
-            resnet._set_layers = ResNet._set_layers
-            resnet._set_layers(self=resnet)
+            resnet.version = 'original'
+            resnet._initialize_layers = ResNet._initialize_layers
+            resnet._initialize_layers(self=resnet)
 
             # check the conv, bn, max pooling, average pooling, and linear
             # layers
@@ -348,13 +354,13 @@ class TestResNet(object):
                     len(test_case['n_blocks_per_stage']))
             for idx_stage, stage in enumerate(resnet.residual_stages):
                 assert len(stage) == test_case['n_blocks_per_stage'][idx_stage]
-            assert (mock_projection_shorcut.call_count ==
+            assert (mock_projection_shortcut.call_count ==
                     test_case['n_projection_shortcut_calls'])
             assert (mock_bottleneck_block.call_count ==
                     test_case['n_bottleneck_block_calls'])
 
             # reset the call count for the next iteration of the loop
-            mock_projection_shorcut.call_count = 0
+            mock_projection_shortcut.call_count = 0
             mock_bottleneck_block.call_count = 0
 
     def test_forward(self, monkeypatch):
@@ -384,6 +390,7 @@ class TestResNet(object):
         monkeypatch.setattr('torch.add', mock_add)
 
         module.forward = ResNet.forward
+        module.version = 'original'
         module.forward(module, 'sentinel')
 
         for attr_name in attribute_call_counts:

@@ -78,11 +78,11 @@ class TestAlexNet(object):
              '.validate_config'),
             mock_validate_config
         )
-        mock_set_layers = MagicMock()
+        mock_initialize_layers = MagicMock()
         monkeypatch.setattr(
             ('networks.pytorch.object_classification.alexnet'
-             '.AlexNet._set_layers'),
-            mock_set_layers
+             '.AlexNet._initialize_layers'),
+            mock_initialize_layers
         )
         alexnet = AlexNet(network_config)
 
@@ -92,14 +92,14 @@ class TestAlexNet(object):
         mock_validate_config.assert_called_with(
             network_config, AlexNet.required_config_keys
         )
-        assert mock_set_layers.call_count == 1
+        assert mock_initialize_layers.call_count == 1
 
-    def test_set_layers(self, network_config):
-        """Test _set_layers method
+    def test_initialize_layers(self, network_config):
+        """Test _initialize_layers method
 
         This test checks that parameterized layers (convs & linear layers) are
-        not set as attributes *before* `_set_layers` is called, but are set as
-        attributes *after* `_set_layers` is called.
+        not set as attributes *before* `_initialize_layers` is called, but are
+        set as attributes *after* `_initialize_layers` is called.
 
         :param network_config: network_config object fixture
         :type network_config: dict
@@ -107,17 +107,18 @@ class TestAlexNet(object):
 
         alexnet = MagicMock()
         alexnet.config = network_config
-        alexnet._set_layers = AlexNet._set_layers
+        alexnet._initialize_layers = AlexNet._initialize_layers
 
         layer_names = [
             'conv1', 'conv2', 'conv3', 'conv4', 'conv5',
             'linear1', 'linear2', 'linear3'
         ]
 
-        # layers should just be MagicMock objects before calling `_set_layers`
+        # layers should just be MagicMock objects before calling
+        # `_initialize_layers`
         for layer_name in layer_names:
             assert isinstance(getattr(alexnet, layer_name), MagicMock)
-        alexnet._set_layers(self=alexnet)
+        alexnet._initialize_layers(self=alexnet)
         for layer_name in layer_names:
             if 'conv' in layer_name:
                 assert isinstance(
