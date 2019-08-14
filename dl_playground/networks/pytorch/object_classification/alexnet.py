@@ -34,6 +34,8 @@ class AlexNet(Module):
         self.config = config
         self._initialize_layers()
 
+        self.n_outputs = 1
+
     def _initialize_layers(self):
         """Initialize the network's layers used in the forward pass
 

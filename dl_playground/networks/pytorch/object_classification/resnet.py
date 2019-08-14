@@ -391,6 +391,8 @@ class ResNet(Module):
         self._initialize_layers()
         self._initialize_layer_weights()
 
+        self.n_outputs = 1
+
     def _initialize_layers(self):
         """Initialize the network's layers used in the forward pass
 
