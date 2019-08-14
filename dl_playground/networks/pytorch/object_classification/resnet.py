@@ -391,6 +391,8 @@ class ResNet(Module):
         self._initialize_layers()
         self._initialize_layer_weights()
 
+        self.n_outputs = 1
+
     def _initialize_layers(self):
         """Initialize the network's layers used in the forward pass
 
@@ -477,12 +479,9 @@ class ResNet(Module):
     def _initialize_layer_weights(self):
         """Initialize the weights of the network's layers
 
-        This follows the initialize strategy in the original paper ('V1
+        This follows the initialization strategy in the original paper ('V1
         implementation'), which uses Kaiming / He normal initialization. See
         the module docstring for reference details.
-
-        :param modules: modules whose weights to initialize
-        :type modules: torch.nn.Module
         """
 
         for module in self.modules():

@@ -1,0 +1,80 @@
+job_importpath: trainet.training.pytorch.training_job.TrainingJob
+gpu_id: 1
+dataset:
+    n_train_steps_per_epoch: 1000
+    n_validation_steps_per_epoch: 1000
+    fpath_df_train: /data/imagenet/from_access_links/metadata_lists/df_classification_train_set.csv
+    fpath_df_validation: /data/imagenet/from_access_links/metadata_lists/df_classification_val_set.csv
+    importpath: datasets.imagenet_dataset.ImageNetDataSet
+    init_params: 
+        config:
+            height: 227
+            width: 227
+    train_transformations:
+        - trainet.datasets.ops.per_image_standardization:
+            sample_keys:
+                value:
+                    - 'image'
+        - torchvision.transforms.functional.to_tensor:
+            sample_keys:
+                value: 
+                    - 'image'
+        - torch.tensor:
+            sample_keys:
+                value: 
+                    - 'label'
+            dtype:
+                import: true
+                value: 'torch.long'
+    validation_transformations:
+        - trainet.datasets.ops.per_image_standardization:
+            sample_keys:
+                value:
+                    - 'image'
+        - torchvision.transforms.functional.to_tensor:
+            sample_keys:
+                value: 
+                    - 'image'
+        - torch.tensor:
+            sample_keys:
+                value: 
+                    - 'label'
+            dtype:
+                import: true
+                value: 'torch.long'
+    train_loading_params:
+        batch_size: 32
+        shuffle: True
+        num_workers: 4
+        duplicate_target_keys:
+            'label': 2
+    validation_loading_params:
+        batch_size: 32
+        shuffle: False
+        num_workers: 2
+        duplicate_target_keys:
+            'label': 2
+network:
+    importpath: networks.pytorch.object_classification.inception_v1.InceptionNet
+    init_params:
+        config:
+            n_channels: 3
+            n_classes: 1000
+trainer:
+    importpath: trainet.training.pytorch.trainer.Trainer
+    callbacks: 
+        - ktorch.callbacks.TensorBoard
+        - tensorflow.keras.callbacks.CSVLogger
+        - tensorflow.keras.callbacks.ModelCheckpoint:
+                monitor: val_loss
+                save_best_only: True
+    init_params:
+        config:
+            optimizer: 'torch.optim.Adam'
+            loss: 'CrossEntropyLoss'
+            loss_weights: [1.0, 0.3, 0.3]
+            batch_size: 32
+            n_epochs: 10
+    metrics:
+        - ktorch.metrics.TopKCategoricalAccuracy
+        - ktorch.metrics.categorical_accuracy
