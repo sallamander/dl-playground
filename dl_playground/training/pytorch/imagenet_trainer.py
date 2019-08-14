@@ -1,6 +1,6 @@
 """Trainer for training a pytorch model on ImageNet"""
 
-from training.pytorch.model import Model
+from ktorch.model import Model
 
 from utils.generic_utils import cycle, validate_config
 

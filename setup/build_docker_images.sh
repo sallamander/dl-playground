@@ -11,7 +11,7 @@ function usage {
     echo ""
     echo "   --branch                            Branch to use when building, defaults to master."
     echo "   --conda_version                     Conda version for the Docker images - defaults "
-    echo "                                       to 4.6.14, which is compatible with the repository "
+    echo "                                       to 4.7.11, which is compatible with the repository "
     echo "                                       YMLs."
     echo ""
     echo "    --docker_user                      Username for the Docker images. "
@@ -24,8 +24,8 @@ function usage {
     echo "                                       the base image."
     echo ""
     echo "    --gpu_build                        Build the base image (dl-playground/base) using "
-    echo "                                       nvidia/cuda9.0-cudnn7-runtime-ubuntu16.04 as the "
-    echo "                                       base image, instead of ubuntu:16.04 (the default)."
+    echo "                                       nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04 "
+    echo "                                       base image, instead of ubuntu:18.04 (the default)."
     echo ""
     echo "    --rebuild_image                    Rebuild this image and any subsequent images that "
     echo "                                       use this one as base. Useful if you know that "
@@ -80,8 +80,8 @@ if [ -z "$DOCKER_USER" ]; then
 fi
 
 if [ -z "$CONDA_VERSION" ]; then
-    echo "--conda_version not specified, using the default of 4.6.14."
-    CONDA_VERSION=4.6.14
+    echo "--conda_version not specified, using the default of 4.7.11."
+    CONDA_VERSION=4.7.11
 fi
 
 if [ ! -z "$REBUILD_IMAGE" ]; then

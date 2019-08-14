@@ -2,7 +2,8 @@
 
 from unittest.mock import patch, MagicMock
 
-from training.pytorch.model import Model
+from ktorch.model import Model
+
 from training.pytorch.imagenet_trainer import ImageNetTrainer
 
 
