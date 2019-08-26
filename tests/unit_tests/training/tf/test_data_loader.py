@@ -5,9 +5,49 @@ from unittest.mock import MagicMock
 import numpy as np
 import tensorflow as tf
 
-from training.tf.data_loader import TFDataLoader
+from training.tf.data_loader import format_batch, TFDataLoader
 from utils.generic_utils import cycle
 from utils.test_utils import df_images
+
+
+def test_format_batch():
+    """Test format_batch"""
+
+    height, width = np.random.randint(128, 600, 2)
+    batch_size = np.random.randint(2, 4)
+    num_channels = 3
+    images = np.random.random((batch_size, height, width, num_channels))
+    labels = np.random.randint(0, 1000, batch_size)
+
+    batch = {'images': images, 'labels': labels}
+    formatted_batch = format_batch(
+        batch, input_keys=['images'], target_keys=['labels']
+    )
+    assert len(formatted_batch) == 2
+    assert list(formatted_batch[0]) == ['images']
+    assert np.array_equal(formatted_batch[0]['images'], images)
+    assert list(formatted_batch[1]) == ['labels']
+    assert np.array_equal(formatted_batch[1]['labels'], labels)
+
+    images2 = images + 5
+    labels2 = labels + 2
+    batch = {'images': images, 'images2': images2,
+             'labels': labels, 'labels2': labels2}
+    formatted_batch = format_batch(
+        batch, input_keys=['images', 'labels'],
+        target_keys=['images2', 'labels2']
+    )
+    assert len(formatted_batch) == 2
+
+    assert len(formatted_batch[0]) == 2
+    assert len(formatted_batch[1]) == 2
+    assert set(formatted_batch[0]) == {'images', 'labels'}
+    assert set(formatted_batch[1]) == {'images2', 'labels2'}
+
+    assert np.array_equal(formatted_batch[0]['images'], images)
+    assert np.array_equal(formatted_batch[0]['labels'], labels)
+    assert np.array_equal(formatted_batch[1]['images2'], images2)
+    assert np.array_equal(formatted_batch[1]['labels2'], labels2)
 
 
 class TestTFDataLoader(object):
@@ -47,16 +87,9 @@ class TestTFDataLoader(object):
         This tests all attributes are set correctly in the __init__.
         """
 
-        numpy_dataset = MagicMock()
-        tf_data_loader = TFDataLoader(numpy_dataset=numpy_dataset)
-        assert id(tf_data_loader.numpy_dataset) == id(numpy_dataset)
-        assert not tf_data_loader.transformations
-
-        transformations = MagicMock()
-        tf_data_loader = TFDataLoader(
-            numpy_dataset=numpy_dataset, transformations=transformations
-        )
-        assert id(tf_data_loader.transformations) == id(transformations)
+        augmented_dataset = MagicMock()
+        tf_data_loader = TFDataLoader(augmented_dataset=augmented_dataset)
+        assert id(tf_data_loader.augmented_dataset) == id(augmented_dataset)
 
     def test_get_infinite_iter(self):
         """Test get_infinite_iter method"""
@@ -67,34 +100,23 @@ class TestTFDataLoader(object):
             for element in cycle(np.arange(4, dtype='float32')):
                 yield {'element': element, 'label': 1}
 
-        def return_max_val(element, ceiling):
-            """Return the max of the element and ceiling"""
-            return tf.maximum(element, ceiling)
-
-        def add_to_label(label):
-            """Add 1 to the provided label"""
-            return label + 1
-
-        transformations = [
-            (add_to_label, {'sample_keys': ['label']}),
-            (return_max_val, {'sample_keys': ['element'], 'ceiling': 10})
-        ]
-
-        numpy_dataset = MagicMock()
-        numpy_dataset.as_generator = mock_call
-        numpy_dataset.sample_types = {'element': 'float32', 'label': 'int16'}
-        numpy_dataset.input_keys = ['element']
-        numpy_dataset.target_keys = ['label']
-        numpy_dataset.output_shapes = {'element': (), 'label': ()}
+        augmented_dataset = MagicMock()
+        augmented_dataset.as_generator = mock_call
+        augmented_dataset.sample_types = {'element': 'float32', 'label': 'int16'}
+        augmented_dataset.input_keys = ['element']
+        augmented_dataset.target_keys = ['label']
+        augmented_dataset.sample_shapes = {'element': (), 'label': ()}
 
         tf_data_loader = MagicMock()
-        tf_data_loader.numpy_dataset = numpy_dataset
-        tf_data_loader.transformations = transformations
+        tf_data_loader.augmented_dataset = augmented_dataset
         tf_data_loader.get_infinite_iter = TFDataLoader.get_infinite_iter
 
         batches = self._get_batches(tf_data_loader)
         assert len(batches) == 3
 
-        for batch in batches:
-            assert np.array_equal(batch[0]['element'], [10., 10.])
-            assert np.array_equal(batch[1]['label'], [2, 2])
+        for idx, batch in enumerate(batches):
+            idx = idx % 2
+            assert np.array_equal(
+                batch[0]['element'], [idx * 2, (idx * 2) + 1.]
+            )
+            assert np.array_equal(batch[1]['label'], [1, 1])

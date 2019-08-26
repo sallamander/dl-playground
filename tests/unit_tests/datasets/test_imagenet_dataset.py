@@ -7,12 +7,12 @@ import imageio
 import numpy as np
 import torch
 
-from datasets.imagenet_dataset import ImageNetDataSet
+from datasets.imagenet_dataset import ImageNetDataset
 from utils.test_utils import df_images
 
 
-class TestImageNetDataSet(object):
-    """Tests for ImageNetDataSet"""
+class TestImageNetDataset(object):
+    """Tests for ImageNetDataset"""
 
     @pytest.fixture(scope='class')
     def dataset_config(self):
@@ -30,7 +30,7 @@ class TestImageNetDataSet(object):
         This tests several things:
         - All attributes are set correctly in the __init__
         - A KeyError is raised if the fpath_image or label column is missing in
-          the `df_images` passed to the __init__ of the ImageNetDataSet
+          the `df_images` passed to the __init__ of the ImageNetDataset
         - The `sample_types` property is returned correctly
 
         :param df_images : df_images object fixture
@@ -41,26 +41,25 @@ class TestImageNetDataSet(object):
         :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
         """
 
-        mock_validate_config = MagicMock()
+        mock_super_init = MagicMock()
         monkeypatch.setattr(
-            'datasets.imagenet_dataset.validate_config', mock_validate_config
+            'datasets.imagenet_dataset.NumPyDataset.__init__',
+            mock_super_init
         )
 
         # === test all attributes are set correctly === #
-        dataset = ImageNetDataSet(df_images, dataset_config)
+        dataset = ImageNetDataset(df_images, dataset_config)
+        mock_super_init.assert_called_once_with(dataset_config)
         assert dataset.df_obs.equals(df_images)
         assert dataset.config == dataset_config
         assert dataset.required_config_keys == {'height', 'width'}
-        mock_validate_config.assert_called_once_with(
-            dataset.config, dataset.required_config_keys
-        )
 
         # === test `df_images` === #
         for col in ['fpath_image', 'label']:
             df_images_underspecified = df_images.drop(col, axis=1)
 
             with pytest.raises(KeyError):
-                ImageNetDataSet(df_images_underspecified, dataset_config)
+                ImageNetDataset(df_images_underspecified, dataset_config)
 
         # === test `sample_types` === #
         expected_sample_types = {'image': 'float32', 'label': 'uint8'}
@@ -75,7 +74,7 @@ class TestImageNetDataSet(object):
 
         imagenet_dataset = MagicMock()
         imagenet_dataset.df_obs = df_images
-        imagenet_dataset.__len__ = ImageNetDataSet.__len__
+        imagenet_dataset.__len__ = ImageNetDataset.__len__
 
         assert len(imagenet_dataset) == 3
 
@@ -95,7 +94,7 @@ class TestImageNetDataSet(object):
         imagenet_dataset.df_obs = df_images
         imagenet_dataset.config = dataset_config
         imagenet_dataset.sample_types = sample_types
-        imagenet_dataset.__getitem__ = ImageNetDataSet.__getitem__
+        imagenet_dataset.__getitem__ = ImageNetDataset.__getitem__
 
         for idx in range(3):
             sample = imagenet_dataset[idx]
@@ -122,48 +121,3 @@ class TestImageNetDataSet(object):
 
         with pytest.raises(KeyError):
             imagenet_dataset[4]
-
-    def test_as_generator(self):
-        """Test `as_generator` method
-
-        This tests two cases:
-        - `shuffle=False`
-        - `shuffle=True`
-
-        It only tests when `n_workers=0`, deferring the testing of
-        `n_workers=1` to integration tests.
-        """
-
-        def mock_get_item(self, idx):
-            """Mock __getitem__ magic method"""
-            return {idx: idx}
-
-        def mock_len(self):
-            """Mock __len__ magic method"""
-            return 9
-
-        imagenet_dataset = MagicMock()
-        imagenet_dataset.__getitem__ = mock_get_item
-        imagenet_dataset.__len__ = mock_len
-        imagenet_dataset.as_generator = ImageNetDataSet.as_generator
-
-        # set the seed to one where we know that the shuffle won't by random
-        # chance produce the unshuffled version
-        torch.manual_seed(1)
-        for shuffle in [True, False]:
-            gen = imagenet_dataset.as_generator(
-                self=imagenet_dataset, n_workers=0, shuffle=shuffle
-            )
-            dataset = [next(gen) for _ in range(9)]
-            indices, values = [], []
-            for sample in dataset:
-                for idx, value in sample.items():
-                    indices.append(idx)
-                    values.append(value.tolist())
-
-            if shuffle:
-                assert indices != list(range(9))
-                assert values != list(range(9))
-            else:
-                assert indices == list(range(9))
-                assert values == list(range(9))

@@ -65,19 +65,28 @@ class TestTFTrainingJob(object):
         mock_read_csv.return_value = 'return_from_read_csv'
         monkeypatch.setattr(pd, 'read_csv', mock_read_csv)
 
-        MockDataSet = MagicMock()
-        MockDataSet.return_value = 'return_from_dataset_init'
+        MockDataset = MagicMock()
+        MockDataset.return_value = 'return_from_dataset_init'
         mock_import_object = MagicMock()
-        mock_import_object.return_value = MockDataSet
+        mock_import_object.return_value = MockDataset
         monkeypatch.setattr(
             'training.tf.training_job.import_object', mock_import_object
         )
 
-        mock_numpy_dataset = MagicMock()
-        mock_numpy_dataset.__len__ = MagicMock()
-        mock_numpy_dataset.__len__.return_value = 10
+        MockAugmentedDataSet = MagicMock()
+        MockAugmentedDataSet.return_value = (
+            'return_from_augmented_dataset_init'
+        )
+        monkeypatch.setattr(
+            'training.tf.training_job.AugmentedDataset',
+            MockAugmentedDataSet
+        )
+
+        mock_augmented_dataset = MagicMock()
+        mock_augmented_dataset.__len__ = MagicMock()
+        mock_augmented_dataset.__len__.return_value = 10
         mock_loader = create_autospec(
-            TFDataLoader, numpy_dataset=mock_numpy_dataset
+            TFDataLoader, augmented_dataset=mock_augmented_dataset
         )
         mock_loader.get_infinite_iter.return_value = (
             'return_from_get_infinite_iter'
@@ -99,9 +108,6 @@ class TestTFTrainingJob(object):
             training_job._parse_transformations.assert_called_once_with(
                 {'key3': 'value3', 'key4': 'value4'}
             )
-            MockTFDataLoader.assert_called_once_with(
-                'return_from_dataset_init', 'return_from_parse_transformations'
-            )
             mock_loader.get_infinite_iter.assert_called_once_with(batch_size=2)
         else:
             assert n_batches == 2
@@ -109,13 +115,17 @@ class TestTFTrainingJob(object):
             training_job._parse_transformations.assert_called_once_with(
                 {'key5': 'value5', 'key6': 'value6'}
             )
-            MockTFDataLoader.assert_called_once_with(
-                'return_from_dataset_init', 'return_from_parse_transformations'
-            )
             mock_loader.get_infinite_iter.assert_called_once_with(batch_size=4)
-
+        
+        MockAugmentedDataSet.assert_called_once_with(
+            'return_from_dataset_init',
+            'return_from_parse_transformations'
+        )
+        MockTFDataLoader.assert_called_once_with(
+            'return_from_augmented_dataset_init',
+        )
         mock_import_object.assert_called_once_with('path/to/import')
-        MockDataSet.assert_called_once_with(
+        MockDataset.assert_called_once_with(
             df_obs='return_from_read_csv', key1='value1', key2='value2'
         )
 

@@ -4,9 +4,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from datasets.ops import (
-    apply_transformation, format_batch, per_image_standardization
-)
+from datasets.ops import apply_transformation, per_image_standardization
 
 
 @pytest.fixture(scope='module')
@@ -35,46 +33,6 @@ def label():
 
     label = tf.constant(1, dtype=tf.uint8)
     return label
-
-
-def test_format_batch():
-    """Test format_batch"""
-
-    height, width = np.random.randint(128, 600, 2)
-    batch_size = np.random.randint(2, 4)
-    num_channels = 3
-    images = np.random.random((batch_size, height, width, num_channels))
-    labels = np.random.randint(0, 1000, batch_size)
-
-    batch = {'images': images, 'labels': labels}
-    formatted_batch = format_batch(
-        batch, input_keys=['images'], target_keys=['labels']
-    )
-    assert len(formatted_batch) == 2
-    assert list(formatted_batch[0]) == ['images']
-    assert np.array_equal(formatted_batch[0]['images'], images)
-    assert list(formatted_batch[1]) == ['labels']
-    assert np.array_equal(formatted_batch[1]['labels'], labels)
-
-    images2 = images + 5
-    labels2 = labels + 2
-    batch = {'images': images, 'images2': images2,
-             'labels': labels, 'labels2': labels2}
-    formatted_batch = format_batch(
-        batch, input_keys=['images', 'labels'],
-        target_keys=['images2', 'labels2']
-    )
-    assert len(formatted_batch) == 2
-
-    assert len(formatted_batch[0]) == 2
-    assert len(formatted_batch[1]) == 2
-    assert set(formatted_batch[0]) == {'images', 'labels'}
-    assert set(formatted_batch[1]) == {'images2', 'labels2'}
-
-    assert np.array_equal(formatted_batch[0]['images'], images)
-    assert np.array_equal(formatted_batch[0]['labels'], labels)
-    assert np.array_equal(formatted_batch[1]['images2'], images2)
-    assert np.array_equal(formatted_batch[1]['labels2'], labels2)
 
 
 class TestApplyTransformation(object):

@@ -3,18 +3,13 @@
 import imageio
 import numpy as np
 from skimage.transform import resize
-from torch.utils.data import Dataset, DataLoader
 
+from datasets.base_dataset import NumPyDataset
 from utils.generic_utils import cycle, validate_config
 
 
-class ImageNetDataSet(Dataset):
+class ImageNetDataset(NumPyDataset):
     """ImageNet dataset"""
-
-    input_keys = ['image']
-    required_config_keys = {'height', 'width'}
-    sample_types = {'image': 'float32', 'label': 'uint8'}
-    target_keys = ['label']
 
     def __init__(self, df_obs, config):
         """Init
@@ -30,7 +25,7 @@ class ImageNetDataSet(Dataset):
         :type df_obs: pandas.DataFrame
         """
 
-        validate_config(config, self.required_config_keys)
+        super().__init__(config)
 
         if set(df_obs.columns) < {'fpath_image', 'label'}:
             msg = (
@@ -52,7 +47,9 @@ class ImageNetDataSet(Dataset):
         2 channels or 4 channels. If the former, the image is simply stacked
         three times to create a 3 channel input, and if the latter, the first
         three channels of the four are taken.
-
+        
+        :param idx: index into self.df_obs of the observation to return
+        :type idx: int
         :return: dict with keys:
         - numpy.ndarray image: pixel data loaded from the `fpath_image` at
           index `idx` of `self.df_obs`
@@ -80,7 +77,6 @@ class ImageNetDataSet(Dataset):
         assert label.dtype == self.sample_types['label']
 
         sample = {'image': image, 'label': label}
-
         return sample
 
     def __len__(self):
@@ -92,46 +88,65 @@ class ImageNetDataSet(Dataset):
 
         return len(self.df_obs)
 
-    def as_generator(self, shuffle=False, n_workers=0):
-        """Return a generator that yields the entire dataset once
+    @property
+    def input_keys(self):
+        """Return the sample keys that denote a learning algorithm's inputs
 
-        This is intended to act as a lightweight wrapper around the
-        torch.utils.data.DataLoader class, which allows for shuffling of the
-        data without loading it into memory. It purposely removes the added
-        batch dimension from the DataLoader such that each element yielded is
-        still a single sample, just as if it came from indexing into this
-        class, e.g. ImageNetDataSet[10].
+        These keys should be contained in the dictionary returned from
+        __getitem__, and correspond to the keys that will be the inputs to a
+        neural network.
 
-        :param shuffle: if True, shuffle the data before returning it
-        :type shuffle: bool
-        :param n_workers: number of subprocesses to use for data loading
-        :type n_workers: int
-        :return: generator that yields the entire dataset once
-        :rtype: generator
+        :return: input key names
+        :rtype: set{str}
         """
+        return ['image']
+    
+    @property
+    def required_config_keys(self):
+        """Return the keys required to be in the config passed to the __init__
 
-        data_loader = DataLoader(
-            dataset=self, shuffle=shuffle, num_workers=n_workers
-        )
-        for sample in cycle(data_loader):
-            sample_batch_dim_removed = {}
-            for key, val in sample.items():
-                sample_batch_dim_removed[key] = val[0]
-            yield sample_batch_dim_removed
+        :return: required configuration keys
+        :rtype: set{str}
+        """
+        return {'height', 'width'}
 
     @property
-    def output_shapes(self):
+    def sample_shapes(self):
         """Return the shapes of the outputs returned
 
         :return: dict holding the tuples of the shapes for the values returned
          when iterating over the dataset
-        :rtype: dict
+        :rtype: dict{str: tuple}
         """
 
         height = self.config['height']
         width = self.config['width']
 
         image_shape = (height, width, 3)
-        label_shape = ()
+        label_shape = (1000, )
 
         return {'image': image_shape, 'label': label_shape}
+
+
+    @property
+    def sample_types(self):
+        """Return data types of the sample elements returned from __getitem__
+
+        :return: element data types for each element in a sample returned from
+         __getitem__
+        :rtype: dict{str: str}
+        """
+        return {'image': 'float32', 'label': 'uint8'}
+    
+    @property
+    def target_keys(self):
+        """Return the sample keys that denote a learning algorithm's targets
+
+        These should be contained in the dictionary returned from __getitem__,
+        and correspond to the keys that will be the targets to a neural
+        network.
+
+        :return: target key names
+        :rtype: list[str]
+        """
+        return ['label']

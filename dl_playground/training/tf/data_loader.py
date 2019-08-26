@@ -2,26 +2,38 @@
 
 import tensorflow as tf
 
-from datasets.ops import apply_transformation, format_batch
+
+def format_batch(batch, input_keys, target_keys):
+    """Format the batch from a single dictionary into a tuple of dictionaries
+
+    :param batch: batch of inputs and targets
+	:type batch: dict[tensorflow.Tensor]
+    :param input_keys: names of the keys in `batch` that are inputs to a model
+	:type input_keys: list[str]
+    :param target_keys: names of the keys in `batch` that are targets for a
+     model
+	:type target_keys: list[str]
+    :return: 2-element tuple holding the inputs and targets
+	:rtype: tuple(dict)
+    """
+
+    inputs = {input_key: batch[input_key] for input_key in input_keys}
+    targets = {target_key: batch[target_key] for target_key in target_keys}
+
+    return inputs, targets
 
 
 class TFDataLoader(object):
     """Loader for batches of a tf.data.Dataset"""
 
-    def __init__(self, numpy_dataset, transformations=None):
+    def __init__(self, augmented_dataset):
         """Init
 
-        :param numpy_dataset: dataset that provides samples for training
-        :type numpy_dataset: torch.utils.data.Dataset object
-        :param transformations: holds 2 element tuples with the first element
-         being a function to apply to the dataset samples and the second
-         element being a dictionary of keyword arguments to pass to those
-         functions
-        :type transformations: list[tuple(function, dict)]
+        :param augmented_dataset: dataset that provides samples for training
+        :type augmented_dataset: datasets.augmented_dataset.AugmentedDataset
         """
 
-        self.numpy_dataset = numpy_dataset
-        self.transformations = transformations or []
+        self.augmented_dataset = augmented_dataset
 
     def get_infinite_iter(self, batch_size, shuffle=False,
                           prefetch_buffer_size=1, n_workers=0):
@@ -39,36 +51,24 @@ class TFDataLoader(object):
         :rtype: tensorflow.data.Dataset
         """
 
-        generator = self.numpy_dataset.as_generator(
+        generator = self.augmented_dataset.as_generator(
             shuffle=shuffle, n_workers=n_workers
         )
-        output_shapes = {
+        sample_shapes = {
             name: tf.TensorShape(shape)
-            for name, shape in self.numpy_dataset.output_shapes.items()
+            for name, shape in self.augmented_dataset.sample_shapes.items()
         }
         dataset = tf.data.Dataset.from_generator(
-            lambda: generator, self.numpy_dataset.sample_types,
-            output_shapes
+            lambda: generator, self.augmented_dataset.sample_types,
+            sample_shapes
         )
         dataset = dataset.repeat()
-
-        it = self.transformations
-        for transformation_fn, transformation_fn_kwargs in it:
-            transformation_fn_kwargs = transformation_fn_kwargs.copy()
-            sample_keys = transformation_fn_kwargs.pop('sample_keys')
-
-            dataset = dataset.map(
-                lambda sample: apply_transformation(
-                    transformation_fn, sample,
-                    sample_keys, transformation_fn_kwargs
-                )
-            )
 
         dataset = dataset.batch(batch_size)
         dataset = dataset.map(
             lambda batch: format_batch(
-                batch, input_keys=self.numpy_dataset.input_keys,
-                target_keys=self.numpy_dataset.target_keys
+                batch, input_keys=self.augmented_dataset.input_keys,
+                target_keys=self.augmented_dataset.target_keys
             )
         )
         dataset = dataset.prefetch(prefetch_buffer_size)

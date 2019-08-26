@@ -5,8 +5,11 @@ import pytest
 import numpy as np
 import torch
 import tensorflow as tf
+from tensorflow.python.keras.utils import to_categorical
 
-from datasets.imagenet_dataset import ImageNetDataSet
+from datasets.augmented_dataset import AugmentedDataset
+from datasets.imagenet_dataset import ImageNetDataset
+from datasets.ops import per_image_standardization
 from training.tf.data_loader import TFDataLoader
 from utils.test_utils import df_images
 
@@ -27,15 +30,16 @@ class TestTFDataLoader(object):
         """
 
         transformations = [
-            (tf.one_hot,
-             {'sample_keys': ['label'], 'depth': 1000}),
-            (tf.image.per_image_standardization,
+            (to_categorical,
+             {'sample_keys': ['label'], 'num_classes': 1000}),
+            (per_image_standardization,
              {'sample_keys': ['image']}),
         ]
 
         dataset_config = {'height': 227, 'width': 227}
-        imagenet_dataset = ImageNetDataSet(df_images, dataset_config)
-        tf_data_loader = TFDataLoader(imagenet_dataset, transformations)
+        imagenet_dataset = ImageNetDataset(df_images, dataset_config)
+        augmented_dataset = AugmentedDataset(imagenet_dataset, transformations)
+        tf_data_loader = TFDataLoader(augmented_dataset)
 
         return tf_data_loader
 
