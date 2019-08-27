@@ -9,7 +9,7 @@ not use any parallelization across GPUs, nor include a local response layer.
 
 from torch.nn import Conv2d, Dropout, Linear, MaxPool2d, Module, ReLU
 
-from utils.generic_utils import validate_config
+from trainet.utils.generic_utils import validate_config
 
 
 class AlexNet(Module):

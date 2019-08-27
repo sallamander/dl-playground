@@ -11,7 +11,7 @@ from tensorflow.keras.layers import (
     Conv2D, Dense, Dropout, Flatten, Input, MaxPooling2D
 )
 
-from utils.generic_utils import validate_config
+from trainet.utils.generic_utils import validate_config
 
 
 class AlexNet(object):

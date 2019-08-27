@@ -3,9 +3,8 @@
 import imageio
 import numpy as np
 from skimage.transform import resize
-
-from datasets.base_dataset import NumPyDataset
-from utils.generic_utils import cycle, validate_config
+from trainet.datasets.base_dataset import NumPyDataset
+from trainet.utils.generic_utils import cycle, validate_config
 
 
 class ImageNetDataset(NumPyDataset):
