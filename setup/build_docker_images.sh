@@ -11,7 +11,7 @@ function usage {
     echo ""
     echo "   --branch                            Branch to use when building, defaults to master."
     echo "   --conda_version                     Conda version for the Docker images - defaults "
-    echo "                                       to 4.7.11, which is compatible with the repository "
+    echo "                                       to 4.7.10, which is compatible with the repository "
     echo "                                       YMLs."
     echo ""
     echo "    --docker_user                      Username for the Docker images. "
@@ -80,8 +80,8 @@ if [ -z "$DOCKER_USER" ]; then
 fi
 
 if [ -z "$CONDA_VERSION" ]; then
-    echo "--conda_version not specified, using the default of 4.7.11."
-    CONDA_VERSION=4.7.11
+    echo "--conda_version not specified, using the default of 4.7.10."
+    CONDA_VERSION=4.7.10
 fi
 
 if [ ! -z "$REBUILD_IMAGE" ]; then

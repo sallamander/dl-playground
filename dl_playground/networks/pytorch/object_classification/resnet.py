@@ -25,7 +25,7 @@ from torch.nn import (
     AvgPool2d, BatchNorm2d, Conv2d, Linear, MaxPool2d, Module, ModuleList, ReLU
 )
 
-from utils.generic_utils import validate_config
+from trainet.utils.generic_utils import validate_config
 
 
 class BottleneckBlock(Module):
