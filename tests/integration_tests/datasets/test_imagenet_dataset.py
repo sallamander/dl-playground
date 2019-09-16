@@ -24,8 +24,8 @@ class TestImagenetDataset():
         imagenet_dataset = ImageNetDataset(df_images, dataset_config)
 
         transformations = [
-            (per_image_standardization, {'sample_keys': ['image']}),
-            (to_tensor, {'sample_keys': ['image']})
+            (per_image_standardization, {}, {'image': 'image'}),
+            (to_tensor, {}, {'image': 'pic'})
         ]
         augmented_dataset = AugmentedDataset(
             numpy_dataset=imagenet_dataset, transformations=transformations
