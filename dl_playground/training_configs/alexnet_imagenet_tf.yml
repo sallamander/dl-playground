@@ -13,25 +13,21 @@ dataset:
     train_transformations:
         - tensorflow.python.keras.utils.to_categorical:
             sample_keys:
-                value:
-                    - 'label'
+                'label': 'y'
             num_classes:
                 value: 1000
         - trainet.datasets.ops.per_image_standardization:
             sample_keys:
-                value:
-                    - 'image'
+                'image': 'image'
     validation_transformations:
         - tensorflow.python.keras.utils.to_categorical:
             sample_keys:
-                value:
-                    - 'label'
+                'label': 'y'
             num_classes:
                 value: 1000
         - trainet.datasets.ops.per_image_standardization:
             sample_keys:
-                value:
-                    - 'image'
+                'image': 'image'
     train_loading_params:
         batch_size: 32
         shuffle: True

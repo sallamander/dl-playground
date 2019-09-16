@@ -10,38 +10,34 @@ dataset:
         config:
             height: 227
             width: 227
+    train_albumentations:
+        compose_init_params:
+            p: 0.5
+        sample_keys:
+            'image': 'image'
+        albumentations:
+            - albumentations.HorizontalFlip:
+                p: 1.0
     train_transformations:
         - trainet.datasets.ops.per_image_standardization:
             sample_keys:
-                value:
-                    - 'image'
+                'image': 'image'
         - torchvision.transforms.functional.to_tensor:
             sample_keys:
-                value: 
-                    - 'image'
+                'image': 'pic'
         - torch.tensor:
             sample_keys:
-                value: 
-                    - 'label'
-            dtype:
-                import: true
-                value: 'torch.long'
+                'label': 'data'
     validation_transformations:
         - trainet.datasets.ops.per_image_standardization:
             sample_keys:
-                value:
-                    - 'image'
+                'image': 'image'
         - torchvision.transforms.functional.to_tensor:
             sample_keys:
-                value: 
-                    - 'image'
+                'image': 'pic'
         - torch.tensor:
             sample_keys:
-                value: 
-                    - 'label'
-            dtype:
-                import: true
-                value: 'torch.long'
+                'label': 'data'
     train_loading_params:
         batch_size: 32
         shuffle: True
@@ -60,7 +56,7 @@ network:
             n_blocks_per_stage: [3, 24, 36, 3]
 trainer:
     importpath: trainet.training.pytorch.trainer.Trainer
-    callbacks:
+    callbacks: 
         - ktorch.callbacks.TensorBoard
         - tensorflow.keras.callbacks.CSVLogger
         - tensorflow.keras.callbacks.ModelCheckpoint:
@@ -68,7 +64,7 @@ trainer:
                 save_best_only: True
     init_params:
         config:
-            optimizer: 'Adam'
+            optimizer: 'torch.optim.Adam'
             loss: 'CrossEntropyLoss'
             batch_size: 32
             n_epochs: 10
